@@ -8,7 +8,12 @@
 <style>
 :root{--bg:#07111f;--card:#0f1d30;--text:#f5f8fc;--muted:#a9b7c9;--line:rgba(255,255,255,.1);--accent:#48d6c7;--soft:rgba(72,214,199,.12);--max:1180px}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at 80% 10%,rgba(72,214,199,.08),transparent 28%),linear-gradient(180deg,#07111f,#081321);color:var(--text);line-height:1.6}
-html[dir=rtl] body{font-family:Tahoma,"Segoe UI",Arial,sans-serif}a{color:inherit;text-decoration:none}.container{width:min(92%,var(--max));margin:auto}
+html[dir=rtl] body{font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+html[dir=rtl] h1{font-size:clamp(2.45rem,4.5vw,4.65rem);max-width:780px}
+html[dir=rtl] .ltr-text{direction:ltr;unicode-bidi:isolate;text-align:left}
+html[dir=rtl] .brand{direction:ltr;unicode-bidi:isolate}
+html[dir=rtl] .price strong{direction:rtl;unicode-bidi:isolate}
+html[dir=rtl] .contact-detail a{direction:ltr;unicode-bidi:isolate;display:inline-block}a{color:inherit;text-decoration:none}.container{width:min(92%,var(--max));margin:auto}
 nav{position:sticky;top:0;z-index:20;background:rgba(7,17,31,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.nav{min-height:72px;display:flex;align-items:center;gap:22px}.brand{font-weight:800;letter-spacing:.08em;font-size:1.35rem}.brand span{color:var(--accent)}.links{display:flex;gap:22px;margin-inline-start:auto;color:var(--muted);font-size:.92rem}.links a:hover{color:#fff}.nav-actions{display:flex;align-items:center;gap:10px}.langs{display:flex;border:1px solid var(--line);border-radius:9px;padding:4px;background:rgba(255,255,255,.03)}.lang{border:0;background:transparent;color:var(--muted);padding:6px 9px;border-radius:6px;font-weight:700;cursor:pointer}.lang.active{background:var(--soft);color:var(--accent)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:10px;font-weight:750;border:1px solid transparent;cursor:pointer}.primary{background:var(--accent);color:#04110f}.secondary{border-color:var(--line);background:rgba(255,255,255,.03)}.mobile-cta{display:none}
 section{padding:88px 0;scroll-margin-top:80px}.hero{padding:108px 0 90px}.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:70px;align-items:center}.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:var(--soft);border:1px solid rgba(72,214,199,.22);color:var(--accent);font-size:.8rem;font-weight:800;margin-bottom:22px}.dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
@@ -29,13 +34,14 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 </style>
 </head>
 <body>
+<!-- Merqiva Website v1.2 — Arabic copy, RTL and localization QA -->
 <nav><div class="container nav">
 <a class="brand" href="#top">MER<span>Q</span>IVA</a>
 <div class="links">
 <a href="#intelligence" data-t="nav1">Intelligence</a><a href="#sample" data-t="nav2">Sample</a><a href="#process" data-t="nav3">How It Works</a><a href="#offer" data-t="nav4">Pricing</a><a href="#contact" data-t="nav5">Contact</a>
 </div>
 <div class="nav-actions">
-<div class="langs"><button class="lang active" data-lang="en">EN</button><button class="lang" data-lang="ar">العربية</button></div>
+<div class="langs" aria-label="Language selector"><button type="button" class="lang active" data-lang="en" aria-label="English">EN</button><button type="button" class="lang" data-lang="ar" aria-label="العربية">العربية</button></div>
 <a href="#contact" class="btn primary desktop-cta" data-t="cta">Get 10 Free Opportunities</a>
 <a href="#contact" class="btn primary mobile-cta" data-t="mcta">Get Free Sample</a>
 </div>
@@ -56,7 +62,7 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 <div class="intel">
 <div class="row"><span data-t="fleet">Fleet</span><span data-t="fleetv">45+ vessels</span></div>
 <div class="row"><span data-t="vessels">Vessel Types</span><span data-t="vesselsv">AHTS · Workboats · Offshore Support</span></div>
-<div class="row"><span data-t="fit">Product Fit</span><span>NAVCOM · GMDSS · Safety Equipment</span></div>
+<div class="row"><span data-t="fit">Product Fit</span><span class="ltr-text" data-t="fitv">NAVCOM · GMDSS · Safety Equipment</span></div>
 <div class="row"><span data-t="dm">Decision Maker</span><span data-t="dmv">Procurement Manager identified</span></div>
 <div class="row"><span data-t="signal">Buying Signal</span><span data-t="signalv">Recent fleet expansion activity</span></div>
 <div class="row"><span data-t="why">Why Now</span><span data-t="whyv">New vessel activity creates qualification timing</span></div>
@@ -85,7 +91,7 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 <div class="sample-table">
 <div class="sample-row"><div data-t="market">Market</div><div data-t="marketv">GCC Maritime / Offshore</div></div>
 <div class="sample-row"><div data-t="fleet">Fleet</div><div data-t="fleetv">45+ vessels</div></div>
-<div class="sample-row"><div data-t="fit">Product Fit</div><div>NAVCOM · GMDSS · Safety</div></div>
+<div class="sample-row"><div data-t="fit">Product Fit</div><div class="ltr-text" data-t="fitshort">NAVCOM · GMDSS · Safety</div></div>
 <div class="sample-row"><div data-t="dm">Decision Maker</div><div data-t="dmv">Procurement Manager identified</div></div>
 <div class="sample-row"><div data-t="signalshort">Signal</div><div data-t="signalshortv">Fleet expansion activity</div></div>
 <div class="sample-row"><div data-t="prio">Priority</div><div data-t="priov">HIGH</div></div>
@@ -93,14 +99,14 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 
 <section id="process"><div class="container"><div class="section-head"><div class="kicker" data-t="how">How it works</div><h2 data-t="howh">From what you sell to who should hear about it.</h2></div>
 <div class="steps">
-<div class="step"><div class="step-no">STEP 01</div><h3 data-t="s1h">Tell us what you sell</h3><p data-t="s1p">Products, systems, equipment or maritime services.</p></div>
-<div class="step"><div class="step-no">STEP 02</div><h3 data-t="s2h">We research the GCC market</h3><p data-t="s2p">Companies, fleets, decision-makers and current signals.</p></div>
-<div class="step"><div class="step-no">STEP 03</div><h3 data-t="s3h">Receive prioritized opportunities</h3><p data-t="s3p">Structured intelligence with sources and reasoning.</p></div>
-<div class="step"><div class="step-no">STEP 04</div><h3 data-t="s4h">Your team starts targeted outreach</h3><p data-t="s4p">Contact better-fit accounts with better timing.</p></div>
+<div class="step"><div class="step-no" data-t="step1">STEP 01</div><h3 data-t="s1h">Tell us what you sell</h3><p data-t="s1p">Products, systems, equipment or maritime services.</p></div>
+<div class="step"><div class="step-no" data-t="step2">STEP 02</div><h3 data-t="s2h">We research the GCC market</h3><p data-t="s2p">Companies, fleets, decision-makers and current signals.</p></div>
+<div class="step"><div class="step-no" data-t="step3">STEP 03</div><h3 data-t="s3h">Receive prioritized opportunities</h3><p data-t="s3p">Structured intelligence with sources and reasoning.</p></div>
+<div class="step"><div class="step-no" data-t="step4">STEP 04</div><h3 data-t="s4h">Your team starts targeted outreach</h3><p data-t="s4p">Contact better-fit accounts with better timing.</p></div>
 </div></div></section>
 
 <section class="problem" id="offer"><div class="container"><div class="pricing">
-<div class="kicker" data-t="offer">Maritime Opportunity Intelligence</div><div class="price"><strong>$299</strong><span data-t="month">/ month</span></div>
+<div class="kicker" data-t="offer">Maritime Opportunity Intelligence</div><div class="price"><strong data-t="price">$299</strong><span data-t="month">/ month</span></div>
 <p class="muted" data-t="offerp">A focused monthly research service for maritime suppliers targeting vessel operators and buyers across the GCC.</p>
 <ul class="pkg"><li data-t="p1">30 new researched opportunities / month</li><li data-t="p2">Weekly delivery</li><li data-t="p3">Decision-maker research</li><li data-t="p4">Current-company verification</li><li data-t="p5">Fleet and product matching</li><li data-t="p6">Buying-signal monitoring</li><li data-t="p7">Why Now analysis</li><li data-t="p8">Recommended sales angle</li><li data-t="p9">Source links</li><li data-t="p10">Duplicate removal</li><li data-t="p11">Opportunity prioritization</li><li data-t="p12">No long-term contract</li></ul>
 <a href="#contact" class="btn primary" data-t="start">Start With 10 Free Opportunities</a>
@@ -125,7 +131,7 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 <div class="group"><label data-t="workemail">Work Email *</label><input class="control" type="email" name="email" required></div>
 <div class="group"><label data-t="country">Country</label><input class="control" name="country"></div>
 <div class="group full"><label data-t="sell">What do you sell? *</label><input class="control" name="offering" required></div>
-<div class="group full"><label data-t="target">Target GCC Market</label><select class="control" name="market"><option value="" data-t="select">Select a market</option><option>UAE</option><option>Saudi Arabia</option><option>Oman</option><option>Qatar</option><option>Kuwait</option><option>Bahrain</option><option value="Multiple GCC markets" data-t="multiple">Multiple GCC markets</option></select></div>
+<div class="group full"><label data-t="target">Target GCC Market</label><select class="control" name="market"><option value="" data-t="select">Select a market</option><option value="UAE" data-t="uae">UAE</option><option value="Saudi Arabia" data-t="saudi">Saudi Arabia</option><option value="Oman" data-t="oman">Oman</option><option value="Qatar" data-t="qatar">Qatar</option><option value="Kuwait" data-t="kuwait">Kuwait</option><option value="Bahrain" data-t="bahrain">Bahrain</option><option value="Multiple GCC markets" data-t="multiple">Multiple GCC markets</option></select></div>
 <div class="group full"><label data-t="message">Message</label><textarea class="control" name="message"></textarea></div>
 </div>
 <div class="form-actions"><button class="btn primary" type="submit" data-t="send">Send Inquiry</button><span class="form-note" data-t="formnote">This opens your email app with the inquiry pre-filled.</span></div>
@@ -137,13 +143,154 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 
 <script>
 const T={
-en:{nav1:"Intelligence",nav2:"Sample",nav3:"How It Works",nav4:"Pricing",nav5:"Contact",cta:"Get 10 Free Opportunities",mcta:"Get Free Sample",eyebrow:"GCC MARITIME SALES INTELLIGENCE",h1a:"Find GCC Maritime Buyers Worth Contacting",h1b:"— and Know Why Now.",hero:"Merqiva researches vessel operators, fleets, decision-makers and buying signals to identify maritime sales opportunities your team can prioritize with confidence.",samplecta:"View Sample Opportunity",note:"Built for marine equipment suppliers, service providers and maritime sales teams targeting the GCC.",olabel:"Opportunity Intelligence",priority:"HIGH PRIORITY",ocompany:"GCC Offshore Vessel Operator",fleet:"Fleet",fleetv:"45+ vessels",vessels:"Vessel Types",vesselsv:"AHTS · Workboats · Offshore Support",fit:"Product Fit",dm:"Decision Maker",dmv:"Procurement Manager identified",signal:"Buying Signal",signalv:"Recent fleet expansion activity",why:"Why Now",whyv:"New vessel activity creates qualification timing",beyond:"Beyond generic lead lists",ih:"Sales intelligence built around buying relevance.",id:"A company name and email address are not enough. Merqiva connects fleet intelligence, product relevance, decision-makers and current market signals.",company:"Company",fv:"Fleet & Vessel Type",receive:"What you receive",rh:"Research your sales team can act on.",f1h:"Target Company Research",f1p:"Relevant GCC vessel operators, ship managers, offshore companies and maritime buyers.",f2h:"Fleet Intelligence",f2p:"Fleet size, vessel types and operating profile evaluated against what you sell.",f3h:"Product-to-Buyer Matching",f3p:"Each account is assessed for relevance to your equipment, systems or maritime services.",f4h:"Decision-Maker Verification",f4p:"Procurement, purchasing, technical and fleet contacts researched with current-company verification.",f5h:"Buying Signals",f5p:"Fleet expansion, new vessels, contracts, drydock, retrofit, recruitment and other relevant activity.",f6h:"Sales Angle & Priority",f6p:"Why the account matters now, suggested outreach angle and a consistent opportunity priority.",sk:"Sample opportunity",sh:"Not just who to contact. Why they are worth contacting.",st:"Example: Offshore Vessel Operator",sd:"A high-fit account identified through fleet profile, product relevance, procurement research and recent expansion activity.",rs:"Request Your Free Sample",market:"Market",marketv:"GCC Maritime / Offshore",signalshort:"Signal",signalshortv:"Fleet expansion activity",prio:"Priority",priov:"HIGH",how:"How it works",howh:"From what you sell to who should hear about it.",s1h:"Tell us what you sell",s1p:"Products, systems, equipment or maritime services.",s2h:"We research the GCC market",s2p:"Companies, fleets, decision-makers and current signals.",s3h:"Receive prioritized opportunities",s3p:"Structured intelligence with sources and reasoning.",s4h:"Your team starts targeted outreach",s4p:"Contact better-fit accounts with better timing.",offer:"Maritime Opportunity Intelligence",month:"/ month",offerp:"A focused monthly research service for maritime suppliers targeting vessel operators and buyers across the GCC.",p1:"30 new researched opportunities / month",p2:"Weekly delivery",p3:"Decision-maker research",p4:"Current-company verification",p5:"Fleet and product matching",p6:"Buying-signal monitoring",p7:"Why Now analysis",p8:"Recommended sales angle",p9:"Source links",p10:"Duplicate removal",p11:"Opportunity prioritization",p12:"No long-term contract",start:"Start With 10 Free Opportunities",about:"About Merqiva",abouth:"Independent B2B sales intelligence for complex markets.",aboutp:"Merqiva is an independent B2B sales intelligence service, initially focused on the GCC maritime sector. We combine public-source research, commercial relevance and structured qualification to help sales teams focus on accounts worth pursuing.",a1h:"Research-led",a1p:"Opportunities are evaluated before they reach your sales team.",a2h:"Source-based",a2p:"Key claims and buying signals are supported by public sources.",a3h:"Focused on relevance",a3p:"No generic mass-market lead lists.",contact:"Contact Us",contacth:"Tell us what you sell and where you want to grow.",contactp:"Share a few details about your company, products and target GCC market. We’ll use that context to understand whether Merqiva can support your sales team.",email:"Email",focus:"Current focus",focusv:"GCC Maritime Sales Intelligence",coverage:"Coverage",coveragev:"UAE · Saudi Arabia · Oman · Qatar · Kuwait · Bahrain",name:"Full Name *",companyname:"Company Name *",workemail:"Work Email *",country:"Country",sell:"What do you sell? *",target:"Target GCC Market",select:"Select a market",multiple:"Multiple GCC markets",message:"Message",send:"Send Inquiry",formnote:"This opens your email app with the inquiry pre-filled.",rights:"All rights reserved.",tag:"GCC Maritime Sales Intelligence"},
-ar:{nav1:"الاستخبارات",nav2:"نموذج",nav3:"كيف نعمل",nav4:"الأسعار",nav5:"اتصل بنا",cta:"احصل على 10 فرص مجانية",mcta:"نموذج مجاني",eyebrow:"استخبارات المبيعات البحرية في دول الخليج",h1a:"اعثر على المشترين البحريين المناسبين في دول الخليج",h1b:"واعرف لماذا الآن.",hero:"تبحث Merqiva في مشغلي السفن والأساطيل وصناع القرار وإشارات الشراء لتحديد فرص مبيعات بحرية يمكن لفريقك ترتيبها حسب الأولوية بثقة.",samplecta:"عرض نموذج فرصة",note:"مصمم لموردي المعدات البحرية ومقدمي الخدمات وفرق المبيعات التي تستهدف أسواق دول الخليج.",olabel:"استخبارات الفرص",priority:"أولوية عالية",ocompany:"مشغل سفن دعم بحري في الخليج",fleet:"الأسطول",fleetv:"أكثر من 45 سفينة",vessels:"أنواع السفن",vesselsv:"AHTS · قوارب عمل · دعم بحري",fit:"ملاءمة المنتج",dm:"صانع القرار",dmv:"تم تحديد مدير المشتريات",signal:"إشارة شراء",signalv:"نشاط حديث لتوسعة الأسطول",why:"لماذا الآن",whyv:"نشاط السفن الجديدة يخلق توقيتاً مناسباً للتواصل",beyond:"أبعد من قوائم العملاء المحتملين العامة",ih:"استخبارات مبيعات مبنية على ملاءمة الشراء.",id:"اسم الشركة والبريد الإلكتروني لا يكفيان. تربط Merqiva بين معلومات الأسطول وملاءمة المنتج وصناع القرار وإشارات السوق الحالية.",company:"الشركة",fv:"الأسطول ونوع السفينة",receive:"ما الذي ستحصل عليه",rh:"بحث يمكن لفريق المبيعات استخدامه مباشرة.",f1h:"بحث الشركات المستهدفة",f1p:"مشغلو سفن ومديرو أساطيل وشركات أوفشور ومشترون بحريون ذوو صلة في دول الخليج.",f2h:"استخبارات الأسطول",f2p:"حجم الأسطول وأنواع السفن ونمط التشغيل مقارنة بما تبيعه شركتك.",f3h:"مطابقة المنتج مع المشتري",f3p:"يتم تقييم كل حساب وفق مدى ملاءمته لمعداتك أو أنظمتك أو خدماتك البحرية.",f4h:"التحقق من صانع القرار",f4p:"البحث عن مسؤولي المشتريات والشراء والفنيين والأسطول مع التحقق من جهة عملهم الحالية.",f5h:"إشارات الشراء",f5p:"توسعة الأسطول والسفن الجديدة والعقود والحوض الجاف والتحديث والتوظيف وأنشطة أخرى ذات صلة.",f6h:"زاوية البيع والأولوية",f6p:"لماذا الحساب مهم الآن، وزاوية التواصل المقترحة، وتصنيف واضح للأولوية.",sk:"نموذج فرصة",sh:"ليس فقط بمن تتواصل، بل لماذا يستحق التواصل الآن.",st:"مثال: مشغل سفن أوفشور",sd:"حساب عالي الملاءمة تم تحديده عبر ملف الأسطول وملاءمة المنتج وبحث المشتريات ونشاط التوسع الحديث.",rs:"اطلب نموذجك المجاني",market:"السوق",marketv:"القطاع البحري / الأوفشور في الخليج",signalshort:"الإشارة",signalshortv:"نشاط توسعة الأسطول",prio:"الأولوية",priov:"عالية",how:"كيف نعمل",howh:"من ما تبيعه إلى من يجب أن يسمع عنه.",s1h:"أخبرنا بما تبيعه",s1p:"منتجات أو أنظمة أو معدات أو خدمات بحرية.",s2h:"نبحث في سوق الخليج",s2p:"الشركات والأساطيل وصناع القرار والإشارات الحالية.",s3h:"استلم فرصاً مرتبة حسب الأولوية",s3p:"استخبارات منظمة مع المصادر وأسباب التقييم.",s4h:"يبدأ فريقك التواصل المستهدف",s4p:"تواصل مع الحسابات الأكثر ملاءمة وفي توقيت أفضل.",offer:"استخبارات الفرص البحرية",month:"/ شهرياً",offerp:"خدمة بحث شهرية مركزة لموردي القطاع البحري الذين يستهدفون مشغلي السفن والمشترين في دول الخليج.",p1:"30 فرصة جديدة مدروسة شهرياً",p2:"تسليم أسبوعي",p3:"بحث صناع القرار",p4:"التحقق من جهة العمل الحالية",p5:"مطابقة الأسطول والمنتج",p6:"متابعة إشارات الشراء",p7:"تحليل لماذا الآن",p8:"زاوية مبيعات مقترحة",p9:"روابط المصادر",p10:"إزالة التكرار",p11:"ترتيب الفرص حسب الأولوية",p12:"بدون عقد طويل الأجل",start:"ابدأ بـ 10 فرص مجانية",about:"عن Merqiva",abouth:"استخبارات مبيعات B2B مستقلة للأسواق المعقدة.",aboutp:"Merqiva خدمة مستقلة لاستخبارات مبيعات الشركات، وتركز في البداية على القطاع البحري في دول الخليج. نجمع بين البحث في المصادر العامة والملاءمة التجارية والتأهيل المنظم لمساعدة فرق المبيعات على التركيز على الحسابات التي تستحق المتابعة.",a1h:"قائم على البحث",a1p:"يتم تقييم الفرص قبل وصولها إلى فريق المبيعات.",a2h:"مدعوم بالمصادر",a2p:"الادعاءات الرئيسية وإشارات الشراء مدعومة بمصادر عامة.",a3h:"التركيز على الملاءمة",a3p:"لا قوائم عملاء محتملين عامة أو جماعية.",contact:"اتصل بنا",contacth:"أخبرنا بما تبيعه والأسواق التي تريد النمو فيها.",contactp:"شارك معنا بعض المعلومات عن شركتك ومنتجاتك والسوق الخليجي المستهدف. سنستخدمها لفهم ما إذا كانت Merqiva مناسبة لدعم فريق مبيعاتك.",email:"البريد الإلكتروني",focus:"التركيز الحالي",focusv:"استخبارات المبيعات البحرية في دول الخليج",coverage:"التغطية",coveragev:"الإمارات · السعودية · عُمان · قطر · الكويت · البحرين",name:"الاسم الكامل *",companyname:"اسم الشركة *",workemail:"بريد العمل *",country:"الدولة",sell:"ماذا تبيع شركتك؟ *",target:"السوق الخليجي المستهدف",select:"اختر سوقاً",multiple:"عدة أسواق خليجية",message:"الرسالة",send:"إرسال الاستفسار",formnote:"سيتم فتح تطبيق البريد مع تعبئة الاستفسار تلقائياً.",rights:"جميع الحقوق محفوظة.",tag:"استخبارات المبيعات البحرية في دول الخليج"}
+en:{
+nav1:"Intelligence",nav2:"Sample",nav3:"How It Works",nav4:"Pricing",nav5:"Contact",
+cta:"Get 10 Free Opportunities",mcta:"Get Free Sample",
+eyebrow:"GCC MARITIME SALES INTELLIGENCE",
+h1a:"Find GCC Maritime Buyers Worth Contacting",h1b:"— and Know Why Now.",
+hero:"Merqiva researches vessel operators, fleets, decision-makers and buying signals to identify maritime sales opportunities your team can prioritize with confidence.",
+samplecta:"View Sample Opportunity",
+note:"Built for marine equipment suppliers, service providers and maritime sales teams targeting the GCC.",
+olabel:"Opportunity Intelligence",priority:"HIGH PRIORITY",ocompany:"GCC Offshore Vessel Operator",
+fleet:"Fleet",fleetv:"45+ vessels",vessels:"Vessel Types",vesselsv:"AHTS · Workboats · Offshore Support",
+fit:"Product Fit",fitv:"NAVCOM · GMDSS · Safety Equipment",fitshort:"NAVCOM · GMDSS · Safety",
+dm:"Decision Maker",dmv:"Procurement Manager identified",
+signal:"Buying Signal",signalv:"Recent fleet expansion activity",
+why:"Why Now",whyv:"New vessel activity creates qualification timing",
+beyond:"Beyond generic lead lists",
+ih:"Sales intelligence built around buying relevance.",
+id:"A company name and email address are not enough. Merqiva connects fleet intelligence, product relevance, decision-makers and current market signals.",
+company:"Company",fv:"Fleet & Vessel Type",
+receive:"What you receive",rh:"Research your sales team can act on.",
+f1h:"Target Company Research",f1p:"Relevant GCC vessel operators, ship managers, offshore companies and maritime buyers.",
+f2h:"Fleet Intelligence",f2p:"Fleet size, vessel types and operating profile evaluated against what you sell.",
+f3h:"Product-to-Buyer Matching",f3p:"Each account is assessed for relevance to your equipment, systems or maritime services.",
+f4h:"Decision-Maker Verification",f4p:"Procurement, purchasing, technical and fleet contacts researched with current-company verification.",
+f5h:"Buying Signals",f5p:"Fleet expansion, new vessels, contracts, drydock, retrofit, recruitment and other relevant activity.",
+f6h:"Sales Angle & Priority",f6p:"Why the account matters now, suggested outreach angle and a consistent opportunity priority.",
+sk:"Sample opportunity",
+sh:"Not just who to contact. Why they are worth contacting.",
+st:"Example: Offshore Vessel Operator",
+sd:"A high-fit account identified through fleet profile, product relevance, procurement research and recent expansion activity.",
+rs:"Request Your Free Sample",
+market:"Market",marketv:"GCC Maritime / Offshore",
+signalshort:"Signal",signalshortv:"Fleet expansion activity",prio:"Priority",priov:"HIGH",
+how:"How it works",howh:"From what you sell to who should hear about it.",
+step1:"STEP 01",step2:"STEP 02",step3:"STEP 03",step4:"STEP 04",
+s1h:"Tell us what you sell",s1p:"Products, systems, equipment or maritime services.",
+s2h:"We research the GCC market",s2p:"Companies, fleets, decision-makers and current signals.",
+s3h:"Receive prioritized opportunities",s3p:"Structured intelligence with sources and reasoning.",
+s4h:"Your team starts targeted outreach",s4p:"Contact better-fit accounts with better timing.",
+offer:"Maritime Opportunity Intelligence",price:"$299",month:"/ month",
+offerp:"A focused monthly research service for maritime suppliers targeting vessel operators and buyers across the GCC.",
+p1:"30 new researched opportunities / month",p2:"Weekly delivery",p3:"Decision-maker research",
+p4:"Current-company verification",p5:"Fleet and product matching",p6:"Buying-signal monitoring",
+p7:"Why Now analysis",p8:"Recommended sales angle",p9:"Source links",p10:"Duplicate removal",
+p11:"Opportunity prioritization",p12:"No long-term contract",
+start:"Start With 10 Free Opportunities",
+about:"About Merqiva",
+abouth:"Independent B2B sales intelligence for complex markets.",
+aboutp:"Merqiva is an independent B2B sales intelligence service, initially focused on the GCC maritime sector. We combine public-source research, commercial relevance and structured qualification to help sales teams focus on accounts worth pursuing.",
+a1h:"Research-led",a1p:"Opportunities are evaluated before they reach your sales team.",
+a2h:"Source-based",a2p:"Key claims and buying signals are supported by public sources.",
+a3h:"Focused on relevance",a3p:"No generic mass-market lead lists.",
+contact:"Contact Us",contacth:"Tell us what you sell and where you want to grow.",
+contactp:"Share a few details about your company, products and target GCC market. We’ll use that context to understand whether Merqiva can support your sales team.",
+email:"Email",focus:"Current focus",focusv:"GCC Maritime Sales Intelligence",
+coverage:"Coverage",coveragev:"UAE · Saudi Arabia · Oman · Qatar · Kuwait · Bahrain",
+name:"Full Name *",companyname:"Company Name *",workemail:"Work Email *",country:"Country",
+sell:"What do you sell? *",target:"Target GCC Market",select:"Select a market",
+uae:"UAE",saudi:"Saudi Arabia",oman:"Oman",qatar:"Qatar",kuwait:"Kuwait",bahrain:"Bahrain",
+multiple:"Multiple GCC markets",message:"Message",send:"Send Inquiry",
+formnote:"We’ll prepare an email with your inquiry details for you to send.",
+rights:"All rights reserved.",tag:"GCC Maritime Sales Intelligence"
+},
+ar:{
+nav1:"استخبارات المبيعات",nav2:"نموذج",nav3:"كيف نعمل",nav4:"الأسعار",nav5:"اتصل بنا",
+cta:"احصل على 10 فرص مجانية",mcta:"احصل على نموذج مجاني",
+eyebrow:"استخبارات المبيعات البحرية في دول الخليج",
+h1a:"اعثر على المشترين البحريين المناسبين في الخليج",
+h1b:"وتواصل معهم في الوقت المناسب.",
+hero:"تُجري Merqiva أبحاثًا حول مشغلي السفن والأساطيل وصنّاع القرار وإشارات الشراء، لتحديد فرص مبيعات بحرية يستطيع فريقك ترتيبها حسب الأولوية بثقة.",
+samplecta:"عرض نموذج فرصة",
+note:"موجّه لموردي المعدات البحرية ومقدمي الخدمات وفرق المبيعات التي تستهدف أسواق دول الخليج.",
+olabel:"استخبارات الفرص البيعية",priority:"أولوية عالية",ocompany:"مشغّل سفن دعم بحري في الخليج",
+fleet:"الأسطول",fleetv:"أكثر من 45 سفينة",
+vessels:"أنواع السفن",vesselsv:"AHTS · قوارب عمل · سفن دعم بحري",
+fit:"ملاءمة المنتج",fitv:"NAVCOM · GMDSS · Safety Equipment",fitshort:"NAVCOM · GMDSS · Safety",
+dm:"صانع القرار",dmv:"تم تحديد مدير المشتريات",
+signal:"إشارة شراء",signalv:"نشاط حديث لتوسعة الأسطول",
+why:"لماذا الآن",whyv:"نشاط السفن الجديدة يوفّر توقيتًا مناسبًا للتواصل",
+beyond:"أبعد من قوائم العملاء المحتملين العامة",
+ih:"استخبارات مبيعات تركّز على ملاءمة الفرصة الشرائية.",
+id:"اسم الشركة والبريد الإلكتروني لا يكفيان. تربط Merqiva بين معلومات الأسطول وملاءمة المنتج وصنّاع القرار وإشارات السوق الحالية.",
+company:"الشركة",fv:"الأسطول ونوع السفينة",
+receive:"ما الذي تحصل عليه",rh:"أبحاث يستطيع فريق المبيعات استخدامها مباشرة.",
+f1h:"البحث عن الشركات المستهدفة",
+f1p:"مشغّلو السفن ومديرو الأساطيل وشركات الأوفشور والمشترون البحريون ذوو الصلة في دول الخليج.",
+f2h:"استخبارات الأسطول",
+f2p:"تقييم حجم الأسطول وأنواع السفن ونمط التشغيل مقارنةً بما تبيعه شركتك.",
+f3h:"مطابقة المنتج مع المشتري",
+f3p:"يتم تقييم كل حساب وفق مدى ملاءمته لمعداتك أو أنظمتك أو خدماتك البحرية.",
+f4h:"التحقق من صانع القرار",
+f4p:"البحث عن مسؤولي المشتريات والشراء والمسؤولين الفنيين ومسؤولي الأسطول، مع التحقق من جهة عملهم الحالية.",
+f5h:"إشارات الشراء",
+f5p:"توسعة الأسطول، وتسليم سفن جديدة، والعقود، وأعمال الحوض الجاف، والتحديث، والتوظيف، وغيرها من الأنشطة ذات الصلة.",
+f6h:"زاوية المبيعات والأولوية",
+f6p:"لماذا يهم هذا الحساب الآن، وما زاوية التواصل المقترحة، وما مستوى الأولوية المناسب.",
+sk:"نموذج فرصة",
+sh:"ليس فقط مَن تتواصل معه، بل لماذا يستحق التواصل معه الآن.",
+st:"مثال: مشغّل سفن أوفشور",
+sd:"حساب ذو ملاءمة عالية تم تحديده من خلال ملف الأسطول وملاءمة المنتج والبحث في جهات المشتريات ونشاط التوسع الحديث.",
+rs:"اطلب نموذجك المجاني",
+market:"السوق",marketv:"القطاع البحري / الأوفشور في الخليج",
+signalshort:"الإشارة",signalshortv:"نشاط توسعة الأسطول",prio:"الأولوية",priov:"عالية",
+how:"كيف نعمل",howh:"من منتجاتك إلى المشترين المناسبين.",
+step1:"الخطوة 01",step2:"الخطوة 02",step3:"الخطوة 03",step4:"الخطوة 04",
+s1h:"أخبرنا بما تبيعه",s1p:"منتجات أو أنظمة أو معدات أو خدمات بحرية.",
+s2h:"نبحث في أسواق الخليج",s2p:"الشركات والأساطيل وصنّاع القرار والإشارات الحالية.",
+s3h:"استلم فرصًا مرتبة حسب الأولوية",s3p:"استخبارات منظمة مدعومة بالمصادر وأسباب التقييم.",
+s4h:"يبدأ فريقك التواصل المستهدف",s4p:"تواصل مع الحسابات الأكثر ملاءمة وفي توقيت أفضل.",
+offer:"استخبارات الفرص البحرية",price:"299 دولارًا",month:"شهريًا",
+offerp:"خدمة بحث شهرية مركزة لموردي القطاع البحري الذين يستهدفون مشغلي السفن والمشترين في دول الخليج.",
+p1:"30 فرصة جديدة مدروسة شهريًا",p2:"تسليم أسبوعي",p3:"البحث عن صنّاع القرار",
+p4:"التحقق من جهة العمل الحالية",p5:"مطابقة الأسطول والمنتج",p6:"متابعة إشارات الشراء",
+p7:"تحليل «لماذا الآن»",p8:"زاوية مبيعات مقترحة",p9:"روابط المصادر",p10:"إزالة التكرار",
+p11:"ترتيب الفرص حسب الأولوية",p12:"بدون عقد طويل الأجل",
+start:"ابدأ بـ 10 فرص مجانية",
+about:"عن Merqiva",
+abouth:"استخبارات مبيعات مستقلة بين الشركات (B2B) للأسواق المعقدة.",
+aboutp:"Merqiva خدمة مستقلة لاستخبارات مبيعات الشركات، وتركّز في البداية على القطاع البحري في دول الخليج. نجمع بين البحث في المصادر العامة والملاءمة التجارية والتأهيل المنظم لمساعدة فرق المبيعات على التركيز على الحسابات التي تستحق المتابعة.",
+a1h:"قائم على البحث",a1p:"يتم تقييم الفرص قبل وصولها إلى فريق المبيعات.",
+a2h:"مدعوم بالمصادر",a2p:"المعلومات الرئيسية وإشارات الشراء مدعومة بمصادر عامة.",
+a3h:"التركيز على الملاءمة",a3p:"لا نعتمد على قوائم عامة أو جماعية للعملاء المحتملين.",
+contact:"اتصل بنا",
+contacth:"أخبرنا بما تبيعه والأسواق التي تريد التوسع فيها.",
+contactp:"شارك معنا بعض المعلومات عن شركتك ومنتجاتك والسوق الخليجي المستهدف. سنستخدم هذه المعلومات لفهم ما إذا كانت Merqiva مناسبة لدعم فريق مبيعاتك.",
+email:"البريد الإلكتروني",focus:"التركيز الحالي",focusv:"استخبارات المبيعات البحرية في دول الخليج",
+coverage:"التغطية",coveragev:"الإمارات · السعودية · عُمان · قطر · الكويت · البحرين",
+name:"الاسم الكامل *",companyname:"اسم الشركة *",workemail:"البريد الإلكتروني للعمل *",country:"الدولة",
+sell:"ما الذي تبيعه شركتك؟ *",target:"السوق الخليجي المستهدف",select:"اختر سوقًا",
+uae:"الإمارات",saudi:"السعودية",oman:"عُمان",qatar:"قطر",kuwait:"الكويت",bahrain:"البحرين",
+multiple:"عدة أسواق خليجية",message:"الرسالة",send:"إرسال الاستفسار",
+formnote:"سيتم تجهيز رسالة بريد إلكتروني تحتوي على تفاصيل استفسارك لإرسالها.",
+rights:"جميع الحقوق محفوظة.",tag:"استخبارات المبيعات البحرية في دول الخليج"
+}
 };
 function applyLang(lang){
-document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+document.documentElement.lang=lang;
+document.documentElement.dir=lang==="ar"?"rtl":"ltr";
 document.querySelectorAll("[data-t]").forEach(el=>{const k=el.dataset.t;if(T[lang][k])el.textContent=T[lang][k]});
 document.querySelectorAll(".lang").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));
+
+if(lang==="ar"){
+document.title="Merqiva | استخبارات المبيعات البحرية في دول الخليج";
+document.querySelector('meta[name="description"]').setAttribute("content","تساعد Merqiva موردي القطاع البحري على تحديد المشترين المناسبين في دول الخليج من خلال أبحاث الأساطيل وصنّاع القرار وإشارات الشراء.");
+}else{
+document.title="Merqiva | GCC Maritime Sales Intelligence";
+document.querySelector('meta[name="description"]').setAttribute("content","Merqiva researches GCC maritime buyers, fleets, decision-makers and buying signals to identify sales opportunities worth pursuing.");
+}
+
 try{localStorage.setItem("merqiva-language",lang)}catch(e){}
 }
 document.querySelectorAll(".lang").forEach(b=>b.onclick=()=>applyLang(b.dataset.lang));
@@ -156,10 +303,10 @@ const subject=ar?`استفسار Merqiva — ${d.get("company")}`:`Merqiva Inqui
 const body=ar?
 `الاسم: ${d.get("name")}
 الشركة: ${d.get("company")}
-بريد العمل: ${d.get("email")}
+البريد الإلكتروني للعمل: ${d.get("email")}
 الدولة: ${d.get("country")||"-"}
 ما الذي تبيعه الشركة: ${d.get("offering")}
-السوق المستهدف: ${d.get("market")||"-"}
+السوق الخليجي المستهدف: ${d.get("market")||"-"}
 الرسالة:
 ${d.get("message")||"-"}`:
 `Name: ${d.get("name")}
