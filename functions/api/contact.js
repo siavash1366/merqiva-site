@@ -5,7 +5,7 @@ export async function onRequestPost(context) {
 
   if (!token) {
     return new Response(
-      JSON.stringify({ success: false, message: "Turnstile verification missing" }),
+      JSON.stringify({ success: false, message: "Turnstile verification missing" })
       {
         status: 400,
         headers: { "Content-Type": "application/json" }
@@ -33,7 +33,7 @@ export async function onRequestPost(context) {
 
   if (!result.success) {
     return new Response(
-      JSON.stringify({ success: false, message: "Verification failed" }),
+     JSON.stringify({ ok: false, error: "Verification failed" })
       {
         status: 403,
         headers: { "Content-Type": "application/json" }
@@ -42,10 +42,10 @@ export async function onRequestPost(context) {
   }
 
   return new Response(
-    JSON.stringify({
-      success: true,
-      message: "Message accepted"
-    }),
+  JSON.stringify({
+    ok: true,
+    message: "Message accepted"
+  }),
     {
       headers: { "Content-Type": "application/json" }
     }
