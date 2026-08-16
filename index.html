@@ -33,10 +33,20 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 @media(max-width:1020px){.links{display:none}.desktop-cta{display:none}.mobile-cta{display:inline-flex}.hero-grid,.sample,.about,.contact-grid{grid-template-columns:1fr}.flow{grid-template-columns:repeat(3,1fr)}.features{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){section{padding:72px 0}.hero{padding-top:72px}.flow,.features,.steps,.pkg,.form-grid{grid-template-columns:1fr}.group.full{grid-column:auto}.sample-row{grid-template-columns:1fr}.sample-row div:first-child{padding-bottom:4px}.sample-row div:last-child{padding-top:5px}.row{grid-template-columns:1fr;gap:4px}.pricing,.contact-box{padding:26px 20px}.price strong{font-size:3rem}}
 @media(max-width:470px){.brand{font-size:1.08rem}.mobile-cta{display:none}.nav{min-height:64px}h1{font-size:2.55rem}}
+
+.hp-field{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+.turnstile-wrap{margin-top:16px;min-height:65px}
+.form-status{display:none;margin-top:14px;padding:12px 14px;border-radius:9px;font-size:.88rem}
+.form-status.show{display:block}
+.form-status.success{color:#bff8ef;background:rgba(72,214,199,.10);border:1px solid rgba(72,214,199,.25)}
+.form-status.error{color:#ffd0d0;background:rgba(255,100,100,.08);border:1px solid rgba(255,100,100,.2)}
+.btn[disabled]{opacity:.65;cursor:not-allowed;transform:none}
+
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
-<!-- Merqiva Website v1.3 — Arabic copy polish and pricing/contact refinements -->
+<!-- Merqiva Website v1.4 — secure direct contact form with Turnstile -->
 <nav><div class="container nav">
 <a class="brand" href="#top">MER<span>Q</span>IVA</a>
 <div class="links">
@@ -126,7 +136,8 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 <div class="contact-detail"><small data-t="focus">Current focus</small><strong data-t="focusv">GCC Maritime Sales Intelligence</strong></div>
 <div class="contact-detail"><small data-t="coverage">Coverage</small><strong data-t="coveragev">UAE · Saudi Arabia · Oman · Qatar · Kuwait · Bahrain</strong></div>
 </div></div>
-<form class="contact-box" id="contactForm">
+<form class="contact-box" id="contactForm" action="/api/contact" method="post" novalidate>
+<input class="hp-field" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
 <div class="form-grid">
 <div class="group"><label data-t="name">Full Name *</label><input class="control" name="name" required></div>
 <div class="group"><label data-t="companyname">Company Name *</label><input class="control" name="company" required></div>
@@ -136,7 +147,18 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 <div class="group full"><label data-t="target">Target GCC Market</label><select class="control" name="market"><option value="" data-t="select">Select a market</option><option value="UAE" data-t="uae">UAE</option><option value="Saudi Arabia" data-t="saudi">Saudi Arabia</option><option value="Oman" data-t="oman">Oman</option><option value="Qatar" data-t="qatar">Qatar</option><option value="Kuwait" data-t="kuwait">Kuwait</option><option value="Bahrain" data-t="bahrain">Bahrain</option><option value="Multiple GCC markets" data-t="multiple">Multiple GCC markets</option></select></div>
 <div class="group full"><label data-t="message">Message</label><textarea class="control" name="message"></textarea></div>
 </div>
-<div class="form-actions"><button class="btn primary" type="submit" data-t="send">Send Inquiry</button><span class="form-note" data-t="formnote">This opens your email app with the inquiry pre-filled.</span></div>
+<div class="turnstile-wrap">
+<div class="cf-turnstile"
+     data-sitekey="REPLACE_WITH_TURNSTILE_SITE_KEY"
+     data-theme="dark"
+     data-size="flexible"
+     data-action="contact"></div>
+</div>
+<div class="form-actions">
+<button class="btn primary" id="submitBtn" type="submit" data-t="send">Send Inquiry</button>
+<span class="form-note" data-t="formnote">Your inquiry will be sent securely to Merqiva.</span>
+</div>
+<div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
 </form>
 </div></section>
 </main>
@@ -204,7 +226,7 @@ name:"Full Name *",companyname:"Company Name *",workemail:"Work Email *",country
 sell:"What do you sell? *",target:"Target GCC Market",select:"Select a market",
 uae:"UAE",saudi:"Saudi Arabia",oman:"Oman",qatar:"Qatar",kuwait:"Kuwait",bahrain:"Bahrain",
 multiple:"Multiple GCC markets",message:"Message",send:"Send Inquiry",
-formnote:"We’ll prepare an email with your inquiry details for you to send.",
+formnote:"Your inquiry will be sent securely to Merqiva.",
 rights:"All rights reserved.",tag:"GCC Maritime Sales Intelligence"
 },
 ar:{
@@ -275,7 +297,7 @@ name:"الاسم الكامل *",companyname:"اسم الشركة *",workemail:"
 sell:"ما الذي تبيعه شركتك؟ *",target:"السوق الخليجي المستهدف",select:"اختر سوقًا",
 uae:"الإمارات",saudi:"السعودية",oman:"عُمان",qatar:"قطر",kuwait:"الكويت",bahrain:"البحرين",
 multiple:"عدة أسواق خليجية",message:"الرسالة",send:"إرسال الاستفسار",
-formnote:"بعد إرسال الرسالة، سنراجع استفسارك ونتواصل معك عبر البريد الإلكتروني.",
+formnote:"سيتم إرسال استفسارك مباشرةً وبشكل آمن إلى Merqiva.",
 rights:"جميع الحقوق محفوظة.",tag:"استخبارات المبيعات البحرية في دول الخليج"
 }
 };
@@ -298,28 +320,60 @@ try{localStorage.setItem("merqiva-language",lang)}catch(e){}
 document.querySelectorAll(".lang").forEach(b=>b.onclick=()=>applyLang(b.dataset.lang));
 let lang="en";try{const s=localStorage.getItem("merqiva-language");if(s==="ar"||s==="en")lang=s}catch(e){}applyLang(lang);
 
-document.getElementById("contactForm").addEventListener("submit",e=>{
-e.preventDefault();const f=e.currentTarget;if(!f.checkValidity()){f.reportValidity();return}
-const d=new FormData(f),ar=document.documentElement.lang==="ar";
-const subject=ar?`استفسار Merqiva — ${d.get("company")}`:`Merqiva Inquiry — ${d.get("company")}`;
-const body=ar?
-`الاسم: ${d.get("name")}
-الشركة: ${d.get("company")}
-البريد الإلكتروني للعمل: ${d.get("email")}
-الدولة: ${d.get("country")||"-"}
-ما الذي تبيعه الشركة: ${d.get("offering")}
-السوق الخليجي المستهدف: ${d.get("market")||"-"}
-الرسالة:
-${d.get("message")||"-"}`:
-`Name: ${d.get("name")}
-Company: ${d.get("company")}
-Work Email: ${d.get("email")}
-Country: ${d.get("country")||"-"}
-What they sell: ${d.get("offering")}
-Target GCC Market: ${d.get("market")||"-"}
-Message:
-${d.get("message")||"-"}`;
-location.href=`mailto:hello@merqivaintel.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+document.getElementById("contactForm").addEventListener("submit",async e=>{
+e.preventDefault();
+
+const f=e.currentTarget;
+const btn=document.getElementById("submitBtn");
+const status=document.getElementById("formStatus");
+const lang=document.documentElement.lang==="ar"?"ar":"en";
+
+status.className="form-status";
+status.textContent="";
+
+if(!f.checkValidity()){
+f.reportValidity();
+return;
+}
+
+const token=f.querySelector('input[name="cf-turnstile-response"]')?.value;
+if(!token){
+status.textContent=T[lang].turnstilemsg;
+status.className="form-status error show";
+return;
+}
+
+btn.disabled=true;
+btn.textContent=T[lang].sending;
+
+try{
+const response=await fetch("/api/contact",{
+method:"POST",
+body:new FormData(f),
+headers:{"Accept":"application/json"}
+});
+
+let result={};
+try{result=await response.json()}catch(_){}
+
+if(!response.ok || !result.ok){
+throw new Error(result.error || "submit_failed");
+}
+
+status.textContent=T[lang].successmsg;
+status.className="form-status success show";
+f.reset();
+if(window.turnstile){turnstile.reset();}
+
+}catch(err){
+console.error("Contact form error:",err);
+status.textContent=T[lang].errormsg;
+status.className="form-status error show";
+if(window.turnstile){turnstile.reset();}
+}finally{
+btn.disabled=false;
+btn.textContent=T[lang].send;
+}
 });
 </script>
 </body>
