@@ -13,6 +13,8 @@ html[dir=rtl] h1{font-size:clamp(2.45rem,4.5vw,4.65rem);max-width:780px}
 html[dir=rtl] .ltr-text{direction:ltr;unicode-bidi:isolate;text-align:left}
 html[dir=rtl] .brand{direction:ltr;unicode-bidi:isolate}
 html[dir=rtl] .price strong{direction:rtl;unicode-bidi:isolate}
+html[dir=rtl] .price{align-items:flex-end;gap:10px}
+html[dir=rtl] .price span{font-size:.95rem;margin-bottom:.38rem}
 html[dir=rtl] .contact-detail a{direction:ltr;unicode-bidi:isolate;display:inline-block}a{color:inherit;text-decoration:none}.container{width:min(92%,var(--max));margin:auto}
 nav{position:sticky;top:0;z-index:20;background:rgba(7,17,31,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.nav{min-height:72px;display:flex;align-items:center;gap:22px}.brand{font-weight:800;letter-spacing:.08em;font-size:1.35rem}.brand span{color:var(--accent)}.links{display:flex;gap:22px;margin-inline-start:auto;color:var(--muted);font-size:.92rem}.links a:hover{color:#fff}.nav-actions{display:flex;align-items:center;gap:10px}.langs{display:flex;border:1px solid var(--line);border-radius:9px;padding:4px;background:rgba(255,255,255,.03)}.lang{border:0;background:transparent;color:var(--muted);padding:6px 9px;border-radius:6px;font-weight:700;cursor:pointer}.lang.active{background:var(--soft);color:var(--accent)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:10px;font-weight:750;border:1px solid transparent;cursor:pointer}.primary{background:var(--accent);color:#04110f}.secondary{border-color:var(--line);background:rgba(255,255,255,.03)}.mobile-cta{display:none}
@@ -34,7 +36,7 @@ footer{padding:28px 0 36px;border-top:1px solid var(--line);color:#7e8fa5;font-s
 </style>
 </head>
 <body>
-<!-- Merqiva Website v1.2 — Arabic copy, RTL and localization QA -->
+<!-- Merqiva Website v1.3 — Arabic copy polish and pricing/contact refinements -->
 <nav><div class="container nav">
 <a class="brand" href="#top">MER<span>Q</span>IVA</a>
 <div class="links">
@@ -217,12 +219,12 @@ note:"موجّه لموردي المعدات البحرية ومقدمي الخ�
 olabel:"استخبارات الفرص البيعية",priority:"أولوية عالية",ocompany:"مشغّل سفن دعم بحري في الخليج",
 fleet:"الأسطول",fleetv:"أكثر من 45 سفينة",
 vessels:"أنواع السفن",vesselsv:"AHTS · قوارب عمل · سفن دعم بحري",
-fit:"ملاءمة المنتج",fitv:"NAVCOM · GMDSS · Safety Equipment",fitshort:"NAVCOM · GMDSS · Safety",
+fit:"ملاءمة المنتج",fitv:"NAVCOM · GMDSS · معدات السلامة",fitshort:"NAVCOM · GMDSS · معدات السلامة",
 dm:"صانع القرار",dmv:"تم تحديد مدير المشتريات",
 signal:"إشارة شراء",signalv:"نشاط حديث لتوسعة الأسطول",
 why:"لماذا الآن",whyv:"نشاط السفن الجديدة يوفّر توقيتًا مناسبًا للتواصل",
 beyond:"أبعد من قوائم العملاء المحتملين العامة",
-ih:"استخبارات مبيعات تركّز على ملاءمة الفرصة الشرائية.",
+ih:"استخبارات مبيعات تركّز على الفرص ذات الصلة والتوقيت المناسب.",
 id:"اسم الشركة والبريد الإلكتروني لا يكفيان. تربط Merqiva بين معلومات الأسطول وملاءمة المنتج وصنّاع القرار وإشارات السوق الحالية.",
 company:"الشركة",fv:"الأسطول ونوع السفينة",
 receive:"ما الذي تحصل عليه",rh:"أبحاث يستطيع فريق المبيعات استخدامها مباشرة.",
@@ -273,7 +275,7 @@ name:"الاسم الكامل *",companyname:"اسم الشركة *",workemail:"
 sell:"ما الذي تبيعه شركتك؟ *",target:"السوق الخليجي المستهدف",select:"اختر سوقًا",
 uae:"الإمارات",saudi:"السعودية",oman:"عُمان",qatar:"قطر",kuwait:"الكويت",bahrain:"البحرين",
 multiple:"عدة أسواق خليجية",message:"الرسالة",send:"إرسال الاستفسار",
-formnote:"سيتم تجهيز رسالة بريد إلكتروني تحتوي على تفاصيل استفسارك لإرسالها.",
+formnote:"بعد إرسال الرسالة، سنراجع استفسارك ونتواصل معك عبر البريد الإلكتروني.",
 rights:"جميع الحقوق محفوظة.",tag:"استخبارات المبيعات البحرية في دول الخليج"
 }
 };
