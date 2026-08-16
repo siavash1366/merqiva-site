@@ -6,17 +6,35 @@ export async function onRequestPost(context) {
   if (!token) {
     return new Response(
       JSON.stringify({
-        ok: false,
+        success: false,
         error: "Turnstile verification missing"
       }),
       {
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          "Content-Type": "application/json"
+        }
       }
     );
   }
 
   const secret = context.env.TURNSTILE_SECRET_KEY;
+
+  if (!secret) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Server configuration error"
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+  }
+
 
   const verify = await fetch(
     "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -32,28 +50,36 @@ export async function onRequestPost(context) {
     }
   );
 
+
   const result = await verify.json();
+
 
   if (!result.success) {
     return new Response(
       JSON.stringify({
-        ok: false,
+        success: false,
         error: "Verification failed"
       }),
       {
         status: 403,
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          "Content-Type": "application/json"
+        }
       }
     );
   }
 
+
   return new Response(
     JSON.stringify({
-      ok: true,
+      success: true,
       message: "Message accepted"
     }),
     {
-      headers: { "Content-Type": "application/json" }
+      status: 200,
+      headers: {
+        "Content-Type": "application/json"
+      }
     }
   );
 }
