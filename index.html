@@ -371,11 +371,14 @@ try{result=await response.json()}catch(_){}
 if(!response.ok || !result.success){
   throw new Error(result.error || "submit_failed");
 }
-
 status.textContent=T[lang].successmsg;
 status.className="form-status success show";
 f.reset();
-if(window.turnstile){turnstile.reset();}
+
+if(window.turnstile){
+  turnstile.reset();
+}
+
 }catch(err){
 console.error("Contact form error:",err);
 
@@ -390,9 +393,15 @@ if(window.turnstile){
   turnstile.reset();
 }
 
+}finally{
+
+  btn.disabled=false;
+  btn.textContent=T[lang].send;
+
 }
 
 });
 </script>
 </body>
 </html>
+
