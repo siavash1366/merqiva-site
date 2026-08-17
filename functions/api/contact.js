@@ -1,4 +1,34 @@
 export async function onRequestPost(context) {
+    // Rate Limit
+  const ip =
+    context.request.headers.get("CF-Connecting-IP") || "unknown";
+
+  const key = `contact:${ip}`;
+
+  const limit = await context.env.CONTACT_LIMIT.get(key);
+
+  if (limit && Number(limit) >= 5) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Too many requests. Please try again later."
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    );
+  }
+
+  await context.env.CONTACT_LIMIT.put(
+    key,
+    String((Number(limit) || 0) + 1),
+    {
+      expirationTtl: 600
+    }
+  );
   const formData = await context.request.formData();
 
   const token = formData.get("cf-turnstile-response");
