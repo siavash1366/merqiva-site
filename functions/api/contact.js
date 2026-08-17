@@ -11,7 +11,7 @@ export async function onRequestPost(context) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Too many requests. Please try again later."
+          error: "Too many requests. Please wait 10 minutes before submitting another inquiry."
       }),
       {
         status: 429,
