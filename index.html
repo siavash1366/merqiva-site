@@ -367,14 +367,18 @@ if(window.turnstile){turnstile.reset();}
 
 }catch(err){
 console.error("Contact form error:",err);
-status.textContent=T[lang].errormsg;
+
+status.textContent =
+  err.message && err.message !== "submit_failed"
+    ? err.message
+    : T[lang].errormsg;
+
 status.className="form-status error show";
-if(window.turnstile){turnstile.reset();}
-}finally{
-btn.disabled=false;
-btn.textContent=T[lang].send;
+
+if(window.turnstile){
+  turnstile.reset();
 }
-});
+}
 </script>
 </body>
 </html>
