@@ -381,16 +381,15 @@ if(window.turnstile){
 
 }catch(err){
 console.error("Contact form error:",err);
-console.log("ERROR MESSAGE:", err.message);
      console.log("CURRENT LANG:", lang);
      
 if(err.message.toLowerCase().includes("too many requests")){
-     status.textContent =
-    lang === "ar"
-      ? "طلبات كثيرة جدًا. يرجى الانتظار 10 دقائق قبل إرسال طلب جديد."
-      : "Too many requests. Please wait 10 minutes before submitting another inquiry.";
-}
-else{
+  const isArabic = document.documentElement.lang === "ar";
+
+  status.textContent = isArabic
+    ? "طلبات كثيرة جدًا. يرجى الانتظار 10 دقائق قبل إرسال طلب جديد."
+    : "Too many requests. Please wait 10 minutes before submitting another inquiry.";
+}else{
   status.textContent =
     err.message && err.message !== "submit_failed"
       ? err.message
