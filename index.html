@@ -382,6 +382,8 @@ if(window.turnstile){
 }catch(err){
 console.error("Contact form error:",err);
 console.log("ERROR MESSAGE:", err.message);
+     console.log("CURRENT LANG:", lang);
+     
 if(err.message.toLowerCase().includes("too many requests")){
      status.textContent =
     lang === "ar"
