@@ -356,8 +356,8 @@ headers:{"Accept":"application/json"}
 let result={};
 try{result=await response.json()}catch(_){}
 
-if(!response.ok || !result.ok){
-throw new Error(result.error || "submit_failed");
+if(!response.ok || !result.success){
+  throw new Error(result.error || "submit_failed");
 }
 
 status.textContent=T[lang].successmsg;
