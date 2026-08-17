@@ -381,9 +381,9 @@ if(window.turnstile){
 
 }catch(err){
 console.error("Contact form error:",err);
-
-if(err.message.includes("Too many requests")){
-  status.textContent =
+console.log("ERROR MESSAGE:", err.message);
+if(err.message.toLowerCase().includes("too many requests")){
+     status.textContent =
     lang === "ar"
       ? "طلبات كثيرة جدًا. يرجى الانتظار 10 دقائق قبل إرسال طلب جديد."
       : "Too many requests. Please wait 10 minutes before submitting another inquiry.";
