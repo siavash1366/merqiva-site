@@ -364,7 +364,6 @@ status.textContent=T[lang].successmsg;
 status.className="form-status success show";
 f.reset();
 if(window.turnstile){turnstile.reset();}
-
 }catch(err){
 console.error("Contact form error:",err);
 
@@ -378,7 +377,10 @@ status.className="form-status error show";
 if(window.turnstile){
   turnstile.reset();
 }
+
 }
+
+});
 </script>
 </body>
 </html>
