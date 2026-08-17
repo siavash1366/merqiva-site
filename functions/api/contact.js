@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
     );
   }
 
-
+  
   const secret = context.env.TURNSTILE_SECRET_KEY;
 
   if (!secret) {
