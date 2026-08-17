@@ -16,14 +16,14 @@ export async function onRequestPost(context) {
     );
   }
 
-  
+
   const secret = context.env.TURNSTILE_SECRET_KEY;
 
   if (!secret) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Missing Turnstile secret"
+        error: "Server configuration error"
       }),
       {
         status: 500,
@@ -67,16 +67,72 @@ export async function onRequestPost(context) {
 
 
   // Form data
-  const name = formData.get("name");
-  const email = formData.get("email");
-  const company = formData.get("company");
-  const country = formData.get("country");
-  const offering = formData.get("offering");
-  const market = formData.get("market");
-  const message = formData.get("message");
+  const name = formData.get("name") || "";
+  const email = formData.get("email") || "";
+  const company = formData.get("company") || "";
+  const country = formData.get("country") || "";
+  const offering = formData.get("offering") || "";
+  const market = formData.get("market") || "";
+  const message = formData.get("message") || "";
 
 
-  // Send email with Resend
+  // Validation
+  function validateField(value, max) {
+    return (
+      typeof value === "string" &&
+      value.trim().length > 0 &&
+      value.length <= max
+    );
+  }
+
+
+  if (
+    !validateField(name, 100) ||
+    !validateField(company, 150) ||
+    !validateField(email, 200) ||
+    !validateField(offering, 200) ||
+    !validateField(message, 2000)
+  ) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Invalid input"
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
+
+
+  // Escape HTML for email
+  function escapeHTML(value = "") {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+
+  // Check Resend key
+  if (!context.env.RESEND_API_KEY) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Email service unavailable"
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
+
+
+  // Send email
   const emailResponse = await fetch(
     "https://api.resend.com/emails",
     {
@@ -91,20 +147,20 @@ export async function onRequestPost(context) {
           "hello@merqivaintel.com"
         ],
         reply_to: email,
-        subject: `New inquiry from ${name}`,
+        subject: `New inquiry from ${escapeHTML(name)}`,
         html: `
           <h2>New Contact Request</h2>
 
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Company:</strong> ${company}</p>
-          <p><strong>Country:</strong> ${country}</p>
-          <p><strong>Offering:</strong> ${offering}</p>
-          <p><strong>Market:</strong> ${market}</p>
+          <p><strong>Name:</strong> ${escapeHTML(name)}</p>
+          <p><strong>Email:</strong> ${escapeHTML(email)}</p>
+          <p><strong>Company:</strong> ${escapeHTML(company)}</p>
+          <p><strong>Country:</strong> ${escapeHTML(country)}</p>
+          <p><strong>Offering:</strong> ${escapeHTML(offering)}</p>
+          <p><strong>Market:</strong> ${escapeHTML(market)}</p>
 
           <hr>
 
-          <p>${message}</p>
+          <p>${escapeHTML(message)}</p>
         `
       })
     }
@@ -112,12 +168,16 @@ export async function onRequestPost(context) {
 
 
   if (!emailResponse.ok) {
-    const error = await emailResponse.text();
+
+    console.error(
+      "Resend error:",
+      await emailResponse.text()
+    );
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: error
+        error: "Email delivery failed"
       }),
       {
         status: 500,
