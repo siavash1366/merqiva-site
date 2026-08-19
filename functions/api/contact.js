@@ -632,8 +632,8 @@ export async function onRequestPost(context) {
             "Merqiva Website <noreply@merqivaintel.com>",
 
           to: [
-            "hello@merqivaintel.com"
-          ],
+  "sales@merqivaintel.com"
+],
 
           reply_to:
             email,
