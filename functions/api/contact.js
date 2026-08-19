@@ -710,40 +710,42 @@ try {
 
 }
 
-   */
-  if (!emailResponse.ok) {
 
-    let resendError = "";
+/*
+ * 15. Handle Resend errors
+ */
+if (!emailResponse.ok) {
 
-    try {
-      resendError =
-        await emailResponse.text();
-    } catch (_) {}
+  let resendError = "";
 
-    console.error(
-      "Resend error:",
-      emailResponse.status,
-      resendError.slice(0, 500)
-    );
+  try {
+    resendError =
+      await emailResponse.text();
+  } catch (_) {}
 
-    return jsonResponse(
-      {
-        success: false,
-        error: "Email delivery failed"
-      },
-      502
-    );
-  }
+  console.error(
+    "Resend error:",
+    emailResponse.status,
+    resendError.slice(0, 500)
+  );
 
-
-  /*
-   * 16. Success
-   */
   return jsonResponse(
     {
-      success: true,
-      message: "Message sent successfully"
+      success: false,
+      error: "Email delivery failed"
     },
-    200
+    502
   );
 }
+
+
+/*
+ * 16. Success
+ */
+return jsonResponse(
+  {
+    success: true,
+    message: "Message sent successfully"
+  },
+  200
+);
