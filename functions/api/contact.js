@@ -630,8 +630,7 @@ export async function onRequestPost(context) {
 
         body: JSON.stringify({
 
-          from:
-"Merqiva Website <hello@merqivaintel.com>",
+from: "Merqiva Website <onboarding@resend.dev>",
           to: [
   "sales@merqivaintel.com"
 ],
