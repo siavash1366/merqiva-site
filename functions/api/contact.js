@@ -628,18 +628,7 @@ export async function onRequestPost(context) {
             "application/json"
         },
 
-        body: JSON.stringify({
-
-from: "Merqiva Website <onboarding@resend.dev>",
-          to: [
-  "sales@merqivaintel.com"
-],
-
-          reply_to:
-            email,
-
-          subject:
-            `New inquiry from ${safeSubjectName}`,
+        body
 
           html: `
             <h2>New Contact Request</h2>
