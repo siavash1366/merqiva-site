@@ -612,92 +612,104 @@ export async function onRequestPost(context) {
     12000
   );
 
+let emailResponse;
 
-  let emailResponse;
+try {
 
-  try {
+  emailResponse = await fetch(
+    "https://api.resend.com/emails",
+    {
+      method: "POST",
 
-    emailResponse = await fetch(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
-        headers: {
-          "Authorization":
-            `Bearer ${env.RESEND_API_KEY}`,
-          "Content-Type":
-            "application/json"
-        },
-
-        body
-
-          html: `
-            <h2>New Contact Request</h2>
-
-            <p>
-              <strong>Name:</strong>
-              ${safeName}
-            </p>
-
-            <p>
-              <strong>Email:</strong>
-              ${safeEmail}
-            </p>
-
-            <p>
-              <strong>Company:</strong>
-              ${safeCompany}
-            </p>
-
-            <p>
-              <strong>Country:</strong>
-              ${safeCountry}
-            </p>
-
-            <p>
-              <strong>Offering:</strong>
-              ${safeOffering}
-            </p>
-
-            <p>
-              <strong>Market:</strong>
-              ${safeMarket}
-            </p>
-
-            <hr>
-
-            <p>${safeMessage}</p>
-          `
-        }),
-
-        signal:
-          resendController.signal
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Resend request error:",
-      error
-    );
-
-    return jsonResponse(
-      {
-        success: false,
-        error: "Email service unavailable"
+      headers: {
+        "Authorization":
+          `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type":
+          "application/json"
       },
-      503
-    );
 
-  } finally {
+      body: JSON.stringify({
 
-    clearTimeout(resendTimeout);
+        from:
+          "Merqiva Website <onboarding@resend.dev>",
 
-  }
+        to: [
+          "hello@merqivaintel.com"
+        ],
 
+        reply_to:
+          email,
 
-  /*
-   * 15. Handle Resend errors
+        subject:
+          `New Contact Request from ${safeSubjectName}`,
+
+        html: `
+          <h2>New Contact Request</h2>
+
+          <p>
+            <strong>Name:</strong>
+            ${safeName}
+          </p>
+
+          <p>
+            <strong>Email:</strong>
+            ${safeEmail}
+          </p>
+
+          <p>
+            <strong>Company:</strong>
+            ${safeCompany}
+          </p>
+
+          <p>
+            <strong>Country:</strong>
+            ${safeCountry}
+          </p>
+
+          <p>
+            <strong>Offering:</strong>
+            ${safeOffering}
+          </p>
+
+          <p>
+            <strong>Market:</strong>
+            ${safeMarket}
+          </p>
+
+          <hr>
+
+          <p>
+            ${safeMessage}
+          </p>
+        `
+      }),
+
+      signal:
+        resendController.signal
+    }
+  );
+
+} catch (error) {
+
+  console.error(
+    "Resend request error:",
+    error
+  );
+
+  return jsonResponse(
+    {
+      success: false,
+      error: "Email service unavailable"
+    },
+    503
+  );
+
+} finally {
+
+  clearTimeout(resendTimeout);
+
+}
+
    */
   if (!emailResponse.ok) {
 
