@@ -729,14 +729,13 @@ if (!emailResponse.ok) {
     resendError.slice(0, 500)
   );
 
-  return jsonResponse(
-    {
-      success: false,
-      error: "Email delivery failed"
-    },
-    502
-  );
-}
+ return jsonResponse(
+  {
+    success: false,
+    error: resendError
+  },
+  502
+);
 
 
 /*
