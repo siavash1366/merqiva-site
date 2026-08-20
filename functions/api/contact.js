@@ -725,15 +725,24 @@ try {
               ">
 
                 <h2 style="margin:0;">
-                  New Website Lead
-                </h2>
+  New Website Lead
+</h2>
 
-                <p style="
-                  margin:8px 0 0;
-                  color:#cbd5e1;
-                ">
-                  New contact request received from Merqiva website
-                </p>
+<p style="
+  margin:8px 0 0;
+  color:#cbd5e1;
+">
+  New contact request received from Merqiva website
+</p>
+
+<p style="
+  margin:12px 0 0;
+  font-size:12px;
+  color:#94a3b8;
+">
+  Lead ID: ${leadId}<br>
+  Submitted: ${submittedAt}
+</p>
 
               </div>
 
