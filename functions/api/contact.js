@@ -656,71 +656,73 @@ export async function onRequestPost(
 
 
   /*
-   * Prepare Lead
-   */
+ * Prepare Lead
+ */
 
 
-  const safeReplyEmail =
-    email.replace(
-      /[^\w@.\-+]/g,
-      ""
-    );
+const safeReplyEmail =
+  email.replace(
+    /[^\w@.\-+]/g,
+    ""
+  );
 
 
-  const safeName =
-    escapeHTML(name);
+const safeName =
+  escapeHTML(name);
 
 
-  const safeEmail =
-    escapeHTML(email);
+const safeEmail =
+  escapeHTML(email);
 
 
-  const safeCompany =
-    escapeHTML(company);
+const safeCompany =
+  escapeHTML(company);
 
 
-  const safeCountry =
-    escapeHTML(country);
+const safeCountry =
+  escapeHTML(country);
 
 
-  const safeOffering =
-    escapeHTML(offering);
+const safeOffering =
+  escapeHTML(offering);
 
 
-  const safeMarket =
-    escapeHTML(market);
+const safeMarket =
+  escapeHTML(market);
 
 
-  const safeMessage =
-    message
-      ? escapeHTML(message)
-          .replace(
-            /\r?\n/g,
-            "<br>"
-          )
-      : "<em>No message provided.</em>";
-
-
-
-  const safeSubjectName =
-    cleanHeaderValue(name);
+const safeMessage =
+  message
+    ? escapeHTML(message)
+        .replace(
+          /\r?\n/g,
+          "<br>"
+        )
+    : "<em>No message provided.</em>";
 
 
 
-  const leadId =
-    Date.now()
-      .toString(36)
-      .toUpperCase();
+const safeSubjectName =
+  cleanHeaderValue(name);
 
 
 
-  const submittedAt =
-    new Date()
-      .toISOString();
-  id="p3rj9k"
-  /*
-   * Send emails with Resend
-   */
+const leadId =
+  Date.now()
+    .toString(36)
+    .toUpperCase();
+
+
+
+const submittedAt =
+  new Date()
+    .toISOString();
+
+
+
+/*
+ * Send emails with Resend
+ */
 
 
   const resendController =
