@@ -771,14 +771,20 @@ try {
 
 
                   <tr>
-                    <td>
-                      <strong>Email</strong>
-                    </td>
-                    <td>
-                      ${safeEmail}
-                    </td>
-                  </tr>
+  <td>
+    <strong>Email</strong>
+  </td>
 
+  <td>
+    <a href="mailto:${safeReplyEmail}"
+       style="
+         color:#2563eb;
+         text-decoration:none;
+       ">
+      ${safeEmail}
+    </a>
+  </td>
+</tr>
 
                   <tr>
                     <td>
