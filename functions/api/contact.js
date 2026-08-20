@@ -618,9 +618,7 @@ export async function onRequestPost(context) {
   /*
    * 13. Prepare safe email content
    */
-  const safeName =
-    escapeHTML(name);
-
+  safeName
   const safeEmail =
     escapeHTML(email);
 
@@ -637,24 +635,20 @@ export async function onRequestPost(context) {
     escapeHTML(market);
 
   const safeMessage =
-    message
-      ? escapeHTML(message)
-          .replace(
-            /\r?\n/g,
-            "<br>"
-          )
-      : "<em>No message provided.</em>";
+  message
+    ? escapeHTML(message)
+        .replace(
+          /\r?\n/g,
+          "<br>"
+        )
+    : "<em>No message provided.</em>";
 
 
-  const safeSubjectName =
-    cleanHeaderValue(name);
+const leadId =
+  crypto.randomUUID();
 
-
-  const safeReplyEmail =
-    email.replace(
-      /[^\w@.\-+]/g,
-      ""
-    );
+const submittedAt =
+  new Date().toISOString();
 /*
  * 14. Send email with Resend
  */
