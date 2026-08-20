@@ -1256,3 +1256,262 @@ This lead was submitted through merqivaintel.com contact form.
     );
 
   }
+
+   * Customer Auto Reply
+   */
+
+
+  try {
+
+
+    const autoReplyResponse =
+      await fetch(
+        "https://api.resend.com/emails",
+        {
+
+          method:
+            "POST",
+
+
+          headers:
+          {
+
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+
+
+          body:
+            JSON.stringify({
+
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
+
+
+
+              to:
+              [
+                safeReplyEmail
+              ],
+
+
+
+              subject:
+                "We received your inquiry - Merqiva",
+
+
+
+              html:
+              `
+
+<div style="
+font-family:Arial,Helvetica,sans-serif;
+max-width:650px;
+margin:auto;
+color:#222;
+line-height:1.6;
+">
+
+
+<div style="
+background:#0b1220;
+padding:24px;
+color:white;
+border-radius:8px 8px 0 0;
+">
+
+<h2 style="margin:0;">
+Thank you for contacting Merqiva
+</h2>
+
+
+<p style="
+color:#cbd5e1;
+margin-top:10px;
+">
+
+Your inquiry has been successfully received.
+
+</p>
+
+</div>
+
+
+
+<div style="
+border:1px solid #e5e7eb;
+border-top:none;
+padding:24px;
+border-radius:0 0 8px 8px;
+">
+
+
+<p>
+Hello ${safeName},
+</p>
+
+
+<p>
+Thank you for reaching out to Merqiva.
+Our team has received your request and will review your requirements.
+</p>
+
+
+
+<div style="
+background:#f8fafc;
+padding:16px;
+border-radius:6px;
+">
+
+<p style="margin:0;">
+
+<strong>
+Reference ID:
+</strong>
+
+${leadId}
+
+</p>
+
+
+<p style="margin:8px 0 0;">
+
+<strong>
+Submitted:
+</strong>
+
+${submittedAt}
+
+</p>
+
+</div>
+
+
+
+<p>
+We will get back to you as soon as possible.
+</p>
+
+
+
+<div style="
+margin-top:30px;
+text-align:center;
+">
+
+<a href="https://merqivaintel.com"
+
+style="
+display:inline-block;
+background:#0b1220;
+color:white;
+padding:12px 24px;
+border-radius:6px;
+text-decoration:none;
+font-weight:bold;
+">
+
+Visit Merqiva
+
+</a>
+
+</div>
+
+
+
+<hr style="
+margin:24px 0;
+border:none;
+border-top:1px solid #e5e7eb;
+">
+
+
+
+<p style="
+font-size:12px;
+color:#64748b;
+">
+
+Merqiva Team<br>
+hello@merqivaintel.com
+
+</p>
+
+
+
+</div>
+
+</div>
+
+`
+
+            })
+
+
+        }
+
+      );
+
+
+
+    if (!autoReplyResponse.ok) {
+
+
+      const autoReplyError =
+        await autoReplyResponse.text();
+
+
+      console.error(
+        "Auto reply failed:",
+        autoReplyResponse.status,
+        autoReplyError.slice(0,300)
+      );
+
+
+    }
+
+
+
+  } catch(error) {
+
+
+    console.error(
+      "Customer auto reply error:",
+      error
+    );
+
+
+  }
+
+
+
+
+  /*
+   * Final success response
+   */
+
+
+  return jsonResponse(
+    {
+
+      success:true,
+
+      message:
+        "Message sent successfully",
+
+      leadId:
+        leadId
+
+    },
+
+    200
+  );
+
+
+}
