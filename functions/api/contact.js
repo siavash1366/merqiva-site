@@ -11,20 +11,34 @@ const ALLOWED_TURNSTILE_HOSTNAMES = new Set([
 
 
 const API_HEADERS = {
-  "Content-Type": "application/json; charset=UTF-8",
-  "Cache-Control": "no-store, max-age=0",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "Referrer-Policy": "no-referrer",
+  "Content-Type":
+    "application/json; charset=UTF-8",
+
+  "Cache-Control":
+    "no-store, max-age=0",
+
+  "X-Content-Type-Options":
+    "nosniff",
+
+  "X-Frame-Options":
+    "DENY",
+
+  "Referrer-Policy":
+    "no-referrer",
+
   "Permissions-Policy":
     "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+
   "Strict-Transport-Security":
     "max-age=31536000; includeSubDomains",
+
   "Content-Security-Policy":
     "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+
   "X-Robots-Tag":
     "noindex, nofollow, nosnippet"
 };
+
 
 
 function jsonResponse(
@@ -37,6 +51,7 @@ function jsonResponse(
     JSON.stringify(data),
     {
       status,
+
       headers: {
         ...API_HEADERS,
         ...extraHeaders
@@ -47,13 +62,17 @@ function jsonResponse(
 }
 
 
-function normalizeField(value) {
+
+function normalizeField(
+  value
+) {
 
   return typeof value === "string"
     ? value.trim()
     : "";
 
 }
+
 
 
 function validateRequired(
@@ -70,6 +89,7 @@ function validateRequired(
 }
 
 
+
 function validateOptional(
   value,
   maxLength
@@ -83,45 +103,82 @@ function validateOptional(
 }
 
 
-function validateEmail(value) {
+
+function validateEmail(
+  value
+) {
 
   if (
     typeof value !== "string" ||
     value.length === 0 ||
     value.length > 200
   ) {
+
     return false;
+
   }
 
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    value
+  );
 
 }
 
 
-function escapeHTML(value = "") {
+
+function escapeHTML(
+  value = ""
+) {
 
   return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
 
-function cleanHeaderValue(value = "") {
+
+function cleanHeaderValue(
+  value = ""
+) {
 
   return String(value)
-    .replace(/[\r\n]+/g, " ")
+    .replace(
+      /[\r\n]+/g,
+      " "
+    )
     .trim()
-    .slice(0, 120);
+    .slice(
+      0,
+      120
+    );
 
 }
 
 
 
-export async function onRequestPost(context) {
+export async function onRequestPost(
+  context
+) {
 
   const {
     request,
@@ -129,10 +186,12 @@ export async function onRequestPost(context) {
   } = context;
 
 
+
   const contentLength =
     Number(
       request.headers.get("Content-Length") || "0"
     );
+
 
 
   if (
@@ -151,15 +210,20 @@ export async function onRequestPost(context) {
   }
 
 
+
   const contentType =
     request.headers.get("Content-Type") || "";
 
 
+
   const validContentType =
-    contentType.includes("multipart/form-data") ||
+    contentType.includes(
+      "multipart/form-data"
+    ) ||
     contentType.includes(
       "application/x-www-form-urlencoded"
     );
+
 
 
   if (!validContentType) {
@@ -173,6 +237,7 @@ export async function onRequestPost(context) {
     );
 
   }
+
 
 
   let formData;
@@ -203,14 +268,16 @@ export async function onRequestPost(context) {
   }
 
 
+
   /*
-   * 4. Honeypot
+   * Honeypot
    */
 
   const honeypot =
     normalizeField(
       formData.get("website")
     );
+
 
 
   if (honeypot) {
@@ -225,7 +292,7 @@ export async function onRequestPost(context) {
 
   }
     /*
-   * 5. Check server configuration
+   * Environment check
    */
 
   if (
@@ -235,7 +302,7 @@ export async function onRequestPost(context) {
   ) {
 
     console.error(
-      "Missing required environment configuration"
+      "Missing environment configuration"
     );
 
 
@@ -252,34 +319,24 @@ export async function onRequestPost(context) {
 
 
   /*
-   * 6. Turnstile token
+   * Turnstile verification
    */
 
-  const token =
+  const turnstileToken =
     normalizeField(
-      formData.get("cf-turnstile-response")
+      formData.get(
+        "cf-turnstile-response"
+      )
     );
 
 
-  if (!token) {
+
+  if (!turnstileToken) {
 
     return jsonResponse(
       {
         success:false,
-        error:"Turnstile verification missing"
-      },
-      400
-    );
-
-  }
-
-
-  if (token.length > 2048) {
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Invalid verification token"
+        error:"Verification missing"
       },
       400
     );
@@ -288,43 +345,10 @@ export async function onRequestPost(context) {
 
 
 
-  /*
-   * 7. Get visitor IP
-   */
-
-  const ip =
+  const clientIP =
     request.headers.get(
       "CF-Connecting-IP"
     ) || "";
-
-
-
-
-  /*
-   * 8. Verify Turnstile
-   */
-
-  const turnstileBody =
-    new URLSearchParams({
-
-      secret:
-        env.TURNSTILE_SECRET_KEY,
-
-      response:
-        token
-
-    });
-
-
-
-  if (ip) {
-
-    turnstileBody.set(
-      "remoteip",
-      ip
-    );
-
-  }
 
 
 
@@ -342,13 +366,37 @@ export async function onRequestPost(context) {
 
 
 
-  let verifyResponse;
+  let turnstileResponse;
 
 
 
   try {
 
-    verifyResponse =
+    const verifyBody =
+      new URLSearchParams({
+
+        secret:
+          env.TURNSTILE_SECRET_KEY,
+
+        response:
+          turnstileToken
+
+      });
+
+
+
+    if (clientIP) {
+
+      verifyBody.set(
+        "remoteip",
+        clientIP
+      );
+
+    }
+
+
+
+    turnstileResponse =
       await fetch(
         "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         {
@@ -361,7 +409,7 @@ export async function onRequestPost(context) {
           },
 
           body:
-            turnstileBody,
+            verifyBody,
 
           signal:
             turnstileController.signal
@@ -373,8 +421,9 @@ export async function onRequestPost(context) {
 
   } catch(error) {
 
+
     console.error(
-      "Turnstile request error:",
+      "Turnstile error:",
       error
     );
 
@@ -382,58 +431,39 @@ export async function onRequestPost(context) {
     return jsonResponse(
       {
         success:false,
-        error:"Verification service unavailable"
+        error:"Verification unavailable"
       },
       503
     );
 
 
-
   } finally {
+
 
     clearTimeout(
       turnstileTimeout
     );
 
-  }
-
-
-
-  if (!verifyResponse.ok) {
-
-    console.error(
-      "Turnstile HTTP error:",
-      verifyResponse.status
-    );
-
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification service unavailable"
-      },
-      503
-    );
 
   }
+
 
 
 
   let turnstileResult;
 
 
-
   try {
 
     turnstileResult =
-      await verifyResponse.json();
-
+      await turnstileResponse.json();
 
 
   } catch(error) {
 
+
     console.error(
-      "Turnstile response parsing error:",
+      "Turnstile JSON error:",
       error
     );
 
@@ -441,7 +471,7 @@ export async function onRequestPost(context) {
     return jsonResponse(
       {
         success:false,
-        error:"Verification service unavailable"
+        error:"Verification failed"
       },
       503
     );
@@ -450,53 +480,16 @@ export async function onRequestPost(context) {
 
 
 
-  /*
-   * 9. Validate Turnstile result
-   */
-
-  if (!turnstileResult.success) {
-
-    console.warn(
-      "Turnstile verification failed:",
-      turnstileResult["error-codes"] || []
-    );
-
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification failed"
-      },
-      403
-    );
-
-  }
-
-
 
   if (
-    turnstileResult.action !==
-    EXPECTED_TURNSTILE_ACTION
-  ) {
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification failed"
-      },
-      403
-    );
-
-  }
-
-
-
-  if (
+    !turnstileResult.success ||
+    turnstileResult.action !== EXPECTED_TURNSTILE_ACTION ||
     !ALLOWED_TURNSTILE_HOSTNAMES.has(
       turnstileResult.hostname
     )
   ) {
 
+
     return jsonResponse(
       {
         success:false,
@@ -509,43 +502,33 @@ export async function onRequestPost(context) {
 
 
 
+
   /*
-   * 10. Rate Limit
+   * Rate Limit
    */
 
-  const rateLimitKey =
-    `contact:${ip || "unknown"}`;
 
-
-  let currentCount = 0;
+  const rateKey =
+    `contact:${clientIP || "unknown"}`;
 
 
 
   try {
 
-    const storedValue =
-      await env.CONTACT_LIMIT.get(
-        rateLimitKey
+
+    const current =
+      Number(
+        await env.CONTACT_LIMIT.get(
+          rateKey
+        ) || "0"
       );
-
-
-    const parsed =
-      Number.parseInt(
-        storedValue || "0",
-        10
-      );
-
-
-    currentCount =
-      Number.isFinite(parsed)
-        ? parsed
-        : 0;
 
 
 
     if (
-      currentCount >= RATE_LIMIT_MAX
+      current >= RATE_LIMIT_MAX
     ) {
+
 
       return jsonResponse(
         {
@@ -560,13 +543,14 @@ export async function onRequestPost(context) {
         }
       );
 
+
     }
 
 
 
     await env.CONTACT_LIMIT.put(
-      rateLimitKey,
-      String(currentCount + 1),
+      rateKey,
+      String(current + 1),
       {
         expirationTtl:
           RATE_LIMIT_TTL
@@ -577,8 +561,9 @@ export async function onRequestPost(context) {
 
   } catch(error) {
 
+
     console.error(
-      "Rate limit storage error:",
+      "Rate limit error:",
       error
     );
 
@@ -586,15 +571,22 @@ export async function onRequestPost(context) {
     return jsonResponse(
       {
         success:false,
-        error:"Service temporarily unavailable"
+        error:"Service unavailable"
       },
       503
     );
 
+
   }
-    /*
-   * 11. Normalize form fields
+
+
+
+
+
+  /*
+   * Read form fields
    */
+
 
   const name =
     normalizeField(
@@ -639,20 +631,16 @@ export async function onRequestPost(context) {
 
 
 
-
-  /*
-   * 12. Server-side validation
-   */
-
   if (
     !validateRequired(name,100) ||
+    !validateEmail(email) ||
     !validateRequired(company,150) ||
     !validateRequired(offering,200) ||
-    !validateEmail(email) ||
     !validateOptional(country,100) ||
     !validateOptional(market,100) ||
     !validateOptional(message,2000)
   ) {
+
 
     return jsonResponse(
       {
@@ -662,17 +650,21 @@ export async function onRequestPost(context) {
       400
     );
 
+
   }
 
 
 
-
   /*
-   * 13. Prepare safe email content
+   * Prepare Lead
    */
 
+
   const safeReplyEmail =
-    email.replace(/[^\w@.\-+]/g,"");
+    email.replace(
+      /[^\w@.\-+]/g,
+      ""
+    );
 
 
   const safeName =
@@ -725,13 +717,11 @@ export async function onRequestPost(context) {
   const submittedAt =
     new Date()
       .toISOString();
-
-
-
-
+  id="p3rj9k"
   /*
-   * 14. Send email with Resend
+   * Send emails with Resend
    */
+
 
   const resendController =
     new AbortController();
@@ -747,14 +737,19 @@ export async function onRequestPost(context) {
 
 
 
-  let emailResponse;
+  let leadEmailResponse;
 
 
 
   try {
 
 
-    emailResponse =
+    /*
+     * 1. Internal Lead Notification
+     */
+
+
+    leadEmailResponse =
       await fetch(
         "https://api.resend.com/emails",
         {
@@ -766,7 +761,6 @@ export async function onRequestPost(context) {
 
             "Authorization":
               `Bearer ${env.RESEND_API_KEY}`,
-
 
             "Content-Type":
               "application/json"
@@ -804,233 +798,254 @@ export async function onRequestPost(context) {
               html:
               `
 
-              <div style="
-                font-family:Arial,Helvetica,sans-serif;
-                max-width:700px;
-                margin:0 auto;
-                color:#222;
-                line-height:1.6;
-              ">
+<div style="
+font-family:Arial,Helvetica,sans-serif;
+max-width:700px;
+margin:0 auto;
+color:#222;
+line-height:1.6;
+">
 
 
+<div style="
+background:#0b1220;
+padding:24px;
+color:white;
+border-radius:8px 8px 0 0;
+">
 
-                <div style="
-                  background:#0b1220;
-                  padding:24px;
-                  color:white;
-                  border-radius:8px 8px 0 0;
-                ">
 
+<h2 style="margin:0;">
+New Website Lead
+</h2>
 
 
-                  <h2 style="margin:0;">
-                    New Website Lead
-                  </h2>
+<p style="
+margin:8px 0 0;
+color:#cbd5e1;
+">
+New contact request received from Merqiva website
+</p>
 
 
+<p style="
+margin:12px 0 0;
+font-size:12px;
+color:#94a3b8;
+">
 
-                  <p style="
-                    margin:8px 0 0;
-                    color:#cbd5e1;
-                  ">
-                    New contact request received from Merqiva website
-                  </p>
+Lead ID:
+${leadId}
 
+<br>
 
+Submitted:
+${submittedAt}
 
-                  <p style="
-                    margin:12px 0 0;
-                    font-size:12px;
-                    color:#94a3b8;
-                  ">
-                    Lead ID:
-                    ${leadId}
-                    <br>
-                    Submitted:
-                    ${submittedAt}
-                  </p>
+<br>
 
+Source:
+Website Contact Form
 
-                </div>
+</p>
 
 
+</div>
 
-                <div style="
-                  border:1px solid #e5e7eb;
-                  border-top:none;
-                  padding:24px;
-                  border-radius:0 0 8px 8px;
-                ">
 
 
+<div style="
+border:1px solid #e5e7eb;
+border-top:none;
+padding:24px;
+border-radius:0 0 8px 8px;
+">
 
-                  <h3>
-                    Contact Information
-                  </h3>
 
+<h3>
+Contact Information
+</h3>
 
 
-                  <table width="100%" cellpadding="8">
 
+<table width="100%" cellpadding="8">
 
-                    <tr>
-                      <td>
-                        <strong>Name</strong>
-                      </td>
 
-                      <td>
-                        ${safeName}
-                      </td>
-                    </tr>
+<tr>
 
+<td>
+<strong>Name</strong>
+</td>
 
+<td>
+${safeName}
+</td>
 
-                    <tr>
-                      <td>
-                        <strong>Email</strong>
-                      </td>
+</tr>
 
-                      <td>
-                        <a
-                          href="mailto:${safeReplyEmail}"
-                          style="
-                            color:#2563eb;
-                            text-decoration:none;
-                          "
-                        >
-                          ${safeEmail}
-                        </a>
-                      </td>
-                    </tr>
 
 
+<tr>
 
-                    <tr>
-                      <td>
-                        <strong>Company</strong>
-                      </td>
+<td>
+<strong>Email</strong>
+</td>
 
-                      <td>
-                        ${safeCompany}
-                      </td>
-                    </tr>
+<td>
+${safeEmail}
+</td>
 
+</tr>
 
 
-                    <tr>
-                      <td>
-                        <strong>Country</strong>
-                      </td>
 
-                      <td>
-                        ${safeCountry}
-                      </td>
-                    </tr>
+<tr>
 
+<td>
+<strong>Company</strong>
+</td>
 
-                  </table>
+<td>
+${safeCompany}
+</td>
 
+</tr>
 
 
-                  <h3>
-                    Business Information
-                  </h3>
 
+<tr>
 
+<td>
+<strong>Country</strong>
+</td>
 
-                  <table width="100%" cellpadding="8">
+<td>
+${safeCountry}
+</td>
 
+</tr>
 
-                    <tr>
-                      <td>
-                        <strong>Offering</strong>
-                      </td>
 
-                      <td>
-                        ${safeOffering}
-                      </td>
-                    </tr>
+</table>
 
 
 
-                    <tr>
-                      <td>
-                        <strong>Target Market</strong>
-                      </td>
 
-                      <td>
-                        ${safeMarket}
-                      </td>
-                    </tr>
+<h3>
+Business Information
+</h3>
 
 
-                  </table>
 
+<table width="100%" cellpadding="8">
 
 
-                  <h3>
-                    Message
-                  </h3>
+<tr>
 
+<td>
+<strong>Offering</strong>
+</td>
 
+<td>
+${safeOffering}
+</td>
 
-                  <div style="
-                    background:#f8fafc;
-                    padding:16px;
-                    border-radius:6px;
-                  ">
-                    ${safeMessage}
-                  </div>
-                                    <div style="
-                    margin-top:30px;
-                    text-align:center;
-                  ">
+</tr>
 
-                    <a
-                      href="mailto:${safeReplyEmail}"
-                      style="
-                        display:inline-block;
-                        background:#0b1220;
-                        color:white;
-                        padding:12px 24px;
-                        text-decoration:none;
-                        border-radius:6px;
-                        font-weight:bold;
-                      "
-                    >
-                      Reply To Customer
-                    </a>
 
-                  </div>
 
+<tr>
 
+<td>
+<strong>Target Market</strong>
+</td>
 
+<td>
+${safeMarket}
+</td>
 
-                  <hr style="
-                    margin:24px 0;
-                    border:none;
-                    border-top:1px solid #e5e7eb;
-                  ">
+</tr>
 
 
+</table>
 
-                  <p style="
-                    font-size:12px;
-                    color:#64748b;
-                  ">
-                    This lead was submitted through merqivaintel.com contact form.
-                  </p>
 
 
 
-                </div>
+<h3>
+Message
+</h3>
 
 
-              </div>
 
-              `
+<div style="
+background:#f8fafc;
+padding:16px;
+border-radius:6px;
+">
+
+${safeMessage}
+
+</div>
+
+
+
+
+<div style="
+margin-top:30px;
+text-align:center;
+">
+
+
+<a href="mailto:${safeReplyEmail}"
+
+style="
+display:inline-block;
+background:#0b1220;
+color:white;
+padding:12px 24px;
+text-decoration:none;
+border-radius:6px;
+font-weight:bold;
+">
+
+Reply To Customer
+
+</a>
+
+
+</div>
+
+
+
+<hr style="
+margin:24px 0;
+border:none;
+border-top:1px solid #e5e7eb;
+">
+
+
+
+<p style="
+font-size:12px;
+color:#64748b;
+">
+
+This lead was submitted through merqivaintel.com contact form.
+
+</p>
+
+
+
+</div>
+
+
+</div>
+
+`
 
             }),
+
 
 
           signal:
@@ -1042,14 +1057,41 @@ export async function onRequestPost(context) {
 
 
 
+
+    if (!leadEmailResponse.ok) {
+
+
+      const resendError =
+        await leadEmailResponse.text();
+
+
+      console.error(
+        "Lead email failed:",
+        leadEmailResponse.status,
+        resendError.slice(0,500)
+      );
+
+
+      return jsonResponse(
+        {
+          success:false,
+          error:"Email delivery failed"
+        },
+        502
+      );
+
+
+    }
+
+
+
   } catch(error) {
 
 
     console.error(
-      "Resend request error:",
+      "Resend lead email error:",
       error
     );
-
 
 
     return jsonResponse(
@@ -1059,7 +1101,6 @@ export async function onRequestPost(context) {
       },
       503
     );
-
 
 
   } finally {
@@ -1076,72 +1117,132 @@ export async function onRequestPost(context) {
 
 
   /*
-   * 15. Handle Resend errors
+   * 2. Customer Auto Reply
    */
 
 
-  if (!emailResponse.ok) {
+  try {
 
 
-    let resendError = "";
+    await fetch(
+      "https://api.resend.com/emails",
+      {
+
+        method:"POST",
 
 
+        headers:{
 
-    try {
+          "Authorization":
+            `Bearer ${env.RESEND_API_KEY}`,
 
+          "Content-Type":
+            "application/json"
 
-      resendError =
-        await emailResponse.text();
-
-
-
-    } catch(error) {
-
-
-      console.error(
-        "Failed reading Resend error:",
-        error
-      );
-
-
-    }
+        },
 
 
 
+        body:
+          JSON.stringify({
 
-    console.error(
-      "Resend error:",
-      emailResponse.status,
-      resendError.slice(0,500)
+            from:
+              "Merqiva Website <hello@merqivaintel.com>",
+
+
+
+            to:
+              [
+                safeReplyEmail
+              ],
+
+
+
+            subject:
+              "We received your inquiry - Merqiva",
+
+
+
+            html:
+            `
+
+<div style="
+font-family:Arial,Helvetica,sans-serif;
+max-width:600px;
+margin:auto;
+color:#222;
+line-height:1.6;
+">
+
+
+<h2>
+Thank you for contacting Merqiva
+</h2>
+
+
+<p>
+Hello ${safeName},
+</p>
+
+
+<p>
+We have received your inquiry successfully.
+Our team will review your requirements and get back to you shortly.
+</p>
+
+
+<p>
+<strong>Reference:</strong>
+${leadId}
+</p>
+
+
+<p>
+Best regards,
+<br>
+Merqiva Team
+</p>
+
+
+</div>
+
+`
+
+          })
+
+
+      }
+
+
     );
 
 
+  } catch(error) {
 
-    return jsonResponse(
-      {
-        success:false,
-        error:
-          resendError ||
-          "Email delivery failed"
-      },
-      502
+
+    console.error(
+      "Customer auto reply failed:",
+      error
     );
 
 
   }
-
-
-
-
+  
   /*
-   * 16. Success
+   * Final success response
    */
 
 
   return jsonResponse(
     {
       success:true,
-      message:"Message sent successfully"
+
+      message:
+        "Message sent successfully",
+
+      leadId:
+        leadId
+
     },
     200
   );
