@@ -338,6 +338,7 @@ export async function onRequestPost(context) {
 
     console.error(
       "Turnstile request error:",
+      
       error
     );
 
@@ -654,45 +655,47 @@ export async function onRequestPost(context) {
       /[^\w@.\-+]/g,
       ""
     );
+/*
+ * 14. Send email with Resend
+ */
+
+const resendController =
+  new AbortController();
 
 
-  /*
-   * 14. Send email with Resend
-   */
-  const resendController =
-    new AbortController();
+const resendTimeout =
+  setTimeout(
+    () => resendController.abort(),
+    12000
+  );
 
 
-  const resendTimeout =
-    setTimeout(
-      () => resendController.abort(),
-      12000
-    );
+let emailResponse;
 
 
-  let emailResponse;
+try {
+
+  emailResponse =
+    await fetch(
+      "https://api.resend.com/emails",
+      {
+        method: "POST",
+
+        headers: {
+          "Authorization":
+            `Bearer ${env.RESEND_API_KEY}`,
+
+          "Content-Type":
+            "application/json"
+        },
 
 
-  try {
-
-    emailResponse =
-      await fetch(
-        "https://api.resend.com/emails",
-        {
-          method: "POST",
-
-          headers: {
-            "Authorization":
-              `Bearer ${env.RESEND_API_KEY}`,
-
-            "Content-Type":
-              "application/json"
-          },
         body:
           JSON.stringify({
 
             from:
               "Merqiva Website <hello@merqivaintel.com>",
+
 
             to:
             [
@@ -700,21 +703,25 @@ export async function onRequestPost(context) {
               "kimforex28@gmail.com"
             ],
 
+
             reply_to:
               safeReplyEmail,
 
+
             subject:
               `New Contact Request from ${safeSubjectName}`,
+
 
             html:
             `
             <div style="
               font-family: Arial, Helvetica, sans-serif;
-              max-width: 700px;
-              margin: 0 auto;
-              color: #222;
-              line-height: 1.6;
+              max-width:700px;
+              margin:0 auto;
+              color:#222;
+              line-height:1.6;
             ">
+
 
               <div style="
                 background:#0b1220;
@@ -737,12 +744,14 @@ export async function onRequestPost(context) {
               </div>
 
 
+
               <div style="
                 border:1px solid #e5e7eb;
                 border-top:none;
                 padding:24px;
                 border-radius:0 0 8px 8px;
               ">
+
 
                 <h3>
                   Contact Information
@@ -793,6 +802,7 @@ export async function onRequestPost(context) {
                 </table>
 
 
+
                 <h3>
                   Business Information
                 </h3>
@@ -822,6 +832,7 @@ export async function onRequestPost(context) {
                 </table>
 
 
+
                 <h3>
                   Message
                 </h3>
@@ -838,6 +849,31 @@ export async function onRequestPost(context) {
                 </div>
 
 
+
+                <div style="
+                  margin-top:30px;
+                  text-align:center;
+                ">
+
+                  <a href="mailto:${safeReplyEmail}"
+                  style="
+                    display:inline-block;
+                    background:#0b1220;
+                    color:white;
+                    padding:12px 24px;
+                    text-decoration:none;
+                    border-radius:6px;
+                    font-weight:bold;
+                  ">
+
+                    Reply To Customer
+
+                  </a>
+
+                </div>
+
+
+
                 <hr style="
                   margin:24px 0;
                   border:none;
@@ -845,102 +881,114 @@ export async function onRequestPost(context) {
                 ">
 
 
+
                 <p style="
                   font-size:12px;
                   color:#64748b;
                 ">
+
                   This lead was submitted through merqivaintel.com contact form.
+
                 </p>
 
 
               </div>
 
+
             </div>
             `
           }),
+
 
         signal:
           resendController.signal
       }
     );
 
+
+} catch (error) {
+
+  console.error(
+    "Resend request error:",
+    error
+  );
+
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Email service unavailable"
+    },
+    503
+  );
+
+
+} finally {
+
+  clearTimeout(
+    resendTimeout
+  );
+
+}
+
+
+
+/*
+ * 15. Handle Resend errors
+ */
+
+if (!emailResponse.ok) {
+
+  let resendError = "";
+
+
+  try {
+
+    resendError =
+      await emailResponse.text();
+
+
   } catch (error) {
 
     console.error(
-      "Resend request error:",
+      "Failed reading Resend error:",
       error
     );
 
-    return jsonResponse(
-      {
-        success: false,
-        error: "Email service unavailable"
-      },
-      503
-    );
-
-  } finally {
-
-    clearTimeout(
-      resendTimeout
-    );
-
   }
 
 
-  /*
-   * 15. Handle Resend errors
-   */
-  if (!emailResponse.ok) {
-
-    let resendError = "";
-
-
-    try {
-
-      resendError =
-        await emailResponse.text();
+  console.error(
+    "Resend error:",
+    emailResponse.status,
+    resendError.slice(0,500)
+  );
 
 
-    } catch (error) {
-
-      console.error(
-        "Failed reading Resend error:",
-        error
-      );
-
-    }
-
-
-    console.error(
-      "Resend error:",
-      emailResponse.status,
-      resendError.slice(0, 500)
-    );
-
-
-    return jsonResponse(
-      {
-        success: false,
-        error:
-          resendError ||
-          "Email delivery failed"
-      },
-      502
-    );
-
-  }
-
-
-  /*
-   * 16. Success
-   */
   return jsonResponse(
     {
-      success: true,
-      message: "Message sent successfully"
+      success:false,
+      error:
+        resendError ||
+        "Email delivery failed"
     },
-    200
+    502
   );
+
+}
+
+
+
+/*
+ * 16. Success
+ */
+
+return jsonResponse(
+  {
+    success:true,
+    message:"Message sent successfully"
+  },
+  200
+);
 
 }
