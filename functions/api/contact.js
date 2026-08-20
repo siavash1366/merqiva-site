@@ -186,6 +186,655 @@ export async function onRequestPost(context) {
     );
 
   }
-```
 
-ادامه در پیام بعدی: **بخش 
+بخش ۲/۳:
+
+```javascript
+  /*
+   * 4. Honeypot
+   */
+  const honeypot =
+    normalizeField(
+      formData.get("website")
+    );
+
+
+  if (honeypot) {
+
+    return jsonResponse(
+      {
+        success: true,
+        message: "Message sent successfully"
+      },
+      200
+    );
+
+  }
+
+
+  /*
+   * 5. Check server configuration
+   */
+  if (
+    !env.TURNSTILE_SECRET_KEY ||
+    !env.RESEND_API_KEY ||
+    !env.CONTACT_LIMIT
+  ) {
+
+    console.error(
+      "Missing required environment configuration"
+    );
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Server configuration error"
+      },
+      500
+    );
+
+  }
+
+
+  /*
+   * 6. Turnstile token
+   */
+  const token =
+    normalizeField(
+      formData.get("cf-turnstile-response")
+    );
+
+
+  if (!token) {
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Turnstile verification missing"
+      },
+      400
+    );
+
+  }
+
+
+  if (token.length > 2048) {
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Invalid verification token"
+      },
+      400
+    );
+
+  }
+
+
+  /*
+   * 7. Get visitor IP
+   */
+  const ip =
+    request.headers.get("CF-Connecting-IP") || "";
+
+
+  /*
+   * 8. Verify Turnstile
+   */
+  const turnstileBody =
+    new URLSearchParams({
+      secret:
+        env.TURNSTILE_SECRET_KEY,
+
+      response:
+        token
+    });
+
+
+  if (ip) {
+
+    turnstileBody.set(
+      "remoteip",
+      ip
+    );
+
+  }
+
+
+  const turnstileController =
+    new AbortController();
+
+
+  const turnstileTimeout =
+    setTimeout(
+      () => turnstileController.abort(),
+      8000
+    );
+
+
+  let verifyResponse;
+
+
+  try {
+
+    verifyResponse =
+      await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/x-www-form-urlencoded"
+          },
+
+          body:
+            turnstileBody,
+
+          signal:
+            turnstileController.signal
+        }
+      );
+
+
+  } catch (error) {
+
+    console.error(
+      "Turnstile request error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Verification service unavailable"
+      },
+      503
+    );
+
+
+  } finally {
+
+    clearTimeout(
+      turnstileTimeout
+    );
+
+  }
+
+
+  if (!verifyResponse.ok) {
+
+    console.error(
+      "Turnstile HTTP error:",
+      verifyResponse.status
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Verification service unavailable"
+      },
+      503
+    );
+
+  }
+
+
+  let turnstileResult;
+
+
+  try {
+
+    turnstileResult =
+      await verifyResponse.json();
+
+
+  } catch (error) {
+
+    console.error(
+      "Turnstile response parsing error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Verification service unavailable"
+      },
+      503
+    );
+
+  }
+
+
+  /*
+   * 9. Validate Turnstile result
+   */
+  if (!turnstileResult.success) {
+
+    console.warn(
+      "Turnstile verification failed:",
+      turnstileResult["error-codes"] || []
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Verification failed"
+      },
+      403
+    );
+
+  }
+
+
+  if (
+    turnstileResult.action !==
+    EXPECTED_TURNSTILE_ACTION
+  ) {
+
+    console.warn(
+      "Turnstile action mismatch:",
+      turnstileResult.action
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Verification failed"
+      },
+      403
+    );
+
+  }
+
+
+  if (
+    !ALLOWED_TURNSTILE_HOSTNAMES.has(
+      turnstileResult.hostname
+    )
+  ) {
+
+    console.warn(
+      "Turnstile hostname mismatch:",
+      turnstileResult.hostname
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Verification failed"
+      },
+      403
+    );
+
+  }
+
+
+  /*
+   * 10. Rate Limit
+   */
+  const rateLimitKey =
+    `contact:${ip || "unknown"}`;
+
+
+  let currentCount = 0;
+
+
+  try {
+
+    const storedValue =
+      await env.CONTACT_LIMIT.get(
+        rateLimitKey
+      );
+
+
+    const parsed =
+      Number.parseInt(
+        storedValue || "0",
+        10
+      );
+
+
+    currentCount =
+      Number.isFinite(parsed)
+        ? parsed
+        : 0;
+
+
+    if (currentCount >= RATE_LIMIT_MAX) {
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Too many requests. Please wait 10 minutes before submitting another inquiry."
+        },
+        429,
+        {
+          "Retry-After":
+            String(RATE_LIMIT_TTL)
+        }
+      );
+
+    }
+
+
+    await env.CONTACT_LIMIT.put(
+      rateLimitKey,
+      String(currentCount + 1),
+      {
+        expirationTtl:
+          RATE_LIMIT_TTL
+      }
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Rate limit storage error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Service temporarily unavailable"
+      },
+      503
+    );
+
+  }
+  /*
+   * 11. Normalize form fields
+   */
+  const name =
+    normalizeField(
+      formData.get("name")
+    );
+
+  const email =
+    normalizeField(
+      formData.get("email")
+    );
+
+  const company =
+    normalizeField(
+      formData.get("company")
+    );
+
+  const country =
+    normalizeField(
+      formData.get("country")
+    );
+
+  const offering =
+    normalizeField(
+      formData.get("offering")
+    );
+
+  const market =
+    normalizeField(
+      formData.get("market")
+    );
+
+  const message =
+    normalizeField(
+      formData.get("message")
+    );
+
+
+  /*
+   * 12. Server-side validation
+   */
+  if (
+    !validateRequired(name, 100) ||
+    !validateRequired(company, 150) ||
+    !validateRequired(offering, 200) ||
+    !validateEmail(email) ||
+    !validateOptional(country, 100) ||
+    !validateOptional(market, 100) ||
+    !validateOptional(message, 2000)
+  ) {
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Invalid input"
+      },
+      400
+    );
+
+  }
+
+
+  /*
+   * 13. Prepare safe email content
+   */
+  const safeName =
+    escapeHTML(name);
+
+  const safeEmail =
+    escapeHTML(email);
+
+  const safeCompany =
+    escapeHTML(company);
+
+  const safeCountry =
+    escapeHTML(country);
+
+  const safeOffering =
+    escapeHTML(offering);
+
+  const safeMarket =
+    escapeHTML(market);
+
+  const safeMessage =
+    message
+      ? escapeHTML(message)
+          .replace(
+            /\r?\n/g,
+            "<br>"
+          )
+      : "<em>No message provided.</em>";
+
+
+  const safeSubjectName =
+    cleanHeaderValue(name);
+
+
+  const safeReplyEmail =
+    email.replace(
+      /[^\w@.\-+]/g,
+      ""
+    );
+
+
+  /*
+   * 14. Send email with Resend
+   */
+  const resendController =
+    new AbortController();
+
+
+  const resendTimeout =
+    setTimeout(
+      () => resendController.abort(),
+      12000
+    );
+
+
+  let emailResponse;
+
+
+  try {
+
+    emailResponse =
+      await fetch(
+        "https://api.resend.com/emails",
+        {
+          method: "POST",
+
+          headers: {
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
+
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
+
+              to:
+                [
+                  "hello@merqivaintel.com"
+                ],
+
+              reply_to:
+                safeReplyEmail,
+
+              subject:
+                `New Contact Request from ${safeSubjectName}`,
+
+              html:
+                `
+                <h2>New Contact Request</h2>
+
+                <p>
+                  <strong>Name:</strong>
+                  ${safeName}
+                </p>
+
+                <p>
+                  <strong>Email:</strong>
+                  ${safeEmail}
+                </p>
+
+                <p>
+                  <strong>Company:</strong>
+                  ${safeCompany}
+                </p>
+
+                <p>
+                  <strong>Country:</strong>
+                  ${safeCountry}
+                </p>
+
+                <p>
+                  <strong>Offering:</strong>
+                  ${safeOffering}
+                </p>
+
+                <p>
+                  <strong>Market:</strong>
+                  ${safeMarket}
+                </p>
+
+                <hr>
+
+                <p>
+                  ${safeMessage}
+                </p>
+                `
+            }),
+
+          signal:
+            resendController.signal
+        }
+      );
+
+
+  } catch (error) {
+
+    console.error(
+      "Resend request error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error: "Email service unavailable"
+      },
+      503
+    );
+
+
+  } finally {
+
+    clearTimeout(
+      resendTimeout
+    );
+
+  }
+
+
+  /*
+   * 15. Handle Resend errors
+   */
+  if (!emailResponse.ok) {
+
+    let resendError = "";
+
+
+    try {
+
+      resendError =
+        await emailResponse.text();
+
+
+    } catch (error) {
+
+      console.error(
+        "Failed reading Resend error:",
+        error
+      );
+
+    }
+
+
+    console.error(
+      "Resend error:",
+      emailResponse.status,
+      resendError.slice(0, 500)
+    );
+
+
+    return jsonResponse(
+      {
+        success: false,
+        error:
+          resendError ||
+          "Email delivery failed"
+      },
+      502
+    );
+
+  }
+
+
+  /*
+   * 16. Success
+   */
+  return jsonResponse(
+    {
+      success: true,
+      message: "Message sent successfully"
+    },
+    200
+  );
+
+}
