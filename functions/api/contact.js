@@ -1,6 +1,4 @@
-بخش ۱/۳:
 
-```javascript
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_TTL = 600;
 const MAX_BODY_BYTES = 32 * 1024;
@@ -187,9 +185,8 @@ export async function onRequestPost(context) {
 
   }
 
-بخش ۲/۳:
 
-```javascript
+
   /*
    * 4. Honeypot
    */
@@ -553,6 +550,7 @@ export async function onRequestPost(context) {
     );
 
   }
+
   /*
    * 11. Normalize form fields
    */
