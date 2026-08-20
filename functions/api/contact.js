@@ -1,5 +1,4 @@
-
-const RATE_LIMIT_MAX = 50;
+const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_TTL = 600;
 const MAX_BODY_BYTES = 32 * 1024;
 
@@ -28,7 +27,11 @@ const API_HEADERS = {
 };
 
 
-function jsonResponse(data, status = 200, extraHeaders = {}) {
+function jsonResponse(
+  data,
+  status = 200,
+  extraHeaders = {}
+) {
 
   return new Response(
     JSON.stringify(data),
@@ -53,7 +56,10 @@ function normalizeField(value) {
 }
 
 
-function validateRequired(value, maxLength) {
+function validateRequired(
+  value,
+  maxLength
+) {
 
   return (
     typeof value === "string" &&
@@ -64,7 +70,10 @@ function validateRequired(value, maxLength) {
 }
 
 
-function validateOptional(value, maxLength) {
+function validateOptional(
+  value,
+  maxLength
+) {
 
   return (
     typeof value === "string" &&
@@ -111,13 +120,19 @@ function cleanHeaderValue(value = "") {
 }
 
 
+
 export async function onRequestPost(context) {
 
-  const { request, env } = context;
+  const {
+    request,
+    env
+  } = context;
 
 
   const contentLength =
-    Number(request.headers.get("Content-Length") || "0");
+    Number(
+      request.headers.get("Content-Length") || "0"
+    );
 
 
   if (
@@ -127,8 +142,8 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Request too large"
+        success:false,
+        error:"Request too large"
       },
       413
     );
@@ -151,8 +166,8 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Unsupported request format"
+        success:false,
+        error:"Unsupported request format"
       },
       415
     );
@@ -168,17 +183,19 @@ export async function onRequestPost(context) {
     formData =
       await request.formData();
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Form parsing error:",
       error
     );
 
+
     return jsonResponse(
       {
-        success: false,
-        error: "Invalid form data"
+        success:false,
+        error:"Invalid form data"
       },
       400
     );
@@ -186,10 +203,10 @@ export async function onRequestPost(context) {
   }
 
 
-
   /*
    * 4. Honeypot
    */
+
   const honeypot =
     normalizeField(
       formData.get("website")
@@ -200,18 +217,17 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: true,
-        message: "Message sent successfully"
+        success:true,
+        message:"Message sent successfully"
       },
       200
     );
 
   }
-
-
-  /*
+    /*
    * 5. Check server configuration
    */
+
   if (
     !env.TURNSTILE_SECRET_KEY ||
     !env.RESEND_API_KEY ||
@@ -222,10 +238,11 @@ export async function onRequestPost(context) {
       "Missing required environment configuration"
     );
 
+
     return jsonResponse(
       {
-        success: false,
-        error: "Server configuration error"
+        success:false,
+        error:"Server configuration error"
       },
       500
     );
@@ -233,9 +250,11 @@ export async function onRequestPost(context) {
   }
 
 
+
   /*
    * 6. Turnstile token
    */
+
   const token =
     normalizeField(
       formData.get("cf-turnstile-response")
@@ -246,8 +265,8 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Turnstile verification missing"
+        success:false,
+        error:"Turnstile verification missing"
       },
       400
     );
@@ -259,8 +278,8 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Invalid verification token"
+        success:false,
+        error:"Invalid verification token"
       },
       400
     );
@@ -268,24 +287,34 @@ export async function onRequestPost(context) {
   }
 
 
+
   /*
    * 7. Get visitor IP
    */
+
   const ip =
-    request.headers.get("CF-Connecting-IP") || "";
+    request.headers.get(
+      "CF-Connecting-IP"
+    ) || "";
+
+
 
 
   /*
    * 8. Verify Turnstile
    */
+
   const turnstileBody =
     new URLSearchParams({
+
       secret:
         env.TURNSTILE_SECRET_KEY,
 
       response:
         token
+
     });
+
 
 
   if (ip) {
@@ -298,18 +327,23 @@ export async function onRequestPost(context) {
   }
 
 
+
   const turnstileController =
     new AbortController();
 
 
+
   const turnstileTimeout =
     setTimeout(
-      () => turnstileController.abort(),
+      () =>
+        turnstileController.abort(),
       8000
     );
 
 
+
   let verifyResponse;
+
 
 
   try {
@@ -318,9 +352,10 @@ export async function onRequestPost(context) {
       await fetch(
         "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         {
-          method: "POST",
 
-          headers: {
+          method:"POST",
+
+          headers:{
             "Content-Type":
               "application/x-www-form-urlencoded"
           },
@@ -330,26 +365,28 @@ export async function onRequestPost(context) {
 
           signal:
             turnstileController.signal
+
         }
       );
 
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Turnstile request error:",
-      
       error
     );
 
 
     return jsonResponse(
       {
-        success: false,
-        error: "Verification service unavailable"
+        success:false,
+        error:"Verification service unavailable"
       },
       503
     );
+
 
 
   } finally {
@@ -359,6 +396,7 @@ export async function onRequestPost(context) {
     );
 
   }
+
 
 
   if (!verifyResponse.ok) {
@@ -371,8 +409,8 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Verification service unavailable"
+        success:false,
+        error:"Verification service unavailable"
       },
       503
     );
@@ -380,7 +418,9 @@ export async function onRequestPost(context) {
   }
 
 
+
   let turnstileResult;
+
 
 
   try {
@@ -389,7 +429,8 @@ export async function onRequestPost(context) {
       await verifyResponse.json();
 
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Turnstile response parsing error:",
@@ -399,8 +440,8 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Verification service unavailable"
+        success:false,
+        error:"Verification service unavailable"
       },
       503
     );
@@ -408,9 +449,11 @@ export async function onRequestPost(context) {
   }
 
 
+
   /*
    * 9. Validate Turnstile result
    */
+
   if (!turnstileResult.success) {
 
     console.warn(
@@ -421,13 +464,14 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Verification failed"
+        success:false,
+        error:"Verification failed"
       },
       403
     );
 
   }
+
 
 
   if (
@@ -435,21 +479,16 @@ export async function onRequestPost(context) {
     EXPECTED_TURNSTILE_ACTION
   ) {
 
-    console.warn(
-      "Turnstile action mismatch:",
-      turnstileResult.action
-    );
-
-
     return jsonResponse(
       {
-        success: false,
-        error: "Verification failed"
+        success:false,
+        error:"Verification failed"
       },
       403
     );
 
   }
+
 
 
   if (
@@ -458,16 +497,10 @@ export async function onRequestPost(context) {
     )
   ) {
 
-    console.warn(
-      "Turnstile hostname mismatch:",
-      turnstileResult.hostname
-    );
-
-
     return jsonResponse(
       {
-        success: false,
-        error: "Verification failed"
+        success:false,
+        error:"Verification failed"
       },
       403
     );
@@ -475,14 +508,17 @@ export async function onRequestPost(context) {
   }
 
 
+
   /*
    * 10. Rate Limit
    */
+
   const rateLimitKey =
     `contact:${ip || "unknown"}`;
 
 
   let currentCount = 0;
+
 
 
   try {
@@ -506,11 +542,14 @@ export async function onRequestPost(context) {
         : 0;
 
 
-    if (currentCount >= RATE_LIMIT_MAX) {
+
+    if (
+      currentCount >= RATE_LIMIT_MAX
+    ) {
 
       return jsonResponse(
         {
-          success: false,
+          success:false,
           error:
             "Too many requests. Please wait 10 minutes before submitting another inquiry."
         },
@@ -524,6 +563,7 @@ export async function onRequestPost(context) {
     }
 
 
+
     await env.CONTACT_LIMIT.put(
       rateLimitKey,
       String(currentCount + 1),
@@ -534,7 +574,8 @@ export async function onRequestPost(context) {
     );
 
 
-  } catch (error) {
+
+  } catch(error) {
 
     console.error(
       "Rate limit storage error:",
@@ -544,46 +585,52 @@ export async function onRequestPost(context) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Service temporarily unavailable"
+        success:false,
+        error:"Service temporarily unavailable"
       },
       503
     );
 
   }
-
-  /*
+    /*
    * 11. Normalize form fields
    */
+
   const name =
     normalizeField(
       formData.get("name")
     );
+
 
   const email =
     normalizeField(
       formData.get("email")
     );
 
+
   const company =
     normalizeField(
       formData.get("company")
     );
+
 
   const country =
     normalizeField(
       formData.get("country")
     );
 
+
   const offering =
     normalizeField(
       formData.get("offering")
     );
 
+
   const market =
     normalizeField(
       formData.get("market")
     );
+
 
   const message =
     normalizeField(
@@ -591,23 +638,26 @@ export async function onRequestPost(context) {
     );
 
 
+
+
   /*
    * 12. Server-side validation
    */
+
   if (
-    !validateRequired(name, 100) ||
-    !validateRequired(company, 150) ||
-    !validateRequired(offering, 200) ||
+    !validateRequired(name,100) ||
+    !validateRequired(company,150) ||
+    !validateRequired(offering,200) ||
     !validateEmail(email) ||
-    !validateOptional(country, 100) ||
-    !validateOptional(market, 100) ||
-    !validateOptional(message, 2000)
+    !validateOptional(country,100) ||
+    !validateOptional(market,100) ||
+    !validateOptional(message,2000)
   ) {
 
     return jsonResponse(
       {
-        success: false,
-        error: "Invalid input"
+        success:false,
+        error:"Invalid input"
       },
       400
     );
@@ -615,389 +665,486 @@ export async function onRequestPost(context) {
   }
 
 
+
+
   /*
    * 13. Prepare safe email content
    */
-  safeName
+
+  const safeReplyEmail =
+    email.replace(/[^\w@.\-+]/g,"");
+
+
+  const safeName =
+    escapeHTML(name);
+
+
   const safeEmail =
     escapeHTML(email);
+
 
   const safeCompany =
     escapeHTML(company);
 
+
   const safeCountry =
     escapeHTML(country);
+
 
   const safeOffering =
     escapeHTML(offering);
 
+
   const safeMarket =
     escapeHTML(market);
 
+
   const safeMessage =
-  message
-    ? escapeHTML(message)
-        .replace(
-          /\r?\n/g,
-          "<br>"
-        )
-    : "<em>No message provided.</em>";
+    message
+      ? escapeHTML(message)
+          .replace(
+            /\r?\n/g,
+            "<br>"
+          )
+      : "<em>No message provided.</em>";
 
 
-const leadId =
-  Date.now().toString(36).toUpperCase();
 
-const submittedAt =
-  new Date().toISOString();
-/*
- * 14. Send email with Resend
- */
+  const safeSubjectName =
+    cleanHeaderValue(name);
 
-const resendController =
-  new AbortController();
 
 
-const resendTimeout =
-  setTimeout(
-    () => resendController.abort(),
-    12000
-  );
+  const leadId =
+    Date.now()
+      .toString(36)
+      .toUpperCase();
 
 
-let emailResponse;
 
+  const submittedAt =
+    new Date()
+      .toISOString();
 
-try {
 
-  emailResponse =
-    await fetch(
-      "https://api.resend.com/emails",
-      {
-        method: "POST",
 
-        headers: {
-          "Authorization":
-            `Bearer ${env.RESEND_API_KEY}`,
 
-          "Content-Type":
-            "application/json"
-        },
+  /*
+   * 14. Send email with Resend
+   */
 
+  const resendController =
+    new AbortController();
 
-        body:
-          JSON.stringify({
 
-            from:
-              "Merqiva Website <hello@merqivaintel.com>",
 
-
-            to:
-            [
-              "hello@merqivaintel.com",
-              "kimforex28@gmail.com"
-            ],
-
-
-            reply_to:
-              safeReplyEmail,
-
-
-            subject:
-              `New Contact Request from ${safeSubjectName}`,
-
-
-            html:
-            `
-            <div style="
-              font-family: Arial, Helvetica, sans-serif;
-              max-width:700px;
-              margin:0 auto;
-              color:#222;
-              line-height:1.6;
-            ">
-
-
-              <div style="
-                background:#0b1220;
-                padding:24px;
-                color:white;
-                border-radius:8px 8px 0 0;
-              ">
-
-                <h2 style="margin:0;">
-  New Website Lead
-</h2>
-
-<p style="
-  margin:8px 0 0;
-  color:#cbd5e1;
-">
-  New contact request received from Merqiva website
-</p>
-
-<p style="
-  margin:12px 0 0;
-  font-size:12px;
-  color:#94a3b8;
-">
-  Lead ID: ${leadId}<br>
-  Submitted: ${submittedAt}
-</p>
-
-              </div>
-
-
-
-              <div style="
-                border:1px solid #e5e7eb;
-                border-top:none;
-                padding:24px;
-                border-radius:0 0 8px 8px;
-              ">
-
-
-                <h3>
-                  Contact Information
-                </h3>
-
-
-                <table width="100%" cellpadding="8">
-
-                  <tr>
-                    <td>
-                      <strong>Name</strong>
-                    </td>
-                    <td>
-                      ${safeName}
-                    </td>
-                  </tr>
-
-
-                  <tr>
-  <td>
-    <strong>Email</strong>
-  </td>
-
-  <td>
-    <a href="mailto:${safeReplyEmail}"
-       style="
-         color:#2563eb;
-         text-decoration:none;
-       ">
-      ${safeEmail}
-    </a>
-  </td>
-</tr>
-
-                  <tr>
-                    <td>
-                      <strong>Company</strong>
-                    </td>
-                    <td>
-                      ${safeCompany}
-                    </td>
-                  </tr>
-
-
-                  <tr>
-                    <td>
-                      <strong>Country</strong>
-                    </td>
-                    <td>
-                      ${safeCountry}
-                    </td>
-                  </tr>
-
-                </table>
-
-
-
-                <h3>
-                  Business Information
-                </h3>
-
-
-                <table width="100%" cellpadding="8">
-
-                  <tr>
-                    <td>
-                      <strong>Offering</strong>
-                    </td>
-                    <td>
-                      ${safeOffering}
-                    </td>
-                  </tr>
-
-
-                  <tr>
-                    <td>
-                      <strong>Target Market</strong>
-                    </td>
-                    <td>
-                      ${safeMarket}
-                    </td>
-                  </tr>
-
-                </table>
-
-
-
-                <h3>
-                  Message
-                </h3>
-
-
-                <div style="
-                  background:#f8fafc;
-                  padding:16px;
-                  border-radius:6px;
-                ">
-
-                  ${safeMessage}
-
-                </div>
-
-
-
-                <div style="
-                  margin-top:30px;
-                  text-align:center;
-                ">
-
-                  <a href="mailto:${safeReplyEmail}"
-                  style="
-                    display:inline-block;
-                    background:#0b1220;
-                    color:white;
-                    padding:12px 24px;
-                    text-decoration:none;
-                    border-radius:6px;
-                    font-weight:bold;
-                  ">
-
-                    Reply To Customer
-
-                  </a>
-
-                </div>
-
-
-
-                <hr style="
-                  margin:24px 0;
-                  border:none;
-                  border-top:1px solid #e5e7eb;
-                ">
-
-
-
-                <p style="
-                  font-size:12px;
-                  color:#64748b;
-                ">
-
-                  This lead was submitted through merqivaintel.com contact form.
-
-                </p>
-
-
-              </div>
-
-
-            </div>
-            `
-          }),
-
-
-        signal:
-          resendController.signal
-      }
+  const resendTimeout =
+    setTimeout(
+      () =>
+        resendController.abort(),
+      12000
     );
 
 
-} catch (error) {
 
-  console.error(
-    "Resend request error:",
-    error
-  );
+  let emailResponse;
 
-
-  return jsonResponse(
-    {
-      success:false,
-      error:"Email service unavailable"
-    },
-    503
-  );
-
-
-} finally {
-
-  clearTimeout(
-    resendTimeout
-  );
-
-}
-
-
-
-/*
- * 15. Handle Resend errors
- */
-
-if (!emailResponse.ok) {
-
-  let resendError = "";
 
 
   try {
 
-    resendError =
-      await emailResponse.text();
+
+    emailResponse =
+      await fetch(
+        "https://api.resend.com/emails",
+        {
+
+          method:"POST",
 
 
-  } catch (error) {
+          headers:{
+
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
+
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+
+
+          body:
+            JSON.stringify({
+
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
+
+
+
+              to:
+              [
+                "hello@merqivaintel.com",
+                "kimforex28@gmail.com"
+              ],
+
+
+
+              reply_to:
+                safeReplyEmail,
+
+
+
+              subject:
+                `New Contact Request from ${safeSubjectName}`,
+
+
+
+              html:
+              `
+
+              <div style="
+                font-family:Arial,Helvetica,sans-serif;
+                max-width:700px;
+                margin:0 auto;
+                color:#222;
+                line-height:1.6;
+              ">
+
+
+
+                <div style="
+                  background:#0b1220;
+                  padding:24px;
+                  color:white;
+                  border-radius:8px 8px 0 0;
+                ">
+
+
+
+                  <h2 style="margin:0;">
+                    New Website Lead
+                  </h2>
+
+
+
+                  <p style="
+                    margin:8px 0 0;
+                    color:#cbd5e1;
+                  ">
+                    New contact request received from Merqiva website
+                  </p>
+
+
+
+                  <p style="
+                    margin:12px 0 0;
+                    font-size:12px;
+                    color:#94a3b8;
+                  ">
+                    Lead ID:
+                    ${leadId}
+                    <br>
+                    Submitted:
+                    ${submittedAt}
+                  </p>
+
+
+                </div>
+
+
+
+                <div style="
+                  border:1px solid #e5e7eb;
+                  border-top:none;
+                  padding:24px;
+                  border-radius:0 0 8px 8px;
+                ">
+
+
+
+                  <h3>
+                    Contact Information
+                  </h3>
+
+
+
+                  <table width="100%" cellpadding="8">
+
+
+                    <tr>
+                      <td>
+                        <strong>Name</strong>
+                      </td>
+
+                      <td>
+                        ${safeName}
+                      </td>
+                    </tr>
+
+
+
+                    <tr>
+                      <td>
+                        <strong>Email</strong>
+                      </td>
+
+                      <td>
+                        <a
+                          href="mailto:${safeReplyEmail}"
+                          style="
+                            color:#2563eb;
+                            text-decoration:none;
+                          "
+                        >
+                          ${safeEmail}
+                        </a>
+                      </td>
+                    </tr>
+
+
+
+                    <tr>
+                      <td>
+                        <strong>Company</strong>
+                      </td>
+
+                      <td>
+                        ${safeCompany}
+                      </td>
+                    </tr>
+
+
+
+                    <tr>
+                      <td>
+                        <strong>Country</strong>
+                      </td>
+
+                      <td>
+                        ${safeCountry}
+                      </td>
+                    </tr>
+
+
+                  </table>
+
+
+
+                  <h3>
+                    Business Information
+                  </h3>
+
+
+
+                  <table width="100%" cellpadding="8">
+
+
+                    <tr>
+                      <td>
+                        <strong>Offering</strong>
+                      </td>
+
+                      <td>
+                        ${safeOffering}
+                      </td>
+                    </tr>
+
+
+
+                    <tr>
+                      <td>
+                        <strong>Target Market</strong>
+                      </td>
+
+                      <td>
+                        ${safeMarket}
+                      </td>
+                    </tr>
+
+
+                  </table>
+
+
+
+                  <h3>
+                    Message
+                  </h3>
+
+
+
+                  <div style="
+                    background:#f8fafc;
+                    padding:16px;
+                    border-radius:6px;
+                  ">
+                    ${safeMessage}
+                  </div>
+                                    <div style="
+                    margin-top:30px;
+                    text-align:center;
+                  ">
+
+                    <a
+                      href="mailto:${safeReplyEmail}"
+                      style="
+                        display:inline-block;
+                        background:#0b1220;
+                        color:white;
+                        padding:12px 24px;
+                        text-decoration:none;
+                        border-radius:6px;
+                        font-weight:bold;
+                      "
+                    >
+                      Reply To Customer
+                    </a>
+
+                  </div>
+
+
+
+
+                  <hr style="
+                    margin:24px 0;
+                    border:none;
+                    border-top:1px solid #e5e7eb;
+                  ">
+
+
+
+                  <p style="
+                    font-size:12px;
+                    color:#64748b;
+                  ">
+                    This lead was submitted through merqivaintel.com contact form.
+                  </p>
+
+
+
+                </div>
+
+
+              </div>
+
+              `
+
+            }),
+
+
+          signal:
+            resendController.signal
+
+        }
+
+      );
+
+
+
+  } catch(error) {
+
 
     console.error(
-      "Failed reading Resend error:",
+      "Resend request error:",
       error
     );
+
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Email service unavailable"
+      },
+      503
+    );
+
+
+
+  } finally {
+
+
+    clearTimeout(
+      resendTimeout
+    );
+
 
   }
 
 
-  console.error(
-    "Resend error:",
-    emailResponse.status,
-    resendError.slice(0,500)
-  );
+
+
+  /*
+   * 15. Handle Resend errors
+   */
+
+
+  if (!emailResponse.ok) {
+
+
+    let resendError = "";
+
+
+
+    try {
+
+
+      resendError =
+        await emailResponse.text();
+
+
+
+    } catch(error) {
+
+
+      console.error(
+        "Failed reading Resend error:",
+        error
+      );
+
+
+    }
+
+
+
+
+    console.error(
+      "Resend error:",
+      emailResponse.status,
+      resendError.slice(0,500)
+    );
+
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:
+          resendError ||
+          "Email delivery failed"
+      },
+      502
+    );
+
+
+  }
+
+
+
+
+  /*
+   * 16. Success
+   */
 
 
   return jsonResponse(
     {
-      success:false,
-      error:
-        resendError ||
-        "Email delivery failed"
+      success:true,
+      message:"Message sent successfully"
     },
-    502
+    200
   );
 
-}
-
-
-
-/*
- * 16. Success
- */
-
-return jsonResponse(
-  {
-    success:true,
-    message:"Message sent successfully"
-  },
-  200
-);
 
 }
