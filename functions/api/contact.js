@@ -359,3 +359,448 @@ export async function onRequestPost(
   /*
    * Environment check
    */
+    /*
+   * Environment check
+   */
+
+
+  if (
+    !env.TURNSTILE_SECRET_KEY ||
+    !env.RESEND_API_KEY
+  ) {
+
+    console.error(
+      "Missing environment configuration"
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Server configuration error"
+      },
+      500
+    );
+
+  }
+
+
+
+  if (
+    !env.CONTACT_LIMIT ||
+    typeof env.CONTACT_LIMIT.get !== "function"
+  ) {
+
+    console.error(
+      "CONTACT_LIMIT KV missing"
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Rate limit unavailable"
+      },
+      500
+    );
+
+  }
+
+
+
+  if (
+    !env.LEADS_KV ||
+    typeof env.LEADS_KV.put !== "function"
+  ) {
+
+    console.error(
+      "LEADS_KV binding missing"
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Lead storage unavailable"
+      },
+      500
+    );
+
+  }
+
+
+
+  /*
+   * Turnstile verification
+   */
+
+
+  const turnstileToken =
+    normalizeField(
+      formData.get(
+        "cf-turnstile-response"
+      )
+    );
+
+
+
+  if (!turnstileToken) {
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Verification missing"
+      },
+      400
+    );
+
+  }
+
+
+
+  const clientIP =
+    request.headers.get(
+      "CF-Connecting-IP"
+    ) || "unknown";
+
+
+
+  const turnstileController =
+    new AbortController();
+
+
+
+  const turnstileTimeout =
+    setTimeout(
+      () =>
+        turnstileController.abort(),
+      8000
+    );
+
+
+
+  let turnstileResponse;
+
+
+
+  try {
+
+
+    const verifyBody =
+      new URLSearchParams({
+
+        secret:
+          env.TURNSTILE_SECRET_KEY,
+
+        response:
+          turnstileToken
+
+      });
+
+
+
+    if (
+      clientIP !== "unknown"
+    ) {
+
+      verifyBody.set(
+        "remoteip",
+        clientIP
+      );
+
+    }
+
+
+
+    turnstileResponse =
+      await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+
+          method:
+            "POST",
+
+          headers:
+          {
+            "Content-Type":
+              "application/x-www-form-urlencoded"
+          },
+
+          body:
+            verifyBody,
+
+          signal:
+            turnstileController.signal
+
+        }
+      );
+
+
+
+  } catch(error) {
+
+
+    console.error(
+      "Turnstile request error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Verification unavailable"
+      },
+      503
+    );
+
+
+  } finally {
+
+
+    clearTimeout(
+      turnstileTimeout
+    );
+
+
+  }
+
+
+
+  if (
+    !turnstileResponse.ok
+  ) {
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Verification failed"
+      },
+      503
+    );
+
+  }
+
+
+
+  let turnstileResult;
+
+
+
+  try {
+
+    turnstileResult =
+      await turnstileResponse.json();
+
+
+  } catch(error) {
+
+
+    console.error(
+      "Turnstile JSON error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Verification failed"
+      },
+      503
+    );
+
+  }
+
+
+
+
+  if (
+
+    !turnstileResult.success ||
+
+    turnstileResult.action !==
+      EXPECTED_TURNSTILE_ACTION ||
+
+    !ALLOWED_TURNSTILE_HOSTNAMES.has(
+      turnstileResult.hostname
+    )
+
+  ) {
+
+
+    console.error(
+      "Turnstile validation failed",
+      turnstileResult
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Verification failed"
+      },
+      403
+    );
+
+  }
+
+
+
+
+  /*
+   * Read fields
+   */
+
+
+  const name =
+    normalizeField(
+      formData.get("name")
+    );
+
+
+  const email =
+    normalizeField(
+      formData.get("email")
+    );
+
+
+  const company =
+    normalizeField(
+      formData.get("company")
+    );
+
+
+  const country =
+    normalizeField(
+      formData.get("country")
+    );
+
+
+  const offering =
+    normalizeField(
+      formData.get("offering")
+    );
+
+
+  const market =
+    normalizeField(
+      formData.get("market")
+    );
+
+
+  const message =
+    normalizeField(
+      formData.get("message")
+    );
+
+
+
+  if (
+
+    !validateRequired(name,100) ||
+
+    !validateEmail(email) ||
+
+    !validateRequired(company,150) ||
+
+    !validateRequired(offering,200) ||
+
+    !validateOptional(country,100) ||
+
+    !validateOptional(market,100) ||
+
+    !validateOptional(message,2000)
+
+  ) {
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Invalid input"
+      },
+      400
+    );
+
+  }
+
+
+
+
+  /*
+   * Rate limit
+   */
+
+
+  const rateKey =
+    createRateKey(
+      clientIP,
+      email
+    );
+
+
+
+  try {
+
+
+    const current =
+      Number(
+        await env.CONTACT_LIMIT.get(
+          rateKey
+        ) || "0"
+      );
+
+
+
+    if (
+      current >= RATE_LIMIT_MAX
+    ) {
+
+
+      return jsonResponse(
+        {
+          success:false,
+          error:
+          "Too many requests. Please wait before submitting another inquiry."
+        },
+        429,
+        {
+          "Retry-After":
+            String(RATE_LIMIT_TTL)
+        }
+      );
+
+    }
+
+
+
+    await env.CONTACT_LIMIT.put(
+      rateKey,
+      String(current + 1),
+      {
+        expirationTtl:
+          RATE_LIMIT_TTL
+      }
+    );
+
+
+
+  } catch(error) {
+
+
+    console.error(
+      "Rate limit error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Rate limit unavailable"
+      },
+      503
+    );
+
+  }
