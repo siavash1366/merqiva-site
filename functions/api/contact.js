@@ -645,7 +645,7 @@ export async function onRequestPost(context) {
 
 
 const leadId =
-  crypto.randomUUID();
+  Date.now().toString(36).toUpperCase();
 
 const submittedAt =
   new Date().toISOString();
