@@ -252,17 +252,8 @@ export async function onRequestPost(
   } catch(error) {
 
     console.error(
-      "Form parsing error:",
+      "Customer auto reply failed:",
       error
-    );
-
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Invalid form data"
-      },
-      400
     );
 
   }
@@ -270,36 +261,34 @@ export async function onRequestPost(
 
 
   /*
-   * Honeypot
+   * Final success response
    */
 
-  const honeypot =
-    normalizeField(
-      formData.get("website")
-    );
+  return jsonResponse(
+    {
+      success:true,
+
+      message:
+        "Message sent successfully",
+
+      leadId:
+        leadId
+
+    },
+    200
+  );
 
 
-
-  if (honeypot) {
-
-    return jsonResponse(
-      {
-        success:true,
-        message:"Message sent successfully"
-      },
-      200
-    );
-
+}
   }
    /*
    * Environment check
    */
 
   if (
-    !env.TURNSTILE_SECRET_KEY ||
-    !env.RESEND_API_KEY ||
-    !env.CONTACT_LIMIT
-  ) {
+  !env.TURNSTILE_SECRET_KEY ||
+  !env.RESEND_API_KEY
+)
 
     console.error(
       "Missing environment configuration"
