@@ -291,7 +291,7 @@ export async function onRequestPost(
     );
 
   }
-    /*
+   /*
    * Environment check
    */
 
@@ -318,194 +318,233 @@ export async function onRequestPost(
 
 
 
-  /*
-   * Turnstile verification
-   */
-
-  const turnstileToken =
-    normalizeField(
-      formData.get(
-        "cf-turnstile-response"
-      )
-    );
-
-
-
-  if (!turnstileToken) {
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification missing"
-      },
-      400
-    );
-
-  }
-
-
-
-  const clientIP =
-    request.headers.get(
-      "CF-Connecting-IP"
-    ) || "";
-
-
-
-  const turnstileController =
-    new AbortController();
-
-
-
-  const turnstileTimeout =
-    setTimeout(
-      () =>
-        turnstileController.abort(),
-      8000
-    );
-
-
-
-  let turnstileResponse;
-
-
-
-  try {
-
-    const verifyBody =
-      new URLSearchParams({
-
-        secret:
-          env.TURNSTILE_SECRET_KEY,
-
-        response:
-          turnstileToken
-
-      });
-
-
-
-    if (clientIP) {
-
-      verifyBody.set(
-        "remoteip",
-        clientIP
-      );
-
-    }
-
-
-
-    turnstileResponse =
-      await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/x-www-form-urlencoded"
-          },
-
-          body:
-            verifyBody,
-
-          signal:
-            turnstileController.signal
-
-        }
-      );
-
-
-
-  } catch(error) {
-
-
-    console.error(
-      "Turnstile error:",
-      error
-    );
-
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification unavailable"
-      },
-      503
-    );
-
-
-  } finally {
-
-
-    clearTimeout(
-      turnstileTimeout
-    );
-
-
-  }
-
-
-
-
-  let turnstileResult;
-
-
-  try {
-
-    turnstileResult =
-      await turnstileResponse.json();
-
-
-  } catch(error) {
-
-
-    console.error(
-      "Turnstile JSON error:",
-      error
-    );
-
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification failed"
-      },
-      503
-    );
-
-  }
-
-
-
-
-  if (
-    !turnstileResult.success ||
-    turnstileResult.action !== EXPECTED_TURNSTILE_ACTION ||
-    !ALLOWED_TURNSTILE_HOSTNAMES.has(
-      turnstileResult.hostname
+/*
+ * Turnstile verification
+ */
+
+
+const turnstileToken =
+  normalizeField(
+    formData.get(
+      "cf-turnstile-response"
     )
-  ) {
+  );
 
 
-    return jsonResponse(
-      {
-        success:false,
-        error:"Verification failed"
-      },
-      403
+
+if (!turnstileToken) {
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Verification missing"
+    },
+    400
+  );
+
+}
+
+
+
+const clientIP =
+  request.headers.get(
+    "CF-Connecting-IP"
+  ) || "";
+
+
+
+const turnstileController =
+  new AbortController();
+
+
+
+const turnstileTimeout =
+  setTimeout(
+    () =>
+      turnstileController.abort(),
+    8000
+  );
+
+
+
+let turnstileResponse;
+
+
+
+try {
+
+
+  const verifyBody =
+    new URLSearchParams({
+
+      secret:
+        env.TURNSTILE_SECRET_KEY,
+
+      response:
+        turnstileToken
+
+    });
+
+
+
+  if (clientIP) {
+
+    verifyBody.set(
+      "remoteip",
+      clientIP
     );
 
   }
 
 
 
+  turnstileResponse =
+    await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
 
-  /*
-   * Rate Limit
-   */
+        method:
+          "POST",
+
+
+        headers:
+        {
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+
+        body:
+          verifyBody,
+
+
+        signal:
+          turnstileController.signal
+
+      }
+    );
+
+
+
+} catch(error) {
+
+
+  console.error(
+    "Turnstile request error:",
+    error
+  );
+
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Verification service unavailable"
+    },
+    503
+  );
+
+
+
+} finally {
+
+
+  clearTimeout(
+    turnstileTimeout
+  );
+
+
+}
+
+
+
+if (!turnstileResponse.ok) {
+
+
+  console.error(
+    "Turnstile HTTP error:",
+    turnstileResponse.status
+  );
+
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Verification failed"
+    },
+    503
+  );
+
+
+}
+
+
+
+let turnstileResult;
+
+
+
+try {
+
+
+  turnstileResult =
+    await turnstileResponse.json();
+
+
+
+} catch(error) {
+
+
+  console.error(
+    "Turnstile JSON parse error:",
+    error
+  );
+
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Verification failed"
+    },
+    503
+  );
+
+
+}
+
+
+
+
+if (
+  !turnstileResult.success ||
+  turnstileResult.action !==
+    EXPECTED_TURNSTILE_ACTION ||
+  !ALLOWED_TURNSTILE_HOSTNAMES.has(
+    turnstileResult.hostname
+  )
+) {
+
+
+  console.error(
+    "Turnstile validation failed:",
+    turnstileResult
+  );
+
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Verification failed"
+    },
+    403
+  );
+
+
+}
+
+
+/*
+ * Rate Limit
+ */
 
 
   const rateKey =
@@ -1121,133 +1160,97 @@ This lead was submitted through merqivaintel.com contact form.
   /*
    * 2. Customer Auto Reply
    */
-
-
   try {
 
+    const autoReplyResponse =
+      await fetch(
+        "https://api.resend.com/emails",
+        {
 
-    await fetch(
-      "https://api.resend.com/emails",
-      {
+          method:"POST",
 
-        method:"POST",
+          headers:{
 
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
 
-        headers:{
+            "Content-Type":
+              "application/json"
 
-          "Authorization":
-            `Bearer ${env.RESEND_API_KEY}`,
+          },
 
-          "Content-Type":
-            "application/json"
+          body:
+            JSON.stringify({
 
-        },
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
 
-
-
-        body:
-          JSON.stringify({
-
-            from:
-              "Merqiva Website <hello@merqivaintel.com>",
-
-
-
-            to:
+              to:
               [
                 safeReplyEmail
               ],
 
+              subject:
+                "We received your inquiry - Merqiva",
+
+              html:
+              `
+              <div style="
+              font-family:Arial,Helvetica,sans-serif;
+              max-width:600px;
+              margin:auto;
+              color:#222;
+              line-height:1.6;
+              ">
+
+              <h2>
+              Thank you for contacting Merqiva
+              </h2>
+
+              <p>
+              Hello ${safeName},
+              </p>
+
+              <p>
+              We have received your inquiry successfully.
+              Our team will review your requirements and get back to you shortly.
+              </p>
+
+              <p>
+              <strong>Reference:</strong>
+              ${leadId}
+              </p>
+
+              <p>
+              Best regards,
+              <br>
+              Merqiva Team
+              </p>
+
+              </div>
+              `
+
+            })
+
+        }
+      );
 
 
-            subject:
-              "We received your inquiry - Merqiva",
+    if (!autoReplyResponse.ok) {
 
+      console.error(
+        "Auto reply failed:",
+        autoReplyResponse.status
+      );
 
-
-            html:
-            `
-
-<div style="
-font-family:Arial,Helvetica,sans-serif;
-max-width:600px;
-margin:auto;
-color:#222;
-line-height:1.6;
-">
-
-
-<h2>
-Thank you for contacting Merqiva
-</h2>
-
-
-<p>
-Hello ${safeName},
-</p>
-
-
-<p>
-We have received your inquiry successfully.
-Our team will review your requirements and get back to you shortly.
-</p>
-
-
-<p>
-<strong>Reference:</strong>
-${leadId}
-</p>
-
-
-<p>
-Best regards,
-<br>
-Merqiva Team
-</p>
-
-
-</div>
-
-`
-
-          })
-
-
-      }
-
-
-    );
+    }
 
 
   } catch(error) {
-
 
     console.error(
       "Customer auto reply failed:",
       error
     );
 
-
   }
-  
-  /*
-   * Final success response
-   */
-
-
-  return jsonResponse(
-    {
-      success:true,
-
-      message:
-        "Message sent successfully",
-
-      leadId:
-        leadId
-
-    },
-    200
-  );
-
-
-}
