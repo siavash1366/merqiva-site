@@ -804,3 +804,455 @@ export async function onRequestPost(
     );
 
   }
+/*
+   * Prepare Lead
+   */
+
+
+  const safeReplyEmail =
+    email.replace(
+      /[^\w@.\-+]/g,
+      ""
+    );
+
+
+
+  const safeName =
+    escapeHTML(name);
+
+
+  const safeEmail =
+    escapeHTML(email);
+
+
+  const safeCompany =
+    escapeHTML(company);
+
+
+  const safeCountry =
+    escapeHTML(country);
+
+
+  const safeOffering =
+    escapeHTML(offering);
+
+
+  const safeMarket =
+    escapeHTML(market);
+
+
+  const safeMessage =
+    message
+      ? escapeHTML(message)
+          .replace(
+            /\r?\n/g,
+            "<br>"
+          )
+      : "<em>No message provided.</em>";
+
+
+
+  const safeSubjectName =
+    cleanHeaderValue(name);
+
+
+
+  const leadId =
+    createLeadId();
+
+
+
+  const submittedAt =
+    new Date()
+      .toISOString();
+
+
+
+  const leadData = {
+
+    id:
+      leadId,
+
+    name,
+
+    email,
+
+    company,
+
+    country,
+
+    offering,
+
+    market,
+
+    message,
+
+    status:
+      "new",
+
+    source:
+      "website-contact-form",
+
+    createdAt:
+      submittedAt
+
+  };
+
+
+
+  /*
+   * Save Lead
+   */
+
+
+  try {
+
+
+    await env.LEADS_KV.put(
+
+      `lead:${leadId}`,
+
+      JSON.stringify(
+        leadData
+      ),
+
+      {
+        expirationTtl:
+          LEAD_TTL
+      }
+
+    );
+
+
+  } catch(error) {
+
+
+    console.error(
+      "Lead storage error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Lead storage failed"
+      },
+      503
+    );
+
+  }
+
+
+
+
+  /*
+   * Send Internal Lead Email
+   */
+
+
+  const resendController =
+    new AbortController();
+
+
+
+  const resendTimeout =
+    setTimeout(
+      () =>
+        resendController.abort(),
+      12000
+    );
+
+
+
+  let leadEmailResponse;
+
+
+
+  try {
+
+
+    leadEmailResponse =
+      await fetch(
+        "https://api.resend.com/emails",
+        {
+
+          method:
+            "POST",
+
+
+          headers:
+          {
+
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+
+
+          body:
+            JSON.stringify({
+
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
+
+
+
+              to:
+              [
+                "hello@merqivaintel.com",
+                "kimforex28@gmail.com"
+              ],
+
+
+
+              reply_to:
+                safeReplyEmail,
+
+
+
+              subject:
+                `New Contact Request from ${safeSubjectName}`,
+
+
+
+              html:
+              `
+
+<div style="
+font-family:Arial,Helvetica,sans-serif;
+max-width:700px;
+margin:auto;
+color:#222;
+line-height:1.6;
+">
+
+<div style="
+background:#0b1220;
+padding:24px;
+color:white;
+border-radius:8px 8px 0 0;
+">
+
+<h2>
+New Website Lead
+</h2>
+
+<p style="color:#cbd5e1;">
+New contact request received from Merqiva website
+</p>
+
+<p style="
+font-size:12px;
+color:#94a3b8;
+">
+
+Lead ID:
+${leadId}
+
+<br>
+
+Submitted:
+${submittedAt}
+
+<br>
+
+Status:
+New
+
+</p>
+
+</div>
+
+
+<div style="
+border:1px solid #e5e7eb;
+border-top:none;
+padding:24px;
+">
+
+
+<h3>
+Contact Information
+</h3>
+
+
+<table width="100%" cellpadding="8">
+
+<tr>
+<td><strong>Name</strong></td>
+<td>${safeName}</td>
+</tr>
+
+
+<tr>
+<td><strong>Email</strong></td>
+<td>${safeEmail}</td>
+</tr>
+
+
+<tr>
+<td><strong>Company</strong></td>
+<td>${safeCompany}</td>
+</tr>
+
+
+<tr>
+<td><strong>Country</strong></td>
+<td>${safeCountry}</td>
+</tr>
+
+
+</table>
+
+
+
+<h3>
+Business Information
+</h3>
+
+
+<table width="100%" cellpadding="8">
+
+<tr>
+<td><strong>Offering</strong></td>
+<td>${safeOffering}</td>
+</tr>
+
+
+<tr>
+<td><strong>Target Market</strong></td>
+<td>${safeMarket}</td>
+</tr>
+
+
+</table>
+
+
+
+<h3>
+Message
+</h3>
+
+
+<div style="
+background:#f8fafc;
+padding:16px;
+border-radius:6px;
+">
+
+${safeMessage}
+
+</div>
+
+
+<div style="
+margin-top:30px;
+text-align:center;
+">
+
+<a href="mailto:${safeReplyEmail}"
+
+style="
+display:inline-block;
+background:#0b1220;
+color:white;
+padding:12px 24px;
+border-radius:6px;
+text-decoration:none;
+font-weight:bold;
+">
+
+Reply To Customer
+
+</a>
+
+</div>
+
+
+<hr>
+
+<p style="
+font-size:12px;
+color:#64748b;
+">
+
+This lead was submitted through merqivaintel.com contact form.
+
+</p>
+
+
+</div>
+
+</div>
+
+`
+
+            }),
+
+
+          signal:
+            resendController.signal
+
+        }
+
+      );
+
+
+
+
+    if (!leadEmailResponse.ok) {
+
+
+      const resendError =
+        await leadEmailResponse.text();
+
+
+      console.error(
+        "Lead email failed:",
+        resendError.slice(0,500)
+      );
+
+
+      return jsonResponse(
+        {
+          success:false,
+          error:"Email delivery failed"
+        },
+        502
+      );
+
+    }
+
+
+
+  } catch(error) {
+
+
+    console.error(
+      "Resend internal email error:",
+      error
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Email service unavailable"
+      },
+      503
+    );
+
+
+  } finally {
+
+
+    clearTimeout(
+      resendTimeout
+    );
+
+  }
