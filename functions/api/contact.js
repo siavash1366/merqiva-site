@@ -630,15 +630,16 @@ try {
 
       body: JSON.stringify({
 
-  from:
+from:
 "Merqiva Website <hello@merqivaintel.com>",
 
-to: [
-  "hello@merqivaintel.com"
+to:
+[
+ "hello@merqivaintel.com"
 ],
 
-        reply_to:
-          email,
+reply_to:
+"hello@merqivaintel.com",
 
         subject:
           `New Contact Request from ${safeSubjectName}`,
