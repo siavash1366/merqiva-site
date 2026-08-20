@@ -689,70 +689,176 @@ export async function onRequestPost(context) {
               "application/json"
           },
 
-          body:
-            JSON.stringify({
+                body:
+        JSON.stringify({
 
-              from:
-                "Merqiva Website <hello@merqivaintel.com>",
+          from:
+            "Merqiva Website <hello@merqivaintel.com>",
 
-              to:
-[
-  "hello@merqivaintel.com",
-  "kimforex28@gmail.com"
-],
+          to:
+          [
+            "hello@merqivaintel.com",
+            "kimforex28@gmail.com"
+          ],
 
-              reply_to:
-                safeReplyEmail,
+          reply_to:
+            safeReplyEmail,
 
-              subject:
-                `New Contact Request from ${safeSubjectName}`,
+          subject:
+            `New Contact Request from ${safeSubjectName}`,
 
-              html:
-                `
-                <h2>New Contact Request</h2>
+          html:
+          `
+          <div style="
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            color: #222;
+            line-height: 1.6;
+          ">
 
-                <p>
-                  <strong>Name:</strong>
-                  ${safeName}
-                </p>
+            <div style="
+              background:#0b1220;
+              padding:24px;
+              color:white;
+              border-radius:8px 8px 0 0;
+            ">
+              <h2 style="margin:0;">
+                New Website Lead
+              </h2>
 
-                <p>
-                  <strong>Email:</strong>
-                  ${safeEmail}
-                </p>
+              <p style="
+                margin:8px 0 0;
+                color:#cbd5e1;
+              ">
+                New contact request received from Merqiva website
+              </p>
+            </div>
 
-                <p>
-                  <strong>Company:</strong>
-                  ${safeCompany}
-                </p>
 
-                <p>
-                  <strong>Country:</strong>
-                  ${safeCountry}
-                </p>
+            <div style="
+              border:1px solid #e5e7eb;
+              border-top:none;
+              padding:24px;
+              border-radius:0 0 8px 8px;
+            ">
 
-                <p>
-                  <strong>Offering:</strong>
-                  ${safeOffering}
-                </p>
 
-                <p>
-                  <strong>Market:</strong>
-                  ${safeMarket}
-                </p>
+              <h3>
+                Contact Information
+              </h3>
 
-                <hr>
 
-                <p>
-                  ${safeMessage}
-                </p>
-                `
-            }),
+              <table width="100%" cellpadding="8">
 
-          signal:
-            resendController.signal
-        }
-      );
+                <tr>
+                  <td>
+                    <strong>Name</strong>
+                  </td>
+                  <td>
+                    ${safeName}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td>
+                    <strong>Email</strong>
+                  </td>
+                  <td>
+                    ${safeEmail}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td>
+                    <strong>Company</strong>
+                  </td>
+                  <td>
+                    ${safeCompany}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td>
+                    <strong>Country</strong>
+                  </td>
+                  <td>
+                    ${safeCountry}
+                  </td>
+                </tr>
+
+              </table>
+
+
+
+              <h3>
+                Business Information
+              </h3>
+
+
+              <table width="100%" cellpadding="8">
+
+                <tr>
+                  <td>
+                    <strong>Offering</strong>
+                  </td>
+                  <td>
+                    ${safeOffering}
+                  </td>
+                </tr>
+
+
+                <tr>
+                  <td>
+                    <strong>Target Market</strong>
+                  </td>
+                  <td>
+                    ${safeMarket}
+                  </td>
+                </tr>
+
+              </table>
+
+
+
+              <h3>
+                Message
+              </h3>
+
+
+              <div style="
+                background:#f8fafc;
+                padding:16px;
+                border-radius:6px;
+              ">
+                ${safeMessage}
+              </div>
+
+
+
+              <hr style="
+                margin:24px 0;
+                border:none;
+                border-top:1px solid #e5e7eb;
+              ">
+
+
+              <p style="
+                font-size:12px;
+                color:#64748b;
+              ">
+                This lead was submitted through merqivaintel.com contact form.
+              </p>
+
+
+            </div>
+
+          </div>
+          `
+        }),
 
 
   } catch (error) {
