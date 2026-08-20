@@ -566,6 +566,7 @@ export async function onRequestPost(context) {
   }
 
 
+```javascript
   /*
    * 13. Prepare safe email content
    */
@@ -607,188 +608,170 @@ export async function onRequestPost(context) {
   const resendController =
     new AbortController();
 
-  const resendTimeout = setTimeout(
-    () => resendController.abort(),
-    12000
-  );
+  const resendTimeout =
+    setTimeout(
+      () => resendController.abort(),
+      12000
+    );
 
-let emailResponse;
-
-try {
-
-  emailResponse = await fetch(
-    "https://api.resend.com/emails",
-    {
-      method: "POST",
-
-      headers: {
-        "Authorization":
-          `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type":
-          "application/json"
-      },
-
-      body: JSON.stringify({
-
-from:
-"Merqiva Website <hello@merqivaintel.com>",
-
-to:
-[
- "hello@merqivaintel.com"
-],
-
-reply_to:
-```javascript
-const safeEmail = email.replace(/[^\w@.\-+]/g, "");
-
-let emailResponse;
-
-try {
-
-  emailResponse = await fetch(
-    "https://api.resend.com/emails",
-    {
-      method: "POST",
-
-      headers: {
-        "Authorization":
-          `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type":
-          "application/json"
-      },
-
-      body: JSON.stringify({
-
-        from:
-          "Merqiva Website <hello@merqivaintel.com>",
-
-        to:
-          [
-            "hello@merqivaintel.com"
-          ],
-
-        reply_to:
-          safeEmail,
-
-        subject:
-          `New Contact Request from ${safeSubjectName}`,
-
-        html:
-          `
-          <h2>New Contact Request</h2>
-
-          <p>
-            <strong>Name:</strong>
-            ${safeName}
-          </p>
-
-          <p>
-            <strong>Email:</strong>
-            ${safeEmail}
-          </p>
-
-          <p>
-            <strong>Company:</strong>
-            ${safeCompany}
-          </p>
-
-          <p>
-            <strong>Country:</strong>
-            ${safeCountry}
-          </p>
-
-          <p>
-            <strong>Offering:</strong>
-            ${safeOffering}
-          </p>
-
-          <p>
-            <strong>Market:</strong>
-            ${safeMarket}
-          </p>
-
-          <hr>
-
-          <p>
-            ${safeMessage}
-          </p>
-          `
-      }),
-
-      signal:
-        resendController.signal
-    }
-  );
-
-} catch (error) {
-
-  console.error(
-    "Resend request error:",
-    error
-  );
-
-  return jsonResponse(
-    {
-      success: false,
-      error: "Email service unavailable"
-    },
-    503
-  );
-
-} finally {
-
-  clearTimeout(resendTimeout);
-
-}
+  const safeReplyEmail =
+    email.replace(
+      /[^\w@.\-+]/g,
+      ""
+    );
 
 
-/*
- * 15. Handle Resend errors
- */
-if (!emailResponse.ok) {
-
-  let resendError = "";
+  let emailResponse;
 
   try {
 
-    resendError =
-      await emailResponse.text();
+    emailResponse = await fetch(
+      "https://api.resend.com/emails",
+      {
+        method: "POST",
+
+        headers: {
+          "Authorization":
+            `Bearer ${env.RESEND_API_KEY}`,
+
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+
+          from:
+            "Merqiva Website <hello@merqivaintel.com>",
+
+          to:
+            [
+              "hello@merqivaintel.com"
+            ],
+
+          reply_to:
+            safeReplyEmail,
+
+          subject:
+            `New Contact Request from ${safeSubjectName}`,
+
+          html:
+            `
+            <h2>New Contact Request</h2>
+
+            <p>
+              <strong>Name:</strong>
+              ${safeName}
+            </p>
+
+            <p>
+              <strong>Email:</strong>
+              ${safeEmail}
+            </p>
+
+            <p>
+              <strong>Company:</strong>
+              ${safeCompany}
+            </p>
+
+            <p>
+              <strong>Country:</strong>
+              ${safeCountry}
+            </p>
+
+            <p>
+              <strong>Offering:</strong>
+              ${safeOffering}
+            </p>
+
+            <p>
+              <strong>Market:</strong>
+              ${safeMarket}
+            </p>
+
+            <hr>
+
+            <p>
+              ${safeMessage}
+            </p>
+            `
+        }),
+
+        signal:
+          resendController.signal
+      }
+    );
 
   } catch (error) {
 
     console.error(
-      "Failed reading Resend error:",
+      "Resend request error:",
       error
     );
 
+    return jsonResponse(
+      {
+        success: false,
+        error: "Email service unavailable"
+      },
+      503
+    );
+
+  } finally {
+
+    clearTimeout(resendTimeout);
+
   }
 
-  console.error(
-    "Resend error:",
-    emailResponse.status,
-    resendError.slice(0, 500)
-  );
 
+  /*
+   * 15. Handle Resend errors
+   */
+  if (!emailResponse.ok) {
+
+    let resendError = "";
+
+    try {
+
+      resendError =
+        await emailResponse.text();
+
+    } catch (error) {
+
+      console.error(
+        "Failed reading Resend error:",
+        error
+      );
+
+    }
+
+    console.error(
+      "Resend error:",
+      emailResponse.status,
+      resendError.slice(0, 500)
+    );
+
+    return jsonResponse(
+      {
+        success: false,
+        error:
+          resendError ||
+          "Email delivery failed"
+      },
+      502
+    );
+  }
+
+
+  /*
+   * 16. Success
+   */
   return jsonResponse(
     {
-      success: false,
-      error: resendError || "Email delivery failed"
+      success: true,
+      message: "Message sent successfully"
     },
-    502
+    200
   );
-}
-
-
-/*
- * 16. Success
- */
-return jsonResponse(
-  {
-    success: true,
-    message: "Message sent successfully"
-  },
-  200
-);
 
 }
+
