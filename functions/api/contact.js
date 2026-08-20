@@ -688,178 +688,181 @@ export async function onRequestPost(context) {
             "Content-Type":
               "application/json"
           },
+        body:
+          JSON.stringify({
 
-                body:
-        JSON.stringify({
+            from:
+              "Merqiva Website <hello@merqivaintel.com>",
 
-          from:
-            "Merqiva Website <hello@merqivaintel.com>",
+            to:
+            [
+              "hello@merqivaintel.com",
+              "kimforex28@gmail.com"
+            ],
 
-          to:
-          [
-            "hello@merqivaintel.com",
-            "kimforex28@gmail.com"
-          ],
+            reply_to:
+              safeReplyEmail,
 
-          reply_to:
-            safeReplyEmail,
+            subject:
+              `New Contact Request from ${safeSubjectName}`,
 
-          subject:
-            `New Contact Request from ${safeSubjectName}`,
-
-          html:
-          `
-          <div style="
-            font-family: Arial, Helvetica, sans-serif;
-            max-width: 700px;
-            margin: 0 auto;
-            color: #222;
-            line-height: 1.6;
-          ">
-
+            html:
+            `
             <div style="
-              background:#0b1220;
-              padding:24px;
-              color:white;
-              border-radius:8px 8px 0 0;
+              font-family: Arial, Helvetica, sans-serif;
+              max-width: 700px;
+              margin: 0 auto;
+              color: #222;
+              line-height: 1.6;
             ">
-              <h2 style="margin:0;">
-                New Website Lead
-              </h2>
-
-              <p style="
-                margin:8px 0 0;
-                color:#cbd5e1;
-              ">
-                New contact request received from Merqiva website
-              </p>
-            </div>
-
-
-            <div style="
-              border:1px solid #e5e7eb;
-              border-top:none;
-              padding:24px;
-              border-radius:0 0 8px 8px;
-            ">
-
-
-              <h3>
-                Contact Information
-              </h3>
-
-
-              <table width="100%" cellpadding="8">
-
-                <tr>
-                  <td>
-                    <strong>Name</strong>
-                  </td>
-                  <td>
-                    ${safeName}
-                  </td>
-                </tr>
-
-
-                <tr>
-                  <td>
-                    <strong>Email</strong>
-                  </td>
-                  <td>
-                    ${safeEmail}
-                  </td>
-                </tr>
-
-
-                <tr>
-                  <td>
-                    <strong>Company</strong>
-                  </td>
-                  <td>
-                    ${safeCompany}
-                  </td>
-                </tr>
-
-
-                <tr>
-                  <td>
-                    <strong>Country</strong>
-                  </td>
-                  <td>
-                    ${safeCountry}
-                  </td>
-                </tr>
-
-              </table>
-
-
-
-              <h3>
-                Business Information
-              </h3>
-
-
-              <table width="100%" cellpadding="8">
-
-                <tr>
-                  <td>
-                    <strong>Offering</strong>
-                  </td>
-                  <td>
-                    ${safeOffering}
-                  </td>
-                </tr>
-
-
-                <tr>
-                  <td>
-                    <strong>Target Market</strong>
-                  </td>
-                  <td>
-                    ${safeMarket}
-                  </td>
-                </tr>
-
-              </table>
-
-
-
-              <h3>
-                Message
-              </h3>
-
 
               <div style="
-                background:#f8fafc;
-                padding:16px;
-                border-radius:6px;
+                background:#0b1220;
+                padding:24px;
+                color:white;
+                border-radius:8px 8px 0 0;
               ">
-                ${safeMessage}
+
+                <h2 style="margin:0;">
+                  New Website Lead
+                </h2>
+
+                <p style="
+                  margin:8px 0 0;
+                  color:#cbd5e1;
+                ">
+                  New contact request received from Merqiva website
+                </p>
+
               </div>
 
 
-
-              <hr style="
-                margin:24px 0;
-                border:none;
-                border-top:1px solid #e5e7eb;
+              <div style="
+                border:1px solid #e5e7eb;
+                border-top:none;
+                padding:24px;
+                border-radius:0 0 8px 8px;
               ">
 
+                <h3>
+                  Contact Information
+                </h3>
 
-              <p style="
-                font-size:12px;
-                color:#64748b;
-              ">
-                This lead was submitted through merqivaintel.com contact form.
-              </p>
 
+                <table width="100%" cellpadding="8">
+
+                  <tr>
+                    <td>
+                      <strong>Name</strong>
+                    </td>
+                    <td>
+                      ${safeName}
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td>
+                      <strong>Email</strong>
+                    </td>
+                    <td>
+                      ${safeEmail}
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td>
+                      <strong>Company</strong>
+                    </td>
+                    <td>
+                      ${safeCompany}
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td>
+                      <strong>Country</strong>
+                    </td>
+                    <td>
+                      ${safeCountry}
+                    </td>
+                  </tr>
+
+                </table>
+
+
+                <h3>
+                  Business Information
+                </h3>
+
+
+                <table width="100%" cellpadding="8">
+
+                  <tr>
+                    <td>
+                      <strong>Offering</strong>
+                    </td>
+                    <td>
+                      ${safeOffering}
+                    </td>
+                  </tr>
+
+
+                  <tr>
+                    <td>
+                      <strong>Target Market</strong>
+                    </td>
+                    <td>
+                      ${safeMarket}
+                    </td>
+                  </tr>
+
+                </table>
+
+
+                <h3>
+                  Message
+                </h3>
+
+
+                <div style="
+                  background:#f8fafc;
+                  padding:16px;
+                  border-radius:6px;
+                ">
+
+                  ${safeMessage}
+
+                </div>
+
+
+                <hr style="
+                  margin:24px 0;
+                  border:none;
+                  border-top:1px solid #e5e7eb;
+                ">
+
+
+                <p style="
+                  font-size:12px;
+                  color:#64748b;
+                ">
+                  This lead was submitted through merqivaintel.com contact form.
+                </p>
+
+
+              </div>
 
             </div>
+            `
+          }),
 
-          </div>
-          `
-        }),
-
+        signal:
+          resendController.signal
+      }
+    );
 
   } catch (error) {
 
@@ -868,7 +871,6 @@ export async function onRequestPost(context) {
       error
     );
 
-
     return jsonResponse(
       {
         success: false,
@@ -876,7 +878,6 @@ export async function onRequestPost(context) {
       },
       503
     );
-
 
   } finally {
 
