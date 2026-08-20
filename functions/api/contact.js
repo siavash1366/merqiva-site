@@ -696,9 +696,10 @@ export async function onRequestPost(context) {
                 "Merqiva Website <hello@merqivaintel.com>",
 
               to:
-                [
-                    "kimforex28@gmail.com"
-                ],
+[
+  "hello@merqivaintel.com",
+  "kimforex28@gmail.com"
+],
 
               reply_to:
                 safeReplyEmail,
