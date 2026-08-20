@@ -1,5 +1,5 @@
 
-const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_TTL = 600;
 const MAX_BODY_BYTES = 32 * 1024;
 
