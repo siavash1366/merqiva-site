@@ -630,12 +630,12 @@ try {
 
       body: JSON.stringify({
 
-        from:
-"Merqiva Website <sales@merqivaintel.com>",
+  from:
+"Merqiva Website <hello@merqivaintel.com>",
 
-        to: [
-          "hello@merqivaintel.com"
-        ],
+to: [
+  "hello@merqivaintel.com"
+],
 
         reply_to:
           email,
