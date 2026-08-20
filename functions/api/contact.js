@@ -1328,3 +1328,24 @@ This lead was submitted through merqivaintel.com contact form.
     );
 
   }
+
+
+  /*
+   * Final success response
+   */
+
+  return jsonResponse(
+    {
+      success:true,
+
+      message:
+        "Message sent successfully",
+
+      leadId:
+        leadId
+
+    },
+    200
+  );
+
+}
