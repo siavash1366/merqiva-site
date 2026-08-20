@@ -216,7 +216,7 @@ export async function onRequestPost(
 
 
 
-  const validContentType =
+   const validContentType =
     contentType.includes(
       "multipart/form-data"
     ) ||
@@ -297,6 +297,55 @@ export async function onRequestPost(
 
   /*
    * Environment check
+   */
+
+
+  if (
+    !env.TURNSTILE_SECRET_KEY ||
+    !env.RESEND_API_KEY
+  ) {
+
+    console.error(
+      "Missing environment configuration"
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Server configuration error"
+      },
+      500
+    );
+
+  }
+
+
+
+  if (
+    !env.CONTACT_LIMIT ||
+    typeof env.CONTACT_LIMIT.get !== "function"
+  ) {
+
+    console.error(
+      "KV binding CONTACT_LIMIT missing"
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Rate limit configuration error"
+      },
+      500
+    );
+
+  }
+
+
+
+  /*
+   * Turnstile verification
    */
 
 
