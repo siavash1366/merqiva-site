@@ -1257,6 +1257,7 @@ This lead was submitted through merqivaintel.com contact form.
 
   }
 
+     /*
    * Customer Auto Reply
    */
 
