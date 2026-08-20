@@ -719,9 +719,13 @@ if (!emailResponse.ok) {
   let resendError = "";
 
   try {
-    resendError =
-      await emailResponse.text();
-  } catch (_) {}
+    resendError = await emailResponse.text();
+  } catch (error) {
+    console.error(
+      "Failed reading Resend error:",
+      error
+    );
+  }
 
   console.error(
     "Resend error:",
@@ -729,13 +733,14 @@ if (!emailResponse.ok) {
     resendError.slice(0, 500)
   );
 
- return jsonResponse(
-  {
-    success: false,
-    error: resendError
-  },
-  502
-);
+  return jsonResponse(
+    {
+      success: false,
+      error: resendError || "Email delivery failed"
+    },
+    502
+  );
+}
 
 
 /*
