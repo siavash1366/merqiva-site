@@ -639,12 +639,43 @@ to:
 ],
 
 reply_to:
-email,
+```javascript
+const safeEmail = email.replace(/[^\w@.\-+]/g, "");
+
+let emailResponse;
+
+try {
+
+  emailResponse = await fetch(
+    "https://api.resend.com/emails",
+    {
+      method: "POST",
+
+      headers: {
+        "Authorization":
+          `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type":
+          "application/json"
+      },
+
+      body: JSON.stringify({
+
+        from:
+          "Merqiva Website <hello@merqivaintel.com>",
+
+        to:
+          [
+            "hello@merqivaintel.com"
+          ],
+
+        reply_to:
+          safeEmail,
 
         subject:
           `New Contact Request from ${safeSubjectName}`,
 
-        html: `
+        html:
+          `
           <h2>New Contact Request</h2>
 
           <p>
@@ -682,7 +713,7 @@ email,
           <p>
             ${safeMessage}
           </p>
-        `
+          `
       }),
 
       signal:
@@ -720,12 +751,17 @@ if (!emailResponse.ok) {
   let resendError = "";
 
   try {
-    resendError = await emailResponse.text();
+
+    resendError =
+      await emailResponse.text();
+
   } catch (error) {
+
     console.error(
       "Failed reading Resend error:",
       error
     );
+
   }
 
   console.error(
@@ -754,4 +790,5 @@ return jsonResponse(
   },
   200
 );
+
 }
