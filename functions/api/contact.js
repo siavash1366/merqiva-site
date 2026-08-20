@@ -697,7 +697,7 @@ export async function onRequestPost(context) {
 
               to:
                 [
-                  "hello@merqivaintel.com"
+                    "kimforex28@gmail.com"
                 ],
 
               reply_to:
