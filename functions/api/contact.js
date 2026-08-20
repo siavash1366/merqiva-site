@@ -631,7 +631,7 @@ try {
       body: JSON.stringify({
 
         from:
-          "Merqiva Website <onboarding@resend.dev>",
+"Merqiva Website <sales@merqivaintel.com>",
 
         to: [
           "hello@merqivaintel.com"
