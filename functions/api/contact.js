@@ -243,6 +243,7 @@ export async function onRequestPost(
   let formData;
 
 
+
   try {
 
     formData =
@@ -252,8 +253,17 @@ export async function onRequestPost(
   } catch(error) {
 
     console.error(
-      "Customer auto reply failed:",
+      "Form parsing error:",
       error
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Invalid form data"
+      },
+      400
     );
 
   }
@@ -261,34 +271,39 @@ export async function onRequestPost(
 
 
   /*
-   * Final success response
+   * Honeypot
    */
 
-  return jsonResponse(
-    {
-      success:true,
-
-      message:
-        "Message sent successfully",
-
-      leadId:
-        leadId
-
-    },
-    200
-  );
+  const honeypot =
+    normalizeField(
+      formData.get("website")
+    );
 
 
-}
+
+  if (honeypot) {
+
+    return jsonResponse(
+      {
+        success:true,
+        message:"Message sent successfully"
+      },
+      200
+    );
+
   }
-   /*
+
+
+
+  /*
    * Environment check
    */
 
+
   if (
-  !env.TURNSTILE_SECRET_KEY ||
-  !env.RESEND_API_KEY
-)
+    !env.TURNSTILE_SECRET_KEY ||
+    !env.RESEND_API_KEY
+  ) {
 
     console.error(
       "Missing environment configuration"
@@ -307,10 +322,31 @@ export async function onRequestPost(
 
 
 
-/*
- * Turnstile verification
- */
+  if (
+    !env.CONTACT_LIMIT ||
+    typeof env.CONTACT_LIMIT.get !== "function"
+  ) {
 
+    console.error(
+      "KV binding CONTACT_LIMIT missing"
+    );
+
+
+    return jsonResponse(
+      {
+        success:false,
+        error:"Rate limit configuration error"
+      },
+      500
+    );
+
+  }
+
+
+
+  /*
+   * Turnstile verification
+   */
 
 const turnstileToken =
   normalizeField(
