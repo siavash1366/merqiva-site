@@ -1320,3 +1320,522 @@ export async function onRequestPost(
   /*
    * Send Internal Lead Notification
    */
+  /*
+   * Send Internal Lead Notification
+   */
+
+
+  const resendController =
+    new AbortController();
+
+
+
+  const resendTimeout =
+    setTimeout(
+
+      () =>
+        resendController.abort(),
+
+      12000
+
+    );
+
+
+
+  let leadEmailResponse;
+
+
+
+
+  try {
+
+
+    leadEmailResponse =
+      await fetch(
+
+        "https://api.resend.com/emails",
+
+        {
+
+          method:
+            "POST",
+
+
+          headers:
+          {
+
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
+
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+
+          body:
+            JSON.stringify({
+
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
+
+
+
+              to:
+              [
+
+                "hello@merqivaintel.com",
+
+                "kimforex28@gmail.com"
+
+              ],
+
+
+
+              reply_to:
+                safeReplyEmail,
+
+
+
+              subject:
+                `New Contact Request from ${safeSubjectName}`,
+
+
+
+              html:
+              `
+
+<div style="
+font-family:Arial,Helvetica,sans-serif;
+max-width:700px;
+margin:auto;
+color:#222;
+line-height:1.6;
+">
+
+<div style="
+background:#0b1220;
+padding:24px;
+color:white;
+border-radius:8px 8px 0 0;
+">
+
+<h2>
+New Website Lead
+</h2>
+
+<p>
+New contact request received from Merqiva website
+</p>
+
+<p style="
+font-size:12px;
+color:#cbd5e1;
+">
+
+Lead ID:
+${leadId}
+
+<br>
+
+Submitted:
+${submittedAt}
+
+</p>
+
+</div>
+
+
+<div style="
+border:1px solid #e5e7eb;
+border-top:none;
+padding:24px;
+">
+
+
+<h3>
+Contact Information
+</h3>
+
+
+<table width="100%" cellpadding="8">
+
+
+<tr>
+<td><strong>Name</strong></td>
+<td>${safeName}</td>
+</tr>
+
+
+<tr>
+<td><strong>Email</strong></td>
+<td>${safeEmail}</td>
+</tr>
+
+
+<tr>
+<td><strong>Company</strong></td>
+<td>${safeCompany}</td>
+</tr>
+
+
+<tr>
+<td><strong>Country</strong></td>
+<td>${safeCountry}</td>
+</tr>
+
+
+</table>
+
+
+
+<h3>
+Business Information
+</h3>
+
+
+<table width="100%" cellpadding="8">
+
+
+<tr>
+<td><strong>Offering</strong></td>
+<td>${safeOffering}</td>
+</tr>
+
+
+<tr>
+<td><strong>Market</strong></td>
+<td>${safeMarket}</td>
+</tr>
+
+
+</table>
+
+
+
+<h3>
+Message
+</h3>
+
+
+<div style="
+background:#f8fafc;
+padding:16px;
+border-radius:6px;
+">
+
+${safeMessage}
+
+</div>
+
+
+
+<p style="
+margin-top:30px;
+">
+
+<a href="mailto:${safeReplyEmail}">
+Reply to customer
+</a>
+
+</p>
+
+
+
+</div>
+
+</div>
+
+`
+
+            }),
+
+
+          signal:
+            resendController.signal
+
+
+        }
+
+      );
+
+
+
+
+
+
+    if (!leadEmailResponse.ok) {
+
+
+      const resendError =
+        await leadEmailResponse.text();
+
+
+
+      console.error(
+
+        "Lead email failed:",
+
+        leadEmailResponse.status,
+
+        resendError.slice(
+          0,
+          500
+        )
+
+      );
+
+    }
+
+
+
+
+  } catch(error) {
+
+
+    console.error(
+
+      "Resend internal email error:",
+
+      error
+
+    );
+
+
+  } finally {
+
+
+    clearTimeout(
+      resendTimeout
+    );
+
+
+  }
+
+
+
+
+
+
+
+  /*
+   * Customer Auto Reply
+   */
+
+
+  const autoReplyController =
+    new AbortController();
+
+
+
+  const autoReplyTimeout =
+    setTimeout(
+
+      () =>
+        autoReplyController.abort(),
+
+      12000
+
+    );
+
+
+
+
+
+  try {
+
+
+    const autoReplyResponse =
+      await fetch(
+
+        "https://api.resend.com/emails",
+
+        {
+
+          method:
+            "POST",
+
+
+          headers:
+          {
+
+            "Authorization":
+              `Bearer ${env.RESEND_API_KEY}`,
+
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+
+          body:
+            JSON.stringify({
+
+              from:
+                "Merqiva Website <hello@merqivaintel.com>",
+
+
+              to:
+              [
+                safeReplyEmail
+              ],
+
+
+              subject:
+                "We received your inquiry - Merqiva",
+
+
+
+              html:
+              `
+
+<div style="
+font-family:Arial,Helvetica,sans-serif;
+max-width:650px;
+margin:auto;
+color:#222;
+line-height:1.6;
+">
+
+
+<h2>
+Thank you for contacting Merqiva
+</h2>
+
+
+<p>
+Hello ${safeName},
+</p>
+
+
+<p>
+Your inquiry has been received successfully.
+Our team will review your request and respond shortly.
+</p>
+
+
+<p>
+
+<strong>
+Reference ID:
+</strong>
+
+${leadId}
+
+</p>
+
+
+<p>
+Best regards,
+<br>
+Merqiva Team
+</p>
+
+
+</div>
+
+`
+
+            }),
+
+
+
+          signal:
+            autoReplyController.signal
+
+
+        }
+
+      );
+
+
+
+
+
+    if (!autoReplyResponse.ok) {
+
+
+      const autoReplyError =
+        await autoReplyResponse.text();
+
+
+
+      console.error(
+
+        "Auto reply failed:",
+
+        autoReplyResponse.status,
+
+        autoReplyError.slice(
+          0,
+          300
+        )
+
+      );
+
+
+    }
+
+
+
+
+
+  } catch(error) {
+
+
+    console.error(
+
+      "Customer auto reply error:",
+
+      error
+
+    );
+
+
+  } finally {
+
+
+    clearTimeout(
+      autoReplyTimeout
+    );
+
+
+  }
+
+
+
+
+
+
+
+  /*
+   * Final Success Response
+   */
+
+
+  return jsonResponse(
+
+    {
+
+      success:true,
+
+
+      message:
+        "Message sent successfully",
+
+
+      leadId:
+        leadId
+
+
+    },
+
+
+    200
+
+  );
+
+
+}
