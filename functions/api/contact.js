@@ -17,8 +17,6 @@ const ALLOWED_TURNSTILE_HOSTNAMES =
     "www.merqivaintel.com"
   ]);
 
-
-
 const API_HEADERS = {
 
   "Content-Type":
@@ -249,10 +247,6 @@ function createRateKey(
 
 }
 
-
-
-
-
 export async function onRequestPost(
   context
 ) {
@@ -262,18 +256,12 @@ export async function onRequestPost(
     env
   } = context;
 
-
-
-
   const contentLength =
     Number(
       request.headers.get(
         "Content-Length"
       ) || "0"
     );
-
-
-
 
   if (
 
