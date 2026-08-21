@@ -1,155 +1,395 @@
-<!doctype html>
-<html lang="en" dir="ltr">
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Merqiva | GCC Maritime Sales Intelligence</title>
-<meta name="description" content="Merqiva researches GCC maritime buyers, fleets, decision-makers and buying signals to identify sales opportunities worth pursuing.">
-<link rel="stylesheet" href="/styles.css">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Merqiva Admin</title>
+
+
+<style>
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f8fafc;
+  margin:0;
+  padding:30px;
+  color:#111827;
+}
+
+
+.container{
+  max-width:1200px;
+  margin:auto;
+}
+
+
+.card{
+  background:white;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:20px;
+}
+
+
+input,button{
+  padding:10px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+}
+
+
+button{
+  cursor:pointer;
+  background:#0b1220;
+  color:white;
+}
+
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+
+th,td{
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+}
+
+
+.hidden{
+  display:none;
+}
+
+
+.status{
+  padding:4px 8px;
+  border-radius:5px;
+  background:#e5e7eb;
+}
+
+</style>
+
 </head>
+
+
 <body>
-<!-- Merqiva Website v1.4 — secure direct contact form with Turnstile -->
-<nav><div class="container nav">
-<a class="brand" href="#top">MER<span>Q</span>IVA</a>
-<div class="links">
-<a href="#intelligence" data-t="nav1">Intelligence</a><a href="#sample" data-t="nav2">Sample</a><a href="#process" data-t="nav3">How It Works</a><a href="#offer" data-t="nav4">Pricing</a><a href="#contact" data-t="nav5">Contact</a>
+
+
+<div class="container">
+
+
+<div class="card" id="loginBox">
+
+<h2>
+Merqiva Admin Login
+</h2>
+
+
+<input
+id="token"
+type="password"
+placeholder="Admin Token"
+style="width:300px;"
+>
+
+
+<button onclick="login()">
+Login
+</button>
+
+
+<p id="loginError"></p>
+
+
 </div>
-<div class="nav-actions">
-<div class="langs" aria-label="Language selector"><button type="button" class="lang active" data-lang="en" aria-label="English">EN</button><button type="button" class="lang" data-lang="ar" aria-label="العربية">العربية</button></div>
-<a href="#contact" class="btn primary desktop-cta" data-t="cta">Get 10 Free Opportunities</a>
-<a href="#contact" class="btn primary mobile-cta" data-t="mcta">Get Free Sample</a>
+
+
+
+
+
+<div class="card hidden" id="panel">
+
+
+<h2>
+Lead Management
+</h2>
+
+
+<button onclick="logout()">
+Logout
+</button>
+
+
+<div id="table"></div>
+
+
 </div>
-</div></nav>
 
-<main id="top">
-<section class="hero"><div class="container hero-grid">
-<div>
-<div class="eyebrow"><span class="dot"></span><span data-t="eyebrow">GCC MARITIME SALES INTELLIGENCE</span></div>
-<h1><span data-t="h1a">Find GCC Maritime Buyers Worth Contacting</span> <span class="accent" data-t="h1b">— and Know Why Now.</span></h1>
-<p class="hero-copy" data-t="hero">Merqiva researches vessel operators, fleets, decision-makers and buying signals to identify maritime sales opportunities your team can prioritize with confidence.</p>
-<div class="actions"><a href="#contact" class="btn primary" data-t="cta">Get 10 Free Opportunities</a><a href="#sample" class="btn secondary" data-t="samplecta">View Sample Opportunity</a></div>
-<p class="note" data-t="note">Built for marine equipment suppliers, service providers and maritime sales teams targeting the GCC.</p>
+
 </div>
-<div class="card">
-<div class="card-head"><span class="label" data-t="olabel">Opportunity Intelligence</span><span class="priority" data-t="priority">HIGH PRIORITY</span></div>
-<div class="company" data-t="ocompany">GCC Offshore Vessel Operator</div>
-<div class="intel">
-<div class="row"><span data-t="fleet">Fleet</span><span data-t="fleetv">45+ vessels</span></div>
-<div class="row"><span data-t="vessels">Vessel Types</span><span data-t="vesselsv">AHTS · Workboats · Offshore Support</span></div>
-<div class="row"><span data-t="fit">Product Fit</span><span class="ltr-text" data-t="fitv">NAVCOM · GMDSS · Safety Equipment</span></div>
-<div class="row"><span data-t="dm">Decision Maker</span><span data-t="dmv">Procurement Manager identified</span></div>
-<div class="row"><span data-t="signal">Buying Signal</span><span data-t="signalv">Recent fleet expansion activity</span></div>
-<div class="row"><span data-t="why">Why Now</span><span data-t="whyv">New vessel activity creates qualification timing</span></div>
-</div></div>
-</div></section>
 
-<section class="problem" id="intelligence"><div class="container">
-<div class="section-head"><div class="kicker" data-t="beyond">Beyond generic lead lists</div><h2 data-t="ih">Sales intelligence built around buying relevance.</h2><p data-t="id">A company name and email address are not enough. Merqiva connects fleet intelligence, product relevance, decision-makers and current market signals.</p></div>
-<div class="flow"><div><div class="num">01</div><strong data-t="company">Company</strong></div><div><div class="num">02</div><strong data-t="fv">Fleet & Vessel Type</strong></div><div><div class="num">03</div><strong data-t="fit">Product Fit</strong></div><div><div class="num">04</div><strong data-t="dm">Decision Maker</strong></div><div><div class="num">05</div><strong data-t="signal">Buying Signal</strong></div><div><div class="num">06</div><strong data-t="why">Why Now</strong></div></div>
-</div></section>
 
-<section><div class="container"><div class="section-head"><div class="kicker" data-t="receive">What you receive</div><h2 data-t="rh">Research your sales team can act on.</h2></div>
-<div class="features">
-<div class="feature"><div class="icon">01</div><h3 data-t="f1h">Target Company Research</h3><p data-t="f1p">Relevant GCC vessel operators, ship managers, offshore companies and maritime buyers.</p></div>
-<div class="feature"><div class="icon">02</div><h3 data-t="f2h">Fleet Intelligence</h3><p data-t="f2p">Fleet size, vessel types and operating profile evaluated against what you sell.</p></div>
-<div class="feature"><div class="icon">03</div><h3 data-t="f3h">Product-to-Buyer Matching</h3><p data-t="f3p">Each account is assessed for relevance to your equipment, systems or maritime services.</p></div>
-<div class="feature"><div class="icon">04</div><h3 data-t="f4h">Decision-Maker Verification</h3><p data-t="f4p">Procurement, purchasing, technical and fleet contacts researched with current-company verification.</p></div>
-<div class="feature"><div class="icon">05</div><h3 data-t="f5h">Buying Signals</h3><p data-t="f5p">Fleet expansion, new vessels, contracts, drydock, retrofit, recruitment and other relevant activity.</p></div>
-<div class="feature"><div class="icon">06</div><h3 data-t="f6h">Sales Angle & Priority</h3><p data-t="f6p">Why the account matters now, suggested outreach angle and a consistent opportunity priority.</p></div>
-</div></div></section>
 
-<section class="problem" id="sample"><div class="container">
-<div class="section-head"><div class="kicker" data-t="sk">Sample opportunity</div><h2 data-t="sh">Not just who to contact. Why they are worth contacting.</h2></div>
-<div class="sample">
-<div class="sample-copy"><h3 data-t="st">Example: Offshore Vessel Operator</h3><p data-t="sd">A high-fit account identified through fleet profile, product relevance, procurement research and recent expansion activity.</p><a href="#contact" class="btn primary" data-t="rs">Request Your Free Sample</a></div>
-<div class="sample-table">
-<div class="sample-row"><div data-t="market">Market</div><div data-t="marketv">GCC Maritime / Offshore</div></div>
-<div class="sample-row"><div data-t="fleet">Fleet</div><div data-t="fleetv">45+ vessels</div></div>
-<div class="sample-row"><div data-t="fit">Product Fit</div><div class="ltr-text" data-t="fitshort">NAVCOM · GMDSS · Safety</div></div>
-<div class="sample-row"><div data-t="dm">Decision Maker</div><div data-t="dmv">Procurement Manager identified</div></div>
-<div class="sample-row"><div data-t="signalshort">Signal</div><div data-t="signalshortv">Fleet expansion activity</div></div>
-<div class="sample-row"><div data-t="prio">Priority</div><div data-t="priov">HIGH</div></div>
-</div></div></div></section>
 
-<section id="process"><div class="container"><div class="section-head"><div class="kicker" data-t="how">How it works</div><h2 data-t="howh">From what you sell to who should hear about it.</h2></div>
-<div class="steps">
-<div class="step"><div class="step-no" data-t="step1">STEP 01</div><h3 data-t="s1h">Tell us what you sell</h3><p data-t="s1p">Products, systems, equipment or maritime services.</p></div>
-<div class="step"><div class="step-no" data-t="step2">STEP 02</div><h3 data-t="s2h">We research the GCC market</h3><p data-t="s2p">Companies, fleets, decision-makers and current signals.</p></div>
-<div class="step"><div class="step-no" data-t="step3">STEP 03</div><h3 data-t="s3h">Receive prioritized opportunities</h3><p data-t="s3p">Structured intelligence with sources and reasoning.</p></div>
-<div class="step"><div class="step-no" data-t="step4">STEP 04</div><h3 data-t="s4h">Your team starts targeted outreach</h3><p data-t="s4p">Contact better-fit accounts with better timing.</p></div>
-</div></div></section>
 
-<section class="problem" id="offer"><div class="container"><div class="pricing">
-<div class="kicker" data-t="offer">Maritime Opportunity Intelligence</div><div class="price"><strong data-t="price">$299</strong><span data-t="month">/ month</span></div>
-<p class="muted" data-t="offerp">A focused monthly research service for maritime suppliers targeting vessel operators and buyers across the GCC.</p>
-<ul class="pkg"><li data-t="p1">30 new researched opportunities / month</li><li data-t="p2">Weekly delivery</li><li data-t="p3">Decision-maker research</li><li data-t="p4">Current-company verification</li><li data-t="p5">Fleet and product matching</li><li data-t="p6">Buying-signal monitoring</li><li data-t="p7">Why Now analysis</li><li data-t="p8">Recommended sales angle</li><li data-t="p9">Source links</li><li data-t="p10">Duplicate removal</li><li data-t="p11">Opportunity prioritization</li><li data-t="p12">No long-term contract</li></ul>
-<a href="#contact" class="btn primary" data-t="start">Start With 10 Free Opportunities</a>
-</div></div></section>
+<script>
 
-<section><div class="container about">
-<div><div class="kicker" data-t="about">About Merqiva</div><h2 data-t="abouth">Independent B2B sales intelligence for complex markets.</h2><p data-t="aboutp">Merqiva is an independent B2B sales intelligence service, initially focused on the GCC maritime sector. We combine public-source research, commercial relevance and structured qualification to help sales teams focus on accounts worth pursuing.</p></div>
-<div class="about-points"><div class="about-point"><strong data-t="a1h">Research-led</strong><br><span data-t="a1p">Opportunities are evaluated before they reach your sales team.</span></div><div class="about-point"><strong data-t="a2h">Source-based</strong><br><span data-t="a2p">Key claims and buying signals are supported by public sources.</span></div><div class="about-point"><strong data-t="a3h">Focused on relevance</strong><br><span data-t="a3p">No generic mass-market lead lists.</span></div></div>
-</div></section>
 
-<section class="problem" id="contact"><div class="container contact-grid">
-<div class="contact-copy"><div class="kicker" data-t="contact">Contact Us</div><h2 data-t="contacth">Tell us what you sell and where you want to grow.</h2><p data-t="contactp">Share a few details about your company, products and target GCC market. We’ll use that context to understand whether Merqiva can support your sales team.</p>
-<div class="details">
-<div class="contact-detail">
-<small data-t="email">Sales inquiries</small>
-<strong><a href="mailto:sales@merqivaintel.com">sales@merqivaintel.com</a></strong>
-</div>
-<div class="contact-detail"><small data-t="focus">Current focus</small><strong data-t="focusv">GCC Maritime Sales Intelligence</strong></div>
-<div class="contact-detail"><small data-t="coverage">Coverage</small><strong data-t="coveragev">UAE · Saudi Arabia · Oman · Qatar · Kuwait · Bahrain</strong></div>
-</div></div>
-<form class="contact-box" id="contactForm" action="/api/contact" method="post" novalidate>
-<input class="hp-field" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-<div class="form-grid">
-<div class="group"><label data-t="name">Full Name *</label><input class="control" name="name" required></div>
-<div class="group"><label data-t="companyname">Company Name *</label><input class="control" name="company" required></div>
-<div class="group"><label data-t="workemail">Work Email *</label><input class="control" type="email" name="email" required></div>
-<div class="group"><label data-t="country">Country</label><input class="control" name="country"></div>
-<div class="group full"><label data-t="sell">What do you sell? *</label><input class="control" name="offering" required></div>
-<div class="group full"><label data-t="target">Target GCC Market</label><select class="control" name="market"><option value="" data-t="select">Select a market</option><option value="UAE" data-t="uae">UAE</option><option value="Saudi Arabia" data-t="saudi">Saudi Arabia</option><option value="Oman" data-t="oman">Oman</option><option value="Qatar" data-t="qatar">Qatar</option><option value="Kuwait" data-t="kuwait">Kuwait</option><option value="Bahrain" data-t="bahrain">Bahrain</option><option value="Multiple GCC markets" data-t="multiple">Multiple GCC markets</option></select></div>
-<div class="group full"><label data-t="message">Message</label><textarea class="control" name="message"></textarea></div>
-</div>
-<div class="turnstile-wrap">
-<div class="cf-turnstile"
-     data-sitekey="0x4AAAAAAESBkOeaHlh4PC_C"
-     data-theme="dark"
-     data-size="flexible"
-     data-action="contact"></div>
-</div>
-<div class="form-actions">
-<button class="btn primary" id="submitBtn" type="submit" data-t="send">Send Inquiry</button>
-<span class="form-note" data-t="formnote">Your inquiry will be sent securely to Merqiva.</span>
-</div>
-<div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
-</form>
-</div></section>
-</main>
-<footer>
-  <div class="container footer">
-    <div>
-      © 2026 Merqiva.
-      <span data-t="rights">All rights reserved.</span>
-    </div>
+let token =
+localStorage.getItem(
+"merqiva_admin_token"
+);
 
-    <div class="footer-links">
-      <a href="#contact" data-t="nav5">Contact</a>
 
-     <a href="mailto:sales@merqivaintel.com">
-  sales@merqivaintel.com
-</a>
 
-      <span data-t="tag">
-        GCC Maritime Sales Intelligence
-      </span>
-    </div>
-  </div>
-</footer>
+if(token){
 
-<script src="/app.js" defer></script>
+ loadLeads();
+
+}
+
+
+
+
+
+function login(){
+
+
+const value =
+document
+.getElementById("token")
+.value
+.trim();
+
+
+
+if(!value)
+return;
+
+
+
+localStorage.setItem(
+"merqiva_admin_token",
+value
+);
+
+
+token=value;
+
+
+loadLeads();
+
+
+}
+
+
+
+
+
+
+async function loadLeads(){
+
+
+try{
+
+
+const res =
+await fetch(
+"/api/admin/leads",
+{
+
+headers:{
+Authorization:
+"Bearer " + token
+}
+
+}
+);
+
+
+
+const data =
+await res.json();
+
+
+
+if(!data.success){
+
+
+throw new Error(
+data.error
+);
+
+
+}
+
+
+
+
+document
+.getElementById("loginBox")
+.classList
+.add("hidden");
+
+
+
+document
+.getElementById("panel")
+.classList
+.remove("hidden");
+
+
+
+renderLeads(
+data.leads
+);
+
+
+
+}
+catch(error){
+
+
+localStorage.removeItem(
+"merqiva_admin_token"
+);
+
+
+document
+.getElementById("loginError")
+.innerText =
+"Invalid token";
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+function renderLeads(
+leads
+){
+
+
+let html = `
+
+<table>
+
+<tr>
+
+<th>ID</th>
+<th>Name</th>
+<th>Company</th>
+<th>Email</th>
+<th>Status</th>
+<th>Date</th>
+
+</tr>
+
+`;
+
+
+
+for(
+const lead of leads
+){
+
+
+html += `
+
+<tr>
+
+<td>
+${lead.id}
+</td>
+
+
+<td>
+${lead.name}
+</td>
+
+
+<td>
+${lead.company}
+</td>
+
+
+<td>
+${lead.email}
+</td>
+
+
+<td>
+
+<span class="status">
+${lead.status}
+</span>
+
+</td>
+
+
+<td>
+${lead.createdAt}
+</td>
+
+
+</tr>
+
+`;
+
+}
+
+
+
+html += "</table>";
+
+
+
+document
+.getElementById("table")
+.innerHTML =
+html;
+
+
+}
+
+
+
+
+
+
+
+function logout(){
+
+
+localStorage.removeItem(
+"merqiva_admin_token"
+);
+
+
+location.reload();
+
+
+}
+
+
+
+</script>
+
 
 </body>
+
 </html>
