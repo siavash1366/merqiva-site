@@ -1105,26 +1105,38 @@ export async function onRequestPost(
    * Save Lead To KV
    */
 
+try {
 
-  try {
+  console.log(
+    "ABOUT TO SAVE LEAD",
+    leadId,
+    typeof env.LEADS_KV
+  );
 
 
-    await env.LEADS_KV.put(
+  await env.LEADS_KV.put(
 
-      `lead:${leadId}`,
+    `lead:${leadId}`,
 
-      JSON.stringify(
-        leadData
-      ),
+    JSON.stringify(
+      leadData
+    ),
 
-      {
+    {
+      expirationTtl:
+        LEAD_TTL
+    }
 
-        expirationTtl:
-          LEAD_TTL
+  );
 
-      }
 
-    );
+  console.log(
+    "LEAD SAVED",
+    leadId
+  );
+
+
+}
 
 
 
