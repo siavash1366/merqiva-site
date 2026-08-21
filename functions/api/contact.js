@@ -1,15 +1,22 @@
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_TTL = 600;
+
 const MAX_BODY_BYTES = 32 * 1024;
 
-const LEAD_TTL = 60 * 60 * 24 * 365;
+const LEAD_TTL =
+  60 * 60 * 24 * 365;
 
-const EXPECTED_TURNSTILE_ACTION = "contact";
 
-const ALLOWED_TURNSTILE_HOSTNAMES = new Set([
-  "merqivaintel.com",
-  "www.merqivaintel.com"
-]);
+const EXPECTED_TURNSTILE_ACTION =
+  "contact";
+
+
+const ALLOWED_TURNSTILE_HOSTNAMES =
+  new Set([
+    "merqivaintel.com",
+    "www.merqivaintel.com"
+  ]);
+
 
 
 const API_HEADERS = {
@@ -45,6 +52,7 @@ const API_HEADERS = {
 
 
 
+
 function jsonResponse(
   data,
   status = 200,
@@ -56,6 +64,7 @@ function jsonResponse(
     JSON.stringify(data),
 
     {
+
       status,
 
       headers:
@@ -227,9 +236,19 @@ function createRateKey(
   email
 ) {
 
-  return `contact:${ip}:${email.toLowerCase()}`;
+  const cleanEmail =
+    email
+      .toLowerCase()
+      .slice(
+        0,
+        200
+      );
+
+
+  return `contact:${ip}:${cleanEmail}`;
 
 }
+
 
 
 
@@ -245,10 +264,14 @@ export async function onRequestPost(
 
 
 
+
   const contentLength =
     Number(
-      request.headers.get("Content-Length") || "0"
+      request.headers.get(
+        "Content-Length"
+      ) || "0"
     );
+
 
 
 
@@ -272,24 +295,31 @@ export async function onRequestPost(
 
 
 
+
   const contentType =
-    request.headers.get("Content-Type") || "";
+    request.headers.get(
+      "Content-Type"
+    ) || "";
 
 
 
-  if (
 
-    !contentType.includes(
+  const validContentType =
+
+    contentType.includes(
       "multipart/form-data"
     )
 
-    &&
+    ||
 
-    !contentType.includes(
+    contentType.includes(
       "application/x-www-form-urlencoded"
-    )
+    );
 
-  ) {
+
+
+
+  if (!validContentType) {
 
     return jsonResponse(
       {
@@ -303,7 +333,10 @@ export async function onRequestPost(
 
 
 
+
   let formData;
+
+
 
 
   try {
@@ -332,14 +365,20 @@ export async function onRequestPost(
 
 
 
+
+
   /*
    * Honeypot
    */
 
+
   const honeypot =
     normalizeField(
-      formData.get("website")
+      formData.get(
+        "website"
+      )
     );
+
 
 
 
@@ -356,17 +395,19 @@ export async function onRequestPost(
 
 
 
+
+
   /*
-   * Environment check
-   */
-    /*
-   * Environment check
+   * Environment Check
    */
 
 
   if (
+
     !env.TURNSTILE_SECRET_KEY ||
+
     !env.RESEND_API_KEY
+
   ) {
 
     console.error(
@@ -386,9 +427,13 @@ export async function onRequestPost(
 
 
 
+
   if (
+
     !env.CONTACT_LIMIT ||
+
     typeof env.CONTACT_LIMIT.get !== "function"
+
   ) {
 
     console.error(
@@ -408,9 +453,13 @@ export async function onRequestPost(
 
 
 
+
   if (
+
     !env.LEADS_KV ||
+
     typeof env.LEADS_KV.put !== "function"
+
   ) {
 
     console.error(
@@ -427,11 +476,8 @@ export async function onRequestPost(
     );
 
   }
-
-
-
-  /*
-   * Turnstile verification
+    /*
+   * Turnstile Verification
    */
 
 
@@ -458,6 +504,7 @@ export async function onRequestPost(
 
 
 
+
   const clientIP =
     request.headers.get(
       "CF-Connecting-IP"
@@ -465,8 +512,10 @@ export async function onRequestPost(
 
 
 
+
   const turnstileController =
     new AbortController();
+
 
 
 
@@ -479,7 +528,9 @@ export async function onRequestPost(
 
 
 
+
   let turnstileResponse;
+
 
 
 
@@ -499,6 +550,7 @@ export async function onRequestPost(
 
 
 
+
     if (
       clientIP !== "unknown"
     ) {
@@ -509,6 +561,7 @@ export async function onRequestPost(
       );
 
     }
+
 
 
 
@@ -562,14 +615,21 @@ export async function onRequestPost(
       turnstileTimeout
     );
 
-
   }
+
+
 
 
 
   if (
     !turnstileResponse.ok
   ) {
+
+    console.error(
+      "Turnstile HTTP error:",
+      turnstileResponse.status
+    );
+
 
     return jsonResponse(
       {
@@ -583,14 +643,19 @@ export async function onRequestPost(
 
 
 
+
+
   let turnstileResult;
+
 
 
 
   try {
 
+
     turnstileResult =
       await turnstileResponse.json();
+
 
 
   } catch(error) {
@@ -610,7 +675,9 @@ export async function onRequestPost(
       503
     );
 
+
   }
+
 
 
 
@@ -648,9 +715,12 @@ export async function onRequestPost(
 
 
 
+
+
   /*
-   * Read fields
+   * Read Form Fields
    */
+
 
 
   const name =
@@ -659,10 +729,12 @@ export async function onRequestPost(
     );
 
 
+
   const email =
     normalizeField(
       formData.get("email")
     );
+
 
 
   const company =
@@ -671,10 +743,12 @@ export async function onRequestPost(
     );
 
 
+
   const country =
     normalizeField(
       formData.get("country")
     );
+
 
 
   const offering =
@@ -683,10 +757,12 @@ export async function onRequestPost(
     );
 
 
+
   const market =
     normalizeField(
       formData.get("market")
     );
+
 
 
   const message =
@@ -696,21 +772,63 @@ export async function onRequestPost(
 
 
 
+
+
+
+
+  /*
+   * Validate Input
+   */
+
+
+
   if (
 
-    !validateRequired(name,100) ||
+    !validateRequired(
+      name,
+      100
+    )
 
-    !validateEmail(email) ||
+    ||
 
-    !validateRequired(company,150) ||
+    !validateEmail(
+      email
+    )
 
-    !validateRequired(offering,200) ||
+    ||
 
-    !validateOptional(country,100) ||
+    !validateRequired(
+      company,
+      150
+    )
 
-    !validateOptional(market,100) ||
+    ||
 
-    !validateOptional(message,2000)
+    !validateRequired(
+      offering,
+      200
+    )
+
+    ||
+
+    !validateOptional(
+      country,
+      100
+    )
+
+    ||
+
+    !validateOptional(
+      market,
+      100
+    )
+
+    ||
+
+    !validateOptional(
+      message,
+      2000
+    )
 
   ) {
 
@@ -723,14 +841,19 @@ export async function onRequestPost(
       400
     );
 
+
   }
 
 
 
 
+
+
+
   /*
-   * Rate limit
+   * Rate Limit
    */
+
 
 
   const rateKey =
@@ -738,6 +861,8 @@ export async function onRequestPost(
       clientIP,
       email
     );
+
+
 
 
 
@@ -753,6 +878,8 @@ export async function onRequestPost(
 
 
 
+
+
     if (
       current >= RATE_LIMIT_MAX
     ) {
@@ -761,28 +888,50 @@ export async function onRequestPost(
       return jsonResponse(
         {
           success:false,
+
           error:
-          "Too many requests. Please wait before submitting another inquiry."
+            "Too many requests. Please wait before submitting another inquiry."
+
         },
+
         429,
+
         {
+
           "Retry-After":
-            String(RATE_LIMIT_TTL)
+            String(
+              RATE_LIMIT_TTL
+            )
+
         }
+
       );
+
 
     }
 
 
 
+
+
+
     await env.CONTACT_LIMIT.put(
+
       rateKey,
-      String(current + 1),
+
+      String(
+        current + 1
+      ),
+
       {
+
         expirationTtl:
           RATE_LIMIT_TTL
+
       }
+
     );
+
 
 
 
@@ -795,6 +944,7 @@ export async function onRequestPost(
     );
 
 
+
     return jsonResponse(
       {
         success:false,
@@ -803,10 +953,19 @@ export async function onRequestPost(
       503
     );
 
+
   }
-/*
+
+
+
+
+
+
+
+  /*
    * Prepare Lead
    */
+
 
 
   const safeReplyEmail =
@@ -818,42 +977,67 @@ export async function onRequestPost(
 
 
   const safeName =
-    escapeHTML(name);
+    escapeHTML(
+      name
+    );
+
 
 
   const safeEmail =
-    escapeHTML(email);
+    escapeHTML(
+      email
+    );
+
 
 
   const safeCompany =
-    escapeHTML(company);
+    escapeHTML(
+      company
+    );
+
 
 
   const safeCountry =
-    escapeHTML(country);
+    escapeHTML(
+      country
+    );
+
 
 
   const safeOffering =
-    escapeHTML(offering);
+    escapeHTML(
+      offering
+    );
+
 
 
   const safeMarket =
-    escapeHTML(market);
+    escapeHTML(
+      market
+    );
+
 
 
   const safeMessage =
     message
-      ? escapeHTML(message)
-          .replace(
-            /\r?\n/g,
-            "<br>"
-          )
+
+      ? escapeHTML(
+          message
+        )
+        .replace(
+          /\r?\n/g,
+          "<br>"
+        )
+
       : "<em>No message provided.</em>";
 
 
 
+
   const safeSubjectName =
-    cleanHeaderValue(name);
+    cleanHeaderValue(
+      name
+    );
 
 
 
@@ -865,13 +1049,16 @@ export async function onRequestPost(
   const submittedAt =
     new Date()
       .toISOString();
-
+    /*
+   * Create Lead Data
+   */
 
 
   const leadData = {
 
     id:
       leadId,
+
 
     name,
 
@@ -887,21 +1074,35 @@ export async function onRequestPost(
 
     message,
 
+
     status:
       "new",
+
 
     source:
       "website-contact-form",
 
+
+    version:
+      1,
+
+
     createdAt:
+      submittedAt,
+
+
+    updatedAt:
       submittedAt
 
   };
 
 
 
+
+
+
   /*
-   * Save Lead
+   * Save Lead To KV
    */
 
 
@@ -917,11 +1118,14 @@ export async function onRequestPost(
       ),
 
       {
+
         expirationTtl:
           LEAD_TTL
+
       }
 
     );
+
 
 
   } catch(error) {
@@ -941,14 +1145,20 @@ export async function onRequestPost(
       503
     );
 
+
   }
 
 
 
 
+
+
+
+
   /*
-   * Send Internal Lead Email
+   * Send Internal Lead Notification
    */
+
 
 
   const resendController =
@@ -969,16 +1179,21 @@ export async function onRequestPost(
 
 
 
+
+
   try {
 
 
     leadEmailResponse =
       await fetch(
+
         "https://api.resend.com/emails",
+
         {
 
           method:
             "POST",
+
 
 
           headers:
@@ -986,6 +1201,7 @@ export async function onRequestPost(
 
             "Authorization":
               `Bearer ${env.RESEND_API_KEY}`,
+
 
             "Content-Type":
               "application/json"
@@ -1004,8 +1220,11 @@ export async function onRequestPost(
 
               to:
               [
+
                 "hello@merqivaintel.com",
+
                 "kimforex28@gmail.com"
+
               ],
 
 
@@ -1031,6 +1250,7 @@ color:#222;
 line-height:1.6;
 ">
 
+
 <div style="
 background:#0b1220;
 padding:24px;
@@ -1038,15 +1258,26 @@ color:white;
 border-radius:8px 8px 0 0;
 ">
 
-<h2>
+
+<h2 style="margin:0;">
 New Website Lead
 </h2>
 
-<p style="color:#cbd5e1;">
-New contact request received from Merqiva website
-</p>
+
 
 <p style="
+margin:8px 0 0;
+color:#cbd5e1;
+">
+
+New contact request received from Merqiva website
+
+</p>
+
+
+
+<p style="
+margin-top:12px;
 font-size:12px;
 color:#94a3b8;
 ">
@@ -1064,16 +1295,28 @@ ${submittedAt}
 Status:
 New
 
+<br>
+
+Source:
+Website Contact Form
+
 </p>
 
+
+
 </div>
+
+
+
 
 
 <div style="
 border:1px solid #e5e7eb;
 border-top:none;
 padding:24px;
+border-radius:0 0 8px 8px;
 ">
+
 
 
 <h3>
@@ -1081,33 +1324,71 @@ Contact Information
 </h3>
 
 
+
+
 <table width="100%" cellpadding="8">
 
+
 <tr>
-<td><strong>Name</strong></td>
-<td>${safeName}</td>
+
+<td>
+<strong>Name</strong>
+</td>
+
+<td>
+${safeName}
+</td>
+
 </tr>
 
 
+
 <tr>
-<td><strong>Email</strong></td>
-<td>${safeEmail}</td>
+
+<td>
+<strong>Email</strong>
+</td>
+
+<td>
+${safeEmail}
+</td>
+
 </tr>
 
 
+
 <tr>
-<td><strong>Company</strong></td>
-<td>${safeCompany}</td>
+
+<td>
+<strong>Company</strong>
+</td>
+
+<td>
+${safeCompany}
+</td>
+
 </tr>
 
 
+
 <tr>
-<td><strong>Country</strong></td>
-<td>${safeCountry}</td>
+
+<td>
+<strong>Country</strong>
+</td>
+
+<td>
+${safeCountry}
+</td>
+
 </tr>
+
 
 
 </table>
+
+
+
 
 
 
@@ -1116,27 +1397,51 @@ Business Information
 </h3>
 
 
+
 <table width="100%" cellpadding="8">
 
-<tr>
-<td><strong>Offering</strong></td>
-<td>${safeOffering}</td>
-</tr>
 
 
 <tr>
-<td><strong>Target Market</strong></td>
-<td>${safeMarket}</td>
+
+<td>
+<strong>Offering</strong>
+</td>
+
+<td>
+${safeOffering}
+</td>
+
 </tr>
+
+
+
+
+<tr>
+
+<td>
+<strong>Target Market</strong>
+</td>
+
+<td>
+${safeMarket}
+</td>
+
+</tr>
+
 
 
 </table>
 
 
 
+
+
+
 <h3>
 Message
 </h3>
+
 
 
 <div style="
@@ -1150,10 +1455,15 @@ ${safeMessage}
 </div>
 
 
+
+
+
+
 <div style="
 margin-top:30px;
 text-align:center;
 ">
+
 
 <a href="mailto:${safeReplyEmail}"
 
@@ -1171,10 +1481,23 @@ Reply To Customer
 
 </a>
 
+
+
 </div>
 
 
-<hr>
+
+
+
+<hr style="
+margin:24px 0;
+border:none;
+border-top:1px solid #e5e7eb;
+">
+
+
+
+
 
 <p style="
 font-size:12px;
@@ -1186,13 +1509,17 @@ This lead was submitted through merqivaintel.com contact form.
 </p>
 
 
+
+
 </div>
+
 
 </div>
 
 `
 
             }),
+
 
 
           signal:
@@ -1205,6 +1532,9 @@ This lead was submitted through merqivaintel.com contact form.
 
 
 
+
+
+
     if (!leadEmailResponse.ok) {
 
 
@@ -1212,10 +1542,13 @@ This lead was submitted through merqivaintel.com contact form.
         await leadEmailResponse.text();
 
 
+
       console.error(
         "Lead email failed:",
+        leadEmailResponse.status,
         resendError.slice(0,500)
       );
+
 
 
       return jsonResponse(
@@ -1226,7 +1559,11 @@ This lead was submitted through merqivaintel.com contact form.
         502
       );
 
+
     }
+
+
+
 
 
 
@@ -1239,6 +1576,7 @@ This lead was submitted through merqivaintel.com contact form.
     );
 
 
+
     return jsonResponse(
       {
         success:false,
@@ -1248,6 +1586,7 @@ This lead was submitted through merqivaintel.com contact form.
     );
 
 
+
   } finally {
 
 
@@ -1255,9 +1594,9 @@ This lead was submitted through merqivaintel.com contact form.
       resendTimeout
     );
 
-  }
 
-     /*
+  }
+    /*
    * Customer Auto Reply
    */
 
@@ -1267,11 +1606,14 @@ This lead was submitted through merqivaintel.com contact form.
 
     const autoReplyResponse =
       await fetch(
+
         "https://api.resend.com/emails",
+
         {
 
           method:
             "POST",
+
 
 
           headers:
@@ -1279,6 +1621,7 @@ This lead was submitted through merqivaintel.com contact form.
 
             "Authorization":
               `Bearer ${env.RESEND_API_KEY}`,
+
 
             "Content-Type":
               "application/json"
@@ -1326,6 +1669,7 @@ color:white;
 border-radius:8px 8px 0 0;
 ">
 
+
 <h2 style="margin:0;">
 Thank you for contacting Merqiva
 </h2>
@@ -1340,7 +1684,10 @@ Your inquiry has been successfully received.
 
 </p>
 
+
 </div>
+
+
 
 
 
@@ -1352,9 +1699,11 @@ border-radius:0 0 8px 8px;
 ">
 
 
+
 <p>
 Hello ${safeName},
 </p>
+
 
 
 <p>
@@ -1364,11 +1713,15 @@ Our team has received your request and will review your requirements.
 
 
 
+
+
 <div style="
 background:#f8fafc;
 padding:16px;
 border-radius:6px;
 ">
+
+
 
 <p style="margin:0;">
 
@@ -1381,6 +1734,7 @@ ${leadId}
 </p>
 
 
+
 <p style="margin:8px 0 0;">
 
 <strong>
@@ -1391,7 +1745,24 @@ ${submittedAt}
 
 </p>
 
+
+
+<p style="margin:8px 0 0;">
+
+<strong>
+Status:
+</strong>
+
+New
+
+</p>
+
+
+
 </div>
+
+
+
 
 
 
@@ -1401,10 +1772,15 @@ We will get back to you as soon as possible.
 
 
 
+
+
+
 <div style="
 margin-top:30px;
 text-align:center;
 ">
+
+
 
 <a href="https://merqivaintel.com"
 
@@ -1422,7 +1798,12 @@ Visit Merqiva
 
 </a>
 
+
+
 </div>
+
+
+
 
 
 
@@ -1431,6 +1812,9 @@ margin:24px 0;
 border:none;
 border-top:1px solid #e5e7eb;
 ">
+
+
+
 
 
 
@@ -1446,7 +1830,9 @@ hello@merqivaintel.com
 
 
 
+
 </div>
+
 
 </div>
 
@@ -1454,10 +1840,11 @@ hello@merqivaintel.com
 
             })
 
-
         }
 
       );
+
+
 
 
 
@@ -1468,10 +1855,18 @@ hello@merqivaintel.com
         await autoReplyResponse.text();
 
 
+
       console.error(
+
         "Auto reply failed:",
+
         autoReplyResponse.status,
-        autoReplyError.slice(0,300)
+
+        autoReplyError.slice(
+          0,
+          300
+        )
+
       );
 
 
@@ -1479,12 +1874,16 @@ hello@merqivaintel.com
 
 
 
+
   } catch(error) {
 
 
     console.error(
+
       "Customer auto reply error:",
+
       error
+
     );
 
 
@@ -1493,25 +1892,34 @@ hello@merqivaintel.com
 
 
 
+
+
+
   /*
-   * Final success response
+   * Final Success Response
    */
 
 
   return jsonResponse(
+
     {
 
       success:true,
 
+
       message:
         "Message sent successfully",
+
 
       leadId:
         leadId
 
+
     },
 
+
     200
+
   );
 
 
