@@ -1096,14 +1096,9 @@ export async function onRequestPost(
 
   };
 
-
-
-
-
-
-  /*
-   * Save Lead To KV
-   */
+/*
+ * Save Lead To KV
+ */
 
 try {
 
@@ -1136,42 +1131,30 @@ try {
   );
 
 
+} catch(error) {
+
+
+  console.error(
+    "Lead storage error:",
+    error
+  );
+
+
+  return jsonResponse(
+    {
+      success:false,
+      error:"Lead storage failed"
+    },
+    503
+  );
+
+
 }
 
 
-
-  } catch(error) {
-
-
-    console.error(
-      "Lead storage error:",
-      error
-    );
-
-
-    return jsonResponse(
-      {
-        success:false,
-        error:"Lead storage failed"
-      },
-      503
-    );
-
-
-  }
-
-
-
-
-
-
-
-
-  /*
-   * Send Internal Lead Notification
-   */
-
-
+/*
+ * Send Internal Lead Notification
+ */
 
   const resendController =
     new AbortController();
