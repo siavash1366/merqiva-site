@@ -13,9 +13,6 @@ const API_HEADERS = {
     "DENY"
 
 };
-
-
-
 function jsonResponse(
   data,
   status = 200
