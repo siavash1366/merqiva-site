@@ -7,11 +7,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Merqiva Admin</title>
-
+<title>Merqiva CRM Admin</title>
 
 <link rel="stylesheet" href="/admin/admin.css">
-
 
 </head>
 
@@ -24,13 +22,14 @@
 
 
 
+<!-- LOGIN -->
+
 <div id="loginBox" class="card">
 
 
 <h1>
-Merqiva Admin Login
+Merqiva CRM Login
 </h1>
-
 
 
 <input
@@ -40,15 +39,12 @@ placeholder="Admin Token"
 />
 
 
-
 <button id="loginBtn">
 Login
 </button>
 
 
-
 <div id="loginError" class="message"></div>
-
 
 
 </div>
@@ -59,7 +55,12 @@ Login
 
 
 
+
+<!-- CRM PANEL -->
+
 <div id="panel" class="hidden">
+
+
 
 
 
@@ -71,17 +72,20 @@ Lead Management
 </h1>
 
 
+<div class="toolbar">
+
 
 <button id="refreshBtn">
-Refresh Leads
+Refresh
 </button>
-
 
 
 <button id="logoutBtn">
 Logout
 </button>
 
+
+</div>
 
 
 </div>
@@ -90,6 +94,93 @@ Logout
 
 
 
+
+
+
+<!-- FILTERS -->
+
+
+<div class="card">
+
+
+<h2>
+Search & Filter
+</h2>
+
+
+
+<input
+id="searchInput"
+type="text"
+placeholder="Search name, email, company..."
+/>
+
+
+
+
+<select id="statusFilter">
+
+
+<option value="">
+All Status
+</option>
+
+
+<option value="New">
+New
+</option>
+
+
+<option value="Reviewed">
+Reviewed
+</option>
+
+
+<option value="Contacted">
+Contacted
+</option>
+
+
+<option value="Qualified">
+Qualified
+</option>
+
+
+<option value="Proposal Sent">
+Proposal Sent
+</option>
+
+
+<option value="Won">
+Won
+</option>
+
+
+<option value="Lost">
+Lost
+</option>
+
+
+</select>
+
+
+
+<button id="searchBtn">
+Search
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- LEADS TABLE -->
 
 
 <div class="card">
@@ -101,11 +192,11 @@ Website Leads
 
 
 
-
 <table>
 
 
 <thead>
+
 
 <tr>
 
@@ -144,6 +235,33 @@ Website Leads
 
 
 
+
+
+<div class="pagination">
+
+
+<button id="prevPage">
+Previous
+</button>
+
+
+
+<span id="pageInfo">
+Page 1
+</span>
+
+
+
+<button id="nextPage">
+Next
+</button>
+
+
+
+</div>
+
+
+
 </div>
 
 
@@ -154,7 +272,13 @@ Website Leads
 
 
 
-<div id="leadDetails" class="card hidden">
+<!-- DETAILS -->
+
+
+<div
+id="leadDetails"
+class="card hidden"
+>
 
 
 <h2>
@@ -165,7 +289,25 @@ Lead Details
 
 <div id="detailsContent">
 
+
 </div>
+
+
+
+
+
+<div class="detailActions">
+
+
+<button id="replyBtn">
+Reply Email
+</button>
+
+
+
+<button id="copyEmailBtn">
+Copy Email
+</button>
 
 
 
@@ -181,11 +323,33 @@ Close
 
 
 
+<h3>
+Activity History
+</h3>
+
+
+
+<div id="historyContent">
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
 </div>
 
 
 
 </div>
+
+
 
 
 
@@ -193,7 +357,6 @@ Close
 
 
 <script src="/admin/admin.js"></script>
-
 
 
 </body>
