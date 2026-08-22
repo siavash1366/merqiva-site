@@ -14,12 +14,10 @@
 </head>
 
 
-
 <body>
 
 
 <div class="container">
-
 
 
 <!-- LOGIN -->
@@ -54,13 +52,9 @@ Login
 
 
 
-
-
 <!-- CRM PANEL -->
 
 <div id="panel" class="hidden">
-
-
 
 
 
@@ -70,6 +64,7 @@ Login
 <h1>
 Lead Management
 </h1>
+
 
 
 <div class="toolbar">
@@ -95,10 +90,7 @@ Logout
 
 
 
-
-
 <!-- FILTERS -->
-
 
 <div class="card">
 
@@ -179,7 +171,6 @@ Search
 
 
 
-
 <!-- LEADS TABLE -->
 
 
@@ -196,7 +187,6 @@ Website Leads
 
 
 <thead>
-
 
 <tr>
 
@@ -216,16 +206,13 @@ Website Leads
 
 <th>Action</th>
 
-
 </tr>
-
 
 </thead>
 
 
 
 <tbody id="leadTable">
-
 
 </tbody>
 
@@ -257,11 +244,36 @@ Next
 </button>
 
 
+</div>
+
 
 </div>
 
 
 
+
+
+
+
+
+
+<!-- LEAD DETAILS -->
+
+
+<div
+id="leadDetails"
+class="card hidden"
+>
+
+
+<h2>
+Lead Details
+</h2>
+
+
+
+<div id="detailsContent">
+
 </div>
 
 
@@ -270,9 +282,9 @@ Next
 
 
 
+<!-- INTERNAL NOTES -->
 
 
-<!-- DETAILS -->
 <div class="noteBox">
 
 
@@ -281,10 +293,13 @@ Internal Notes
 </h3>
 
 
+
 <textarea
 id="noteInput"
 placeholder="Add internal note..."
 ></textarea>
+
+
 
 
 <button id="saveNoteBtn">
@@ -292,16 +307,25 @@ Save Note
 </button>
 
 
+
+
 <div id="notesList">
 
 </div>
 
 
+
 </div>
 
 
 
 
+
+
+
+
+
+<!-- HISTORY -->
 
 
 <h3>
@@ -317,19 +341,49 @@ Activity History
 
 
 
+
+
+
+
+
+<!-- ACTIONS -->
+
+
+<div class="detailActions">
+
+
+<button id="replyBtn">
+Reply Email
+</button>
+
+
+
+<button id="copyEmailBtn">
+Copy Email
+</button>
+
+
+
+<button id="closeDetails">
+Close
+</button>
+
+
+</div>
+
+
+
 </div>
 
 
 
 
 
-
 </div>
 
 
 
 </div>
-
 
 
 
@@ -341,6 +395,5 @@ Activity History
 
 
 </body>
-
 
 </html>
