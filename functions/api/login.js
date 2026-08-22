@@ -32,6 +32,22 @@ export async function onRequestPost(context) {
 
 
     if (
+      !env.ADMIN_TOKEN
+    ) {
+
+      return jsonResponse(
+        {
+          success:false,
+          error:"Admin token missing"
+        },
+        500
+      );
+
+    }
+
+
+
+    if (
       !env.ADMIN_SESSIONS_KV ||
       typeof env.ADMIN_SESSIONS_KV.put !== "function"
     ) {
@@ -85,13 +101,17 @@ export async function onRequestPost(context) {
       `session:${sessionId}`,
 
       JSON.stringify({
+
         createdAt:
           new Date().toISOString()
+
       }),
 
       {
+
         expirationTtl:
           60 * 60 * 8
+
       }
 
     );
