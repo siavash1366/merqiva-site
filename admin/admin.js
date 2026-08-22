@@ -4,13 +4,7 @@ const API_URL="/api/admin/leads";
 
 
 let adminSession =
-localStorage.getItem(
-"admin_session"
-);
-
-
-
-let leadsCache = [];
+localStorage.getItem("admin_session");
 
 
 
@@ -45,7 +39,7 @@ document
 .getElementById("closeDetails")
 .addEventListener(
 "click",
-()=>{
+function(){
 
 document
 .getElementById("leadDetails")
@@ -64,6 +58,7 @@ if(adminSession){
 showPanel();
 
 }
+
 
 
 
@@ -104,7 +99,7 @@ headers:{
 
 body:JSON.stringify({
 
-token
+token:token
 
 })
 
@@ -162,7 +157,6 @@ document
 
 
 
-
 function showPanel(){
 
 
@@ -198,7 +192,6 @@ function logout(){
 localStorage.removeItem(
 "admin_session"
 );
-
 
 
 adminSession=null;
@@ -248,23 +241,12 @@ await response.json();
 
 if(!data.success){
 
-
-alert(
-data.error || "Unauthorized"
-);
-
-
 logout();
-
 
 return;
 
 }
 
-
-
-leadsCache =
-data.leads;
 
 
 
@@ -290,7 +272,7 @@ document.createElement("tr");
 
 
 
-row.innerHTML = `
+row.innerHTML=`
 
 
 <td>${lead.id || ""}</td>
@@ -303,9 +285,7 @@ row.innerHTML = `
 
 <td>${lead.country || ""}</td>
 
-
 <td>${lead.offering || ""}</td>
-
 
 
 <td>
@@ -345,8 +325,6 @@ Lost
 </td>
 
 
-
-
 <td>
 
 <button onclick="updateStatus('${lead.id}')">
@@ -375,7 +353,6 @@ tbody.appendChild(row);
 
 
 }
-
 
 
 
@@ -419,9 +396,9 @@ headers:{
 
 body:JSON.stringify({
 
-id,
+id:id,
 
-status
+status:status
 
 })
 
@@ -438,30 +415,21 @@ await response.json();
 
 if(data.success){
 
-alert(
-"Status updated"
-);
-
+alert("Status updated");
 
 loadLeads();
 
-
 }
-
 else{
-
 
 alert(
 data.error || "Update failed"
 );
 
-
 }
 
 
 }
-
-
 
 
 
@@ -512,12 +480,16 @@ content.innerHTML = `
 
 <p><b>Message:</b></p>
 
-<p>
-${lead.message || ""}
-</p>
+<p>${lead.message || ""}</p>
+
 
 `;
+
+
+
 box
 .classList
 .remove("hidden");
+
+
 }
