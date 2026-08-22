@@ -1,209 +1,60 @@
-const API_HEADERS = {
-  "Content-Type": "application/json; charset=UTF-8",
-  "Cache-Control": "no-store",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY"
-};
+async function login(){
+
+const token =
+document.getElementById("token").value.trim();
 
 
-
-function jsonResponse(
-  data,
-  status = 200
-) {
-
-  return new Response(
-
-    JSON.stringify(data),
-
-    {
-      status,
-
-      headers:
-        API_HEADERS
-    }
-
-  );
-
+if(!token){
+    return;
 }
 
 
+const response =
+await fetch("/api/login",{
 
+method:"POST",
 
+headers:{
+"Content-Type":"application/json"
+},
 
-export async function onRequestPost(
-  context
-) {
+body:JSON.stringify({
+token
+})
 
+});
 
-  const {
-    request,
-    env
-  } = context;
 
+const data =
+await response.json();
 
 
+if(data.success){
 
-  try {
 
+localStorage.setItem(
+"admin_session",
+data.session
+);
 
-    if (
-      !env.ADMIN_SESSIONS_KV ||
-      typeof env.ADMIN_SESSIONS_KV.put !== "function"
-    ) {
 
+adminSession =
+data.session;
 
-      return jsonResponse(
 
-        {
-          success:false,
-          error:"Session storage unavailable"
-        },
+showPanel();
 
-        500
 
-      );
+}
+else{
 
-    }
 
+document.getElementById("loginError")
+.innerText =
+"Invalid token";
 
 
-
-    const body =
-      await request.json();
-
-
-
-
-    const token =
-      body.token;
-
-
-
-
-    if (
-      !token ||
-      token !== env.ADMIN_TOKEN
-    ) {
-
-
-      return jsonResponse(
-
-        {
-          success:false,
-          error:"Invalid credentials"
-        },
-
-        401
-
-      );
-
-    }
-
-
-
-
-
-    const sessionId =
-      crypto.randomUUID();
-
-
-
-
-
-
-    await env.ADMIN_SESSIONS_KV.put(
-
-      `session:${sessionId}`,
-
-      JSON.stringify({
-
-        createdAt:
-          new Date().toISOString()
-
-      }),
-
-      {
-
-        expirationTtl:
-          60 * 60 * 8
-
-      }
-
-    );
-
-
-
-
-
-
-    const check =
-      await env.ADMIN_SESSIONS_KV.get(
-
-        `session:${sessionId}`
-
-      );
-
-
-
-    console.log(
-      "SESSION CHECK:",
-      check
-    );
-
-
-
-
-
-
-    return jsonResponse(
-
-      {
-
-        success:true,
-
-        session:
-          sessionId
-
-      },
-
-      200
-
-    );
-
-
-
-
-
-  } catch(error) {
-
-
-    console.error(
-
-      "Admin login error:",
-
-      error
-
-    );
-
-
-
-    return jsonResponse(
-
-      {
-
-        success:false,
-
-        error:"Login failed"
-
-      },
-
-      500
-
-    );
-
-
-  }
+}
 
 
 }
