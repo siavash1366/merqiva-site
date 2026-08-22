@@ -78,9 +78,7 @@ export async function onRequestPost(context) {
 
     const sessionId =
       crypto.randomUUID();
-    await env.ADMIN_SESSIONS_KV.put(
-const check =
- await env.ADMIN_SESSIONS_KV.put(
+await env.ADMIN_SESSIONS_KV.put(
 
   `session:${sessionId}`,
 
@@ -116,6 +114,7 @@ return jsonResponse({
     sessionId
 
 });
+    
       200
     );
   }
