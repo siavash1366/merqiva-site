@@ -1,529 +1,202 @@
-const LOGIN_URL="/api/login";
+<!DOCTYPE html>
+<html lang="en">
 
-const API_URL="/api/admin/leads";
+<head>
 
+<meta charset="UTF-8">
 
-let adminSession =
-localStorage.getItem(
-"admin_session"
-);
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>Merqiva Admin</title>
 
 
-let leadsCache = [];
+<link rel="stylesheet" href="/admin/admin.css">
 
 
+</head>
 
-document
-.getElementById("loginBtn")
-.addEventListener(
-"click",
-login
-);
 
 
+<body>
 
-document
-.getElementById("refreshBtn")
-.addEventListener(
-"click",
-loadLeads
-);
 
+<div class="container">
 
 
-document
-.getElementById("logoutBtn")
-.addEventListener(
-"click",
-logout
-);
 
+<div id="loginBox" class="card">
 
 
-document
-.getElementById("closeDetails")
-.addEventListener(
-"click",
-()=>{
+<h1>
+Merqiva Admin Login
+</h1>
 
-document
-.getElementById("leadDetails")
-.classList
-.add("hidden");
 
-}
-);
 
+<input
+id="token"
+type="password"
+placeholder="Admin Token"
+/>
 
 
 
-
-if(adminSession){
-
-showPanel();
-
-}
-
-
-
-
-
-async function login(){
-
-
-const token =
-document
-.getElementById("token")
-.value
-.trim();
-
-
-
-if(!token){
-
-return;
-
-}
-
-
-
-const response =
-await fetch(
-LOGIN_URL,
-{
-
-method:"POST",
-
-headers:{
-
-"Content-Type":
-"application/json"
-
-},
-
-body:JSON.stringify({
-
-token
-
-})
-
-}
-
-);
-
-
-
-const data =
-await response.json();
-
-
-
-if(data.success){
-
-
-adminSession =
-data.session;
-
-
-
-localStorage.setItem(
-
-"admin_session",
-
-data.session
-
-);
-
-
-
-showPanel();
-
-
-}
-
-else{
-
-
-document
-.getElementById("loginError")
-.innerText =
-"Invalid token";
-
-
-}
-
-
-}
-
-
-
-
-
-
-
-
-function showPanel(){
-
-
-document
-.getElementById("loginBox")
-.classList
-.add("hidden");
-
-
-
-document
-.getElementById("panel")
-.classList
-.remove("hidden");
-
-
-
-loadLeads();
-
-
-}
-
-
-
-
-
-
-
-
-function logout(){
-
-
-localStorage.removeItem(
-"admin_session"
-);
-
-
-
-adminSession=null;
-
-
-location.reload();
-
-
-}
-
-
-
-
-
-
-
-
-
-async function loadLeads(){
-
-
-const response =
-await fetch(
-
-API_URL,
-
-{
-
-headers:{
-
-"Authorization":
-
-"Bearer "+adminSession
-
-}
-
-}
-
-);
-
-
-
-const data =
-await response.json();
-
-
-
-if(!data.success){
-
-
-alert(
-data.error || "Unauthorized"
-);
-
-
-logout();
-
-
-return;
-
-}
-
-
-
-leadsCache =
-data.leads;
-
-
-
-const tbody =
-document
-.getElementById("leadTable");
-
-
-
-tbody.innerHTML="";
-
-
-
-
-
-data.leads.forEach(
-
-lead=>{
-
-
-const row =
-document.createElement("tr");
-
-
-
-row.innerHTML = `
-
-
-<td>${lead.id || ""}</td>
-
-<td>${lead.name || ""}</td>
-
-<td>${lead.email || ""}</td>
-
-<td>${lead.company || ""}</td>
-
-<td>${lead.country || ""}</td>
-
-
-<td>${lead.offering || ""}</td>
-
-
-
-<td>
-
-<select id="status-${lead.id}">
-
-<option ${lead.status==="New"?"selected":""}>
-New
-</option>
-
-<option ${lead.status==="Reviewed"?"selected":""}>
-Reviewed
-</option>
-
-<option ${lead.status==="Contacted"?"selected":""}>
-Contacted
-</option>
-
-<option ${lead.status==="Qualified"?"selected":""}>
-Qualified
-</option>
-
-<option ${lead.status==="Proposal Sent"?"selected":""}>
-Proposal Sent
-</option>
-
-<option ${lead.status==="Won"?"selected":""}>
-Won
-</option>
-
-<option ${lead.status==="Lost"?"selected":""}>
-Lost
-</option>
-
-</select>
-
-</td>
-
-
-
-
-<td>
-
-<button onclick="updateStatus('${lead.id}')">
-Save
+<button id="loginBtn">
+Login
 </button>
 
 
-<button onclick='viewLead(${JSON.stringify(lead)})'>
-View
+
+<div id="loginError" class="message"></div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div id="panel" class="hidden">
+
+
+
+<div class="card">
+
+
+<h1>
+Lead Management
+</h1>
+
+
+
+<button id="refreshBtn">
+Refresh Leads
 </button>
 
 
-</td>
 
+<button id="logoutBtn">
+Logout
+</button>
 
-`;
 
 
+</div>
 
-tbody.appendChild(row);
 
 
-}
 
-);
 
 
-}
 
+<div class="card">
 
 
+<h2>
+Website Leads
+</h2>
 
 
 
 
+<table>
 
 
+<thead>
 
-async function updateStatus(id){
+<tr>
 
+<th>ID</th>
 
-const status =
-document
-.getElementById(
-"status-"+id
-)
-.value;
+<th>Name</th>
 
+<th>Email</th>
 
+<th>Company</th>
 
-const response =
-await fetch(
+<th>Country</th>
 
-API_URL,
+<th>Offering</th>
 
-{
+<th>Status</th>
 
-method:"PATCH",
+<th>Action</th>
 
-headers:{
 
-"Content-Type":
-"application/json",
+</tr>
 
-"Authorization":
-"Bearer "+adminSession
 
-},
+</thead>
 
 
-body:JSON.stringify({
 
-id,
+<tbody id="leadTable">
 
-status
 
-})
+</tbody>
 
-}
 
-);
 
+</table>
 
 
-const data =
-await response.json();
 
+</div>
 
 
-if(data.success){
 
-alert(
-"Status updated"
-);
 
 
-loadLeads();
 
 
-}
 
-else{
 
+<div id="leadDetails" class="card hidden">
 
-alert(
-data.error || "Update failed"
-);
 
+<h2>
+Lead Details
+</h2>
 
-}
 
 
-}
+<div id="detailsContent">
 
+</div>
 
 
 
+<button id="closeDetails">
+Close
+</button>
 
 
 
+</div>
 
 
 
-function viewLead(lead){
 
 
-const box =
-document
-.getElementById(
-"leadDetails"
-);
+</div>
 
 
 
-const content =
-document
-.getElementById(
-"detailsContent"
-);
+</div>
 
 
 
-content.innerHTML = `
 
 
-<p><b>ID:</b> ${lead.id || ""}</p>
 
-<p><b>Name:</b> ${lead.name || ""}</p>
+<script src="/admin/admin.js"></script>
 
-<p><b>Email:</b> ${lead.email || ""}</p>
 
-<p><b>Company:</b> ${lead.company || ""}</p>
 
-<p><b>Country:</b> ${lead.country || ""}</p>
+</body>
 
-<p><b>Market:</b> ${lead.market || ""}</p>
 
-<p><b>Offering:</b> ${lead.offering || ""}</p>
-
-<p><b>Status:</b> ${lead.status || ""}</p>
-
-<p><b>Created:</b> ${lead.createdAt || ""}</p>
-
-<p><b>Message:</b></p>
-
-<p>
-${lead.message || ""}
-</p>
-
-
-`;
-
-
-
-box
-.classList
-.remove("hidden");
-
-
-}
+</html>
