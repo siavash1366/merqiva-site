@@ -9,11 +9,9 @@ localStorage.getItem("admin_session");
 
 
 
-// Login button
 
 const loginBtn =
 document.getElementById("loginBtn");
-
 
 if(loginBtn){
 
@@ -27,11 +25,8 @@ login
 
 
 
-// Refresh button
-
 const refreshBtn =
 document.getElementById("refreshBtn");
-
 
 if(refreshBtn){
 
@@ -45,11 +40,9 @@ loadLeads
 
 
 
-// Logout button
 
 const logoutBtn =
 document.getElementById("logoutBtn");
-
 
 if(logoutBtn){
 
@@ -63,11 +56,9 @@ logout
 
 
 
-// Close details button
 
 const closeBtn =
 document.getElementById("closeDetails");
-
 
 if(closeBtn){
 
@@ -75,12 +66,10 @@ closeBtn.addEventListener(
 "click",
 ()=>{
 
-
 const box =
 document.getElementById(
 "leadDetails"
 );
-
 
 if(box){
 
@@ -89,7 +78,6 @@ box.classList.add(
 );
 
 }
-
 
 }
 
@@ -107,7 +95,6 @@ if(adminSession){
 showPanel();
 
 }
-
 
 
 
@@ -134,7 +121,6 @@ return;
 
 
 
-
 const response =
 await fetch(
 
@@ -153,7 +139,7 @@ headers:{
 
 body:JSON.stringify({
 
-token:token
+token
 
 })
 
@@ -163,10 +149,8 @@ token:token
 
 
 
-
 const data =
 await response.json();
-
 
 
 
@@ -179,11 +163,8 @@ data.session;
 
 
 localStorage.setItem(
-
 "admin_session",
-
 data.session
-
 );
 
 
@@ -204,7 +185,6 @@ document
 }
 
 
-
 }
 
 
@@ -213,11 +193,7 @@ document
 
 
 
-
-
-
 function showPanel(){
-
 
 
 const loginBox =
@@ -242,7 +218,6 @@ loginBox.classList.add(
 }
 
 
-
 if(panel){
 
 panel.classList.remove(
@@ -252,13 +227,10 @@ panel.classList.remove(
 }
 
 
-
 loadLeads();
 
 
 }
-
-
 
 
 
@@ -274,15 +246,14 @@ localStorage.removeItem(
 );
 
 
-
 adminSession = null;
-
 
 
 location.reload();
 
 
 }
+
 
 
 
@@ -305,7 +276,6 @@ API_URL,
 headers:{
 
 "Authorization":
-
 "Bearer " + adminSession
 
 }
@@ -321,16 +291,14 @@ await response.json();
 
 
 
-
 if(!data.success){
-
 
 logout();
 
 return;
 
-
 }
+
 
 
 
@@ -350,7 +318,8 @@ return;
 
 
 
-tbody.innerHTML = "";
+tbody.innerHTML="";
+
 
 
 
@@ -384,48 +353,57 @@ row.innerHTML = `
 <td>${lead.offering || ""}</td>
 
 
-
 <td>
 
-<select id="status-${lead.id}">
+
+<select class="statusSelect"
+data-id="${lead.id}">
 
 
-<option ${lead.status==="New"?"selected":""}>
+<option value="New"
+${lead.status==="New"?"selected":""}>
 New
 </option>
 
 
-<option ${lead.status==="Reviewed"?"selected":""}>
+<option value="Reviewed"
+${lead.status==="Reviewed"?"selected":""}>
 Reviewed
 </option>
 
 
-<option ${lead.status==="Contacted"?"selected":""}>
+<option value="Contacted"
+${lead.status==="Contacted"?"selected":""}>
 Contacted
 </option>
 
 
-<option ${lead.status==="Qualified"?"selected":""}>
+<option value="Qualified"
+${lead.status==="Qualified"?"selected":""}>
 Qualified
 </option>
 
 
-<option ${lead.status==="Proposal Sent"?"selected":""}>
+<option value="Proposal Sent"
+${lead.status==="Proposal Sent"?"selected":""}>
 Proposal Sent
 </option>
 
 
-<option ${lead.status==="Won"?"selected":""}>
+<option value="Won"
+${lead.status==="Won"?"selected":""}>
 Won
 </option>
 
 
-<option ${lead.status==="Lost"?"selected":""}>
+<option value="Lost"
+${lead.status==="Lost"?"selected":""}>
 Lost
 </option>
 
 
 </select>
+
 
 </td>
 
@@ -435,12 +413,14 @@ Lost
 <td>
 
 
-<button onclick="updateStatus('${lead.id}')">
+<button class="saveBtn"
+data-id="${lead.id}">
 Save
 </button>
 
 
-<button onclick='viewLead(${JSON.stringify(lead)})'>
+<button class="viewBtn"
+data-id="${lead.id}">
 View
 </button>
 
@@ -449,6 +429,48 @@ View
 
 
 `;
+
+
+
+
+
+const saveBtn =
+row.querySelector(".saveBtn");
+
+
+saveBtn.addEventListener(
+"click",
+()=>{
+
+updateStatus(
+lead.id
+);
+
+}
+
+);
+
+
+
+
+
+const viewBtn =
+row.querySelector(".viewBtn");
+
+
+viewBtn.addEventListener(
+"click",
+()=>{
+
+viewLead(
+lead
+);
+
+}
+
+);
+
+
 
 
 
@@ -477,8 +499,8 @@ async function updateStatus(id){
 
 
 const select =
-document.getElementById(
-"status-" + id
+document.querySelector(
+`.statusSelect[data-id="${id}"]`
 );
 
 
@@ -491,9 +513,9 @@ return;
 
 
 
+
 const status =
 select.value;
-
 
 
 
@@ -520,9 +542,9 @@ headers:{
 
 body:JSON.stringify({
 
-id:id,
+id,
 
-status:status
+status
 
 })
 
@@ -547,7 +569,6 @@ alert(
 );
 
 
-
 loadLeads();
 
 
@@ -561,7 +582,6 @@ data.error || "Update failed"
 
 
 }
-
 
 
 }
@@ -626,9 +646,7 @@ content.innerHTML = `
 
 <p><b>Message:</b></p>
 
-<p>
-${lead.message || ""}
-</p>
+<p>${lead.message || ""}</p>
 
 
 `;
