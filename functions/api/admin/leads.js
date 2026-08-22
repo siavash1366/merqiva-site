@@ -48,60 +48,9 @@ export async function onRequestGet(
     env
   } = context;
 
-
-
-
-
   /*
    * Admin Authentication
    */
-
-
-  const authorization =
-    request.headers.get(
-      "Authorization"
-    );
-
-
-
-  if (
-
-    !authorization ||
-
-    authorization !==
-      `Bearer ${env.ADMIN_TOKEN}`
-
-  ) {
-
-
-    return jsonResponse(
-
-      {
-
-        success:false,
-
-        error:
-          "Unauthorized"
-
-      },
-
-      401
-
-    );
-
-
-  }
-
-
-
-
-
-
-
-  /*
-   * KV Check
-   */
-
 
   if (
 
