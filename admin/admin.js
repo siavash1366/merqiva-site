@@ -1,122 +1,99 @@
 const LOGIN_URL = "/api/login";
-
 const API_URL = "/api/admin/leads";
-
 const HISTORY_URL = "/api/admin/history";
-
 
 
 let adminSession =
 localStorage.getItem("admin_session");
 
 
-
 let currentPage = 1;
-
 let currentLead = null;
-
 let currentSearch = "";
-
 let currentStatus = "";
 
 
 
-const loginBtn =
-document.getElementById("loginBtn");
 
 
-if(loginBtn){
+// --------------------
+// INIT EVENTS
+// --------------------
 
-loginBtn.addEventListener(
+
+document
+.getElementById("loginBtn")
+?.addEventListener(
 "click",
 login
 );
 
-}
 
 
-
-const refreshBtn =
-document.getElementById("refreshBtn");
-
-
-if(refreshBtn){
-
-refreshBtn.addEventListener(
+document
+.getElementById("refreshBtn")
+?.addEventListener(
 "click",
 ()=>{
+
 currentPage=1;
 loadLeads();
+
 }
+
 );
 
-}
 
 
-
-
-const logoutBtn =
-document.getElementById("logoutBtn");
-
-
-if(logoutBtn){
-
-logoutBtn.addEventListener(
+document
+.getElementById("logoutBtn")
+?.addEventListener(
 "click",
 logout
 );
 
-}
 
 
-
-
-const searchBtn =
-document.getElementById("searchBtn");
-
-
-if(searchBtn){
-
-searchBtn.addEventListener(
+document
+.getElementById("searchBtn")
+?.addEventListener(
 "click",
 ()=>{
 
+
 currentSearch =
-document.getElementById(
-"searchInput"
-).value.trim();
+document
+.getElementById("searchInput")
+.value
+.trim();
 
 
 currentStatus =
-document.getElementById(
-"statusFilter"
-).value;
+document
+.getElementById("statusFilter")
+.value;
 
 
 currentPage=1;
 
+
 loadLeads();
 
+
 }
 
 );
 
-}
 
 
 
 
-const prevPage =
-document.getElementById(
-"prevPage"
-);
-
-
-if(prevPage){
-
-prevPage.addEventListener(
+document
+.getElementById("prevPage")
+?.addEventListener(
 "click",
 ()=>{
+
 
 if(currentPage>1){
 
@@ -126,77 +103,65 @@ loadLeads();
 
 }
 
+
 }
 
 );
 
-}
 
 
 
 
-const nextPage =
-document.getElementById(
-"nextPage"
-);
-
-
-if(nextPage){
-
-nextPage.addEventListener(
+document
+.getElementById("nextPage")
+?.addEventListener(
 "click",
 ()=>{
+
 
 currentPage++;
 
 loadLeads();
 
+
 }
 
 );
 
-}
 
 
 
 
-const closeDetails =
-document.getElementById(
-"closeDetails"
-);
 
-
-if(closeDetails){
-
-closeDetails.addEventListener(
+document
+.getElementById("closeDetails")
+?.addEventListener(
 "click",
 ()=>{
+
 
 document
 .getElementById("leadDetails")
 .classList
 .add("hidden");
 
+
 }
 
 );
 
-}
 
 
 
 
-const replyBtn =
-document.getElementById(
-"replyBtn"
-);
 
 
-if(replyBtn){
-
-replyBtn.addEventListener(
+document
+.getElementById("replyBtn")
+?.addEventListener(
 "click",
 ()=>{
+
 
 if(currentLead?.email){
 
@@ -205,48 +170,45 @@ window.location.href =
 
 }
 
+
 }
 
 );
 
-}
 
 
 
 
 
-const copyEmailBtn =
-document.getElementById(
-"copyEmailBtn"
-);
 
-
-if(copyEmailBtn){
-
-copyEmailBtn.addEventListener(
+document
+.getElementById("copyEmailBtn")
+?.addEventListener(
 "click",
 async()=>{
 
 
 if(currentLead?.email){
 
+
 await navigator.clipboard.writeText(
 currentLead.email
 );
 
 
-alert(
+showToast(
 "Email copied"
 );
 
+
 }
+
 
 
 }
 
 );
 
-}
 
 
 
@@ -264,6 +226,13 @@ showPanel();
 
 
 
+
+
+// --------------------
+// LOGIN
+// --------------------
+
+
 async function login(){
 
 
@@ -275,11 +244,9 @@ document
 
 
 
-if(!token){
-
+if(!token)
 return;
 
-}
 
 
 
@@ -322,7 +289,6 @@ adminSession =
 data.session;
 
 
-
 localStorage.setItem(
 "admin_session",
 data.session
@@ -359,19 +325,15 @@ function showPanel(){
 
 
 document
-.getElementById(
-"loginBox"
-)
-.classList
+.getElementById("loginBox")
+?.classList
 .add("hidden");
 
 
 
 document
-.getElementById(
-"panel"
-)
-.classList
+.getElementById("panel")
+?.classList
 .remove("hidden");
 
 
@@ -413,6 +375,12 @@ location.reload();
 
 
 
+
+// --------------------
+// LOAD LEADS
+// --------------------
+
+
 async function loadLeads(){
 
 
@@ -428,8 +396,6 @@ search:currentSearch,
 status:currentStatus
 
 });
-
-
 
 
 
@@ -459,7 +425,6 @@ await response.json();
 
 
 
-
 if(!data.success){
 
 logout();
@@ -467,8 +432,6 @@ logout();
 return;
 
 }
-
-
 
 
 
@@ -515,14 +478,14 @@ row.innerHTML = `
 
 <td>
 
-<select class="statusSelect"
-data-id="${lead.id}">
-
+<select
+class="statusSelect"
+data-id="${lead.id}"
+>
 
 ${statusOptions(
 lead.status
 )}
-
 
 </select>
 
@@ -544,7 +507,6 @@ View
 
 
 </td>
-
 
 `;
 
@@ -573,6 +535,7 @@ row
 
 
 
+
 tbody.appendChild(row);
 
 
@@ -584,23 +547,14 @@ tbody.appendChild(row);
 
 
 
-const pageInfo =
-document.getElementById(
-"pageInfo"
-);
 
-
-if(pageInfo){
-
-pageInfo.innerText =
+document
+.getElementById("pageInfo")
+.innerText =
 `Page ${data.page} / ${data.pages || 1}`;
 
-}
-
-
 
 }
-
 
 
 
@@ -615,7 +569,7 @@ current
 ){
 
 
-const list=[
+return [
 
 "New",
 
@@ -631,19 +585,21 @@ const list=[
 
 "Lost"
 
-];
+]
 
+.map(
+status=>`
 
+<option value="${status}"
+${current===status?"selected":""}
+>
 
-return list.map(
-item=>`
+${status}
 
-<option value="${item}"
-${current===item?"selected":""}>
-${item}
 </option>
 
 `
+
 )
 .join("");
 
@@ -655,6 +611,11 @@ ${item}
 
 
 
+
+
+// --------------------
+// UPDATE STATUS
+// --------------------
 
 
 async function updateStatus(id){
@@ -671,8 +632,6 @@ document.querySelector(
 
 const status =
 select.value;
-
-
 
 
 
@@ -700,7 +659,9 @@ body:JSON.stringify({
 
 id,
 
-status
+status,
+
+note:"Updated from CRM"
 
 })
 
@@ -720,7 +681,8 @@ await response.json();
 
 if(data.success){
 
-alert(
+
+showToast(
 "Status updated"
 );
 
@@ -732,9 +694,8 @@ loadLeads();
 else{
 
 
-alert(
-data.error ||
-"Update failed"
+showToast(
+data.error || "Update failed"
 );
 
 
@@ -751,9 +712,12 @@ data.error ||
 
 
 
-async function viewLead(
-lead
-){
+// --------------------
+// VIEW LEAD
+// --------------------
+
+
+function viewLead(lead){
 
 
 currentLead =
@@ -798,13 +762,18 @@ content.innerHTML = `
 
 <p><b>Created:</b> ${lead.createdAt || ""}</p>
 
+
 <p><b>Message:</b></p>
 
-<p>${lead.message || ""}</p>
+<p>
+${lead.message || ""}
+</p>
 
 
 <div id="historyContent">
+
 Loading...
+
 </div>
 
 
@@ -833,23 +802,23 @@ lead.id
 
 
 
+// --------------------
+// HISTORY
+// --------------------
+
+
 async function loadHistory(id){
 
 
-const historyBox =
+const box =
 document.getElementById(
 "historyContent"
 );
 
 
 
-if(!historyBox){
-
+if(!box)
 return;
-
-}
-
-
 
 
 
@@ -881,22 +850,13 @@ await response.json();
 
 
 
-if(!data.success){
 
-historyBox.innerHTML =
-"No history";
+if(
+!data.success ||
+!data.history.length
+){
 
-return;
-
-}
-
-
-
-
-
-if(!data.history.length){
-
-historyBox.innerHTML =
+box.innerHTML =
 "No activity yet";
 
 return;
@@ -907,31 +867,139 @@ return;
 
 
 
-historyBox.innerHTML =
+box.innerHTML =
 data.history
+.reverse()
 .map(
 
 item=>`
 
-<p>
+<div class="history-item">
 
-<b>${item.action}</b><br>
+
+<div class="history-title">
+
+${item.action}
+
+</div>
+
+
+
+<div class="history-change">
 
 ${item.from}
-→
+
+↓
+
 ${item.to}
 
-<br>
+</div>
 
-${item.date}
 
-${item.note ? "<br>"+item.note:""}
 
-</p>
+<div class="history-date">
+
+${new Date(item.date)
+.toLocaleString()}
+
+</div>
+
+
+${item.note ?
+
+`
+<div>
+Note:
+${item.note}
+</div>
+`
+
+:
+
+""
+
+}
+
+
+
+</div>
+
 
 `
 
 )
 .join("");
+
+
+}
+
+
+
+
+
+
+
+
+
+// --------------------
+// TOAST
+// --------------------
+
+
+function showToast(message){
+
+
+let toast =
+document.querySelector(
+".toast"
+);
+
+
+
+if(!toast){
+
+
+toast =
+document.createElement(
+"div"
+);
+
+
+toast.className =
+"toast";
+
+
+document.body.appendChild(
+toast
+);
+
+
+}
+
+
+
+
+toast.innerText =
+message;
+
+
+
+toast.classList.add(
+"show"
+);
+
+
+
+setTimeout(
+()=>{
+
+toast.classList.remove(
+"show"
+);
+
+},
+2000
+);
+
 
 }
