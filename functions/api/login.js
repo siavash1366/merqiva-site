@@ -31,8 +31,27 @@ export async function onRequestPost(context) {
 
   try {
 
+
+    if (
+      !env.ADMIN_SESSIONS_KV ||
+      typeof env.ADMIN_SESSIONS_KV.put !== "function"
+    ) {
+
+      return jsonResponse(
+        {
+          success:false,
+          error:"Session storage unavailable"
+        },
+        500
+      );
+
+    }
+
+
+
     const body =
       await request.json();
+
 
 
     const token =
@@ -67,32 +86,44 @@ export async function onRequestPost(context) {
       `session:${sessionId}`,
 
       JSON.stringify({
+
         createdAt:
           new Date().toISOString()
+
       }),
 
       {
+
         expirationTtl:
           60 * 60 * 8
+
       }
 
     );
 
 
 
-    return jsonResponse({
+    return jsonResponse(
 
-      success:true,
+      {
 
-      session:
-        sessionId
+        success:true,
 
-    });
+        session:
+          sessionId
+
+      },
+
+      200
+
+    );
 
 
   }
 
-  catch(error){
+
+  catch(error) {
+
 
     console.error(
       "Admin login error:",
@@ -101,12 +132,19 @@ export async function onRequestPost(context) {
 
 
     return jsonResponse(
+
       {
+
         success:false,
+
         error:"Login failed"
+
       },
+
       500
+
     );
+
 
   }
 
