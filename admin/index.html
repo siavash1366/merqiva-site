@@ -266,10 +266,7 @@ await response.json();
 if(data.success){
 
 
-localStorage.setItem(
-"admin_token",
-token
-);
+localStorage.setItem("admin_session", session)
 
 
 adminToken=token;
