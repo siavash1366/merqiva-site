@@ -443,13 +443,23 @@ error:"Lead not found"
 }
 
 
-
-
-
 const oldStatus =
 lead.status ||
 "New";
 
+
+// جلوگیری از ثبت History تکراری
+if(oldStatus === newStatus){
+
+return jsonResponse({
+
+success:true,
+
+lead
+
+});
+
+}
 
 
 
@@ -457,11 +467,8 @@ lead.status =
 newStatus;
 
 
-
 lead.updatedAt =
 new Date().toISOString();
-
-
 
 
 
