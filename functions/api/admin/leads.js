@@ -11,7 +11,6 @@ const API_HEADERS = {
 
   "X-Frame-Options":
     "DENY"
-
 };
 function jsonResponse(
   data,
