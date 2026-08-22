@@ -291,3 +291,154 @@ export async function onRequestGet(
 
 
 }
+export async function onRequestPatch(context){
+
+const {
+ request,
+ env
+}=context;
+
+
+
+const authorization =
+request.headers.get("Authorization");
+
+
+if(
+!authorization ||
+!authorization.startsWith("Bearer ")
+){
+
+return jsonResponse(
+{
+success:false,
+error:"Unauthorized"
+},
+401
+);
+
+}
+
+
+
+const sessionId =
+authorization.replace(
+"Bearer ",
+""
+);
+
+
+
+const session =
+await env.ADMIN_SESSIONS_KV.get(
+`session:${sessionId}`
+);
+
+
+
+if(!session){
+
+return jsonResponse(
+{
+success:false,
+error:"Session expired"
+},
+401
+);
+
+}
+
+
+
+try{
+
+
+const body =
+await request.json();
+
+
+
+const leadId =
+body.id;
+
+
+
+const status =
+body.status;
+
+
+
+if(
+!leadId ||
+!status
+){
+
+return jsonResponse(
+{
+success:false,
+error:"Missing data"
+},
+400
+);
+
+}
+
+
+
+const lead =
+await env.LEADS_KV.get(
+`lead:${leadId}`,
+{
+type:"json"
+}
+);
+
+
+
+if(!lead){
+
+return jsonResponse(
+{
+success:false,
+error:"Lead not found"
+},
+404
+);
+
+}
+
+
+
+lead.status=status;
+
+lead.updatedAt =
+new Date().toISOString();
+
+
+
+await env.LEADS_KV.put(
+
+`lead:${leadId}`,
+
+JSON.stringify(lead)
+
+);
+return jsonResponse({
+success:true,
+lead
+});
+}
+catch(error){
+console.error(
+"Update lead error:",
+error
+);
+return jsonResponse(
+{
+success:false,
+error:"Update failed"
+},
+500
+);
+}
+}
