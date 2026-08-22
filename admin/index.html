@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Merqiva Admin</title>
+
 
 <style>
 
@@ -106,15 +109,19 @@ th{
 </head>
 
 
+
 <body>
 
 
 <div class="container">
 
 
+
 <div id="loginBox" class="card">
 
-<h1>Merqiva Admin Login</h1>
+<h1>
+Merqiva Admin Login
+</h1>
 
 
 <input
@@ -137,10 +144,12 @@ Login
 
 
 
+
 <div id="panel" class="hidden">
 
 
 <div class="card">
+
 
 <h1>
 Lead Management
@@ -162,12 +171,14 @@ Logout
 
 
 
+
 <div class="card">
 
 
 <h2>
 Website Leads
 </h2>
+
 
 
 <table>
@@ -214,15 +225,21 @@ Website Leads
 <script>
 
 
+const LOGIN_URL="/api/login";
+
 const API_URL="/api/admin/leads";
 
 
+
 let adminSession =
-localStorage.getItem("admin_session");
+localStorage.getItem(
+"admin_session"
+);
 
 
 
-if(adminToken){
+
+if(adminSession){
 
 showPanel();
 
@@ -231,11 +248,17 @@ showPanel();
 
 
 
+
+
 async function login(){
 
 
-const token=
-document.getElementById("token").value.trim();
+const token =
+document
+.getElementById("token")
+.value
+.trim();
+
 
 
 if(!token){
@@ -245,42 +268,71 @@ return;
 }
 
 
-const response=
+
+const response =
 await fetch(
-API_URL,
+
+LOGIN_URL,
+
 {
+
+method:"POST",
+
 headers:{
-"Authorization":
-"Bearer "+token
+
+"Content-Type":
+"application/json"
+
+},
+
+body:JSON.stringify({
+
+token
+
+})
+
 }
-}
+
 );
 
 
 
-const data=
+const data =
 await response.json();
+
 
 
 
 if(data.success){
 
 
-localStorage.setItem("admin_session", session)
+
+adminSession =
+data.session;
 
 
-adminToken=token;
+
+localStorage.setItem(
+
+"admin_session",
+
+data.session
+
+);
+
 
 
 showPanel();
+
 
 
 }
 else{
 
 
-document.getElementById("loginError")
-.innerText=
+document
+.getElementById("loginError")
+.innerText =
 "Invalid token";
 
 
@@ -288,6 +340,9 @@ document.getElementById("loginError")
 
 
 }
+
+
+
 
 
 
@@ -301,10 +356,12 @@ document
 .add("hidden");
 
 
+
 document
 .getElementById("panel")
 .classList
 .remove("hidden");
+
 
 
 loadLeads();
@@ -315,60 +372,111 @@ loadLeads();
 
 
 
+
+
+
+
 function logout(){
 
 
 localStorage.removeItem(
+
 "admin_session"
+
 );
+
+
+adminSession = null;
+
+
 location.reload();
+
+
 }
+
+
+
+
+
+
+
 async function loadLeads(){
 
-const response=
+
+
+const response =
 await fetch(
+
 API_URL,
+
 {
+
 headers:{
+
 "Authorization":
-"Bearer "+adminSession}
+
+"Bearer " + adminSession
+
 }
+
+}
+
 );
 
-const data=
+
+
+
+const data =
 await response.json();
+
+
+
 
 if(!data.success){
 
-alert("Unauthorized");
+
+alert(
+data.error || "Unauthorized"
+);
+
 
 logout();
 
+
 return;
+
 
 }
 
-const tbody=
+
+
+
+
+const tbody =
 document.getElementById(
 "leadTable"
 );
+
+
 
 tbody.innerHTML="";
 
 
 
+
 data.leads.forEach(
+
 lead=>{
 
 
-const row=
+const row =
 document.createElement(
 "tr"
 );
 
 
 
-row.innerHTML=`
+row.innerHTML = `
 
 <td>${lead.id || ""}</td>
 
@@ -395,7 +503,10 @@ ${lead.status || "new"}
 tbody.appendChild(row);
 
 
-});
+}
+
+);
+
 
 
 }
@@ -406,4 +517,5 @@ tbody.appendChild(row);
 
 
 </body>
+
 </html>
