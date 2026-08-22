@@ -2,16 +2,28 @@ const LOGIN_URL = "/api/login";
 
 const API_URL = "/api/admin/leads";
 
+const HISTORY_URL = "/api/admin/history";
+
+
 
 let adminSession =
 localStorage.getItem("admin_session");
 
 
 
+let currentPage = 1;
+
+let currentLead = null;
+
+let currentSearch = "";
+
+let currentStatus = "";
+
 
 
 const loginBtn =
 document.getElementById("loginBtn");
+
 
 if(loginBtn){
 
@@ -24,15 +36,18 @@ login
 
 
 
-
 const refreshBtn =
 document.getElementById("refreshBtn");
+
 
 if(refreshBtn){
 
 refreshBtn.addEventListener(
 "click",
-loadLeads
+()=>{
+currentPage=1;
+loadLeads();
+}
 );
 
 }
@@ -40,9 +55,9 @@ loadLeads
 
 
 
-
 const logoutBtn =
 document.getElementById("logoutBtn");
+
 
 if(logoutBtn){
 
@@ -56,26 +71,58 @@ logout
 
 
 
+const searchBtn =
+document.getElementById("searchBtn");
 
-const closeBtn =
-document.getElementById("closeDetails");
 
-if(closeBtn){
+if(searchBtn){
 
-closeBtn.addEventListener(
+searchBtn.addEventListener(
 "click",
 ()=>{
 
-const box =
+currentSearch =
 document.getElementById(
-"leadDetails"
+"searchInput"
+).value.trim();
+
+
+currentStatus =
+document.getElementById(
+"statusFilter"
+).value;
+
+
+currentPage=1;
+
+loadLeads();
+
+}
+
 );
 
-if(box){
+}
 
-box.classList.add(
-"hidden"
+
+
+
+const prevPage =
+document.getElementById(
+"prevPage"
 );
+
+
+if(prevPage){
+
+prevPage.addEventListener(
+"click",
+()=>{
+
+if(currentPage>1){
+
+currentPage--;
+
+loadLeads();
 
 }
 
@@ -85,6 +132,121 @@ box.classList.add(
 
 }
 
+
+
+
+const nextPage =
+document.getElementById(
+"nextPage"
+);
+
+
+if(nextPage){
+
+nextPage.addEventListener(
+"click",
+()=>{
+
+currentPage++;
+
+loadLeads();
+
+}
+
+);
+
+}
+
+
+
+
+const closeDetails =
+document.getElementById(
+"closeDetails"
+);
+
+
+if(closeDetails){
+
+closeDetails.addEventListener(
+"click",
+()=>{
+
+document
+.getElementById("leadDetails")
+.classList
+.add("hidden");
+
+}
+
+);
+
+}
+
+
+
+
+const replyBtn =
+document.getElementById(
+"replyBtn"
+);
+
+
+if(replyBtn){
+
+replyBtn.addEventListener(
+"click",
+()=>{
+
+if(currentLead?.email){
+
+window.location.href =
+`mailto:${currentLead.email}`;
+
+}
+
+}
+
+);
+
+}
+
+
+
+
+
+const copyEmailBtn =
+document.getElementById(
+"copyEmailBtn"
+);
+
+
+if(copyEmailBtn){
+
+copyEmailBtn.addEventListener(
+"click",
+async()=>{
+
+
+if(currentLead?.email){
+
+await navigator.clipboard.writeText(
+currentLead.email
+);
+
+
+alert(
+"Email copied"
+);
+
+}
+
+
+}
+
+);
+
+}
 
 
 
@@ -123,9 +285,7 @@ return;
 
 const response =
 await fetch(
-
 LOGIN_URL,
-
 {
 
 method:"POST",
@@ -151,6 +311,7 @@ token
 
 const data =
 await response.json();
+
 
 
 
@@ -193,44 +354,34 @@ document
 
 
 
+
 function showPanel(){
 
 
-const loginBox =
-document.getElementById(
+document
+.getElementById(
 "loginBox"
-);
+)
+.classList
+.add("hidden");
 
 
-const panel =
-document.getElementById(
+
+document
+.getElementById(
 "panel"
-);
+)
+.classList
+.remove("hidden");
 
-
-
-if(loginBox){
-
-loginBox.classList.add(
-"hidden"
-);
-
-}
-
-
-if(panel){
-
-panel.classList.remove(
-"hidden"
-);
-
-}
 
 
 loadLeads();
 
 
 }
+
+
 
 
 
@@ -246,7 +397,7 @@ localStorage.removeItem(
 );
 
 
-adminSession = null;
+adminSession=null;
 
 
 location.reload();
@@ -262,21 +413,37 @@ location.reload();
 
 
 
-
 async function loadLeads(){
+
+
+const params =
+new URLSearchParams({
+
+page:currentPage,
+
+limit:20,
+
+search:currentSearch,
+
+status:currentStatus
+
+});
+
+
+
 
 
 const response =
 await fetch(
 
-API_URL,
+`${API_URL}?${params}`,
 
 {
 
 headers:{
 
 "Authorization":
-"Bearer " + adminSession
+"Bearer "+adminSession
 
 }
 
@@ -288,6 +455,8 @@ headers:{
 
 const data =
 await response.json();
+
+
 
 
 
@@ -303,18 +472,11 @@ return;
 
 
 
+
 const tbody =
 document.getElementById(
 "leadTable"
 );
-
-
-
-if(!tbody){
-
-return;
-
-}
 
 
 
@@ -324,9 +486,7 @@ tbody.innerHTML="";
 
 
 
-
 data.leads.forEach(
-
 lead=>{
 
 
@@ -355,51 +515,13 @@ row.innerHTML = `
 
 <td>
 
-
 <select class="statusSelect"
 data-id="${lead.id}">
 
 
-<option value="New"
-${lead.status==="New"?"selected":""}>
-New
-</option>
-
-
-<option value="Reviewed"
-${lead.status==="Reviewed"?"selected":""}>
-Reviewed
-</option>
-
-
-<option value="Contacted"
-${lead.status==="Contacted"?"selected":""}>
-Contacted
-</option>
-
-
-<option value="Qualified"
-${lead.status==="Qualified"?"selected":""}>
-Qualified
-</option>
-
-
-<option value="Proposal Sent"
-${lead.status==="Proposal Sent"?"selected":""}>
-Proposal Sent
-</option>
-
-
-<option value="Won"
-${lead.status==="Won"?"selected":""}>
-Won
-</option>
-
-
-<option value="Lost"
-${lead.status==="Lost"?"selected":""}>
-Lost
-</option>
+${statusOptions(
+lead.status
+)}
 
 
 </select>
@@ -408,19 +530,15 @@ Lost
 </td>
 
 
-
-
 <td>
 
 
-<button class="saveBtn"
-data-id="${lead.id}">
+<button class="saveBtn">
 Save
 </button>
 
 
-<button class="viewBtn"
-data-id="${lead.id}">
+<button class="viewBtn">
 View
 </button>
 
@@ -434,42 +552,23 @@ View
 
 
 
-const saveBtn =
-row.querySelector(".saveBtn");
-
-
-saveBtn.addEventListener(
+row
+.querySelector(".saveBtn")
+.addEventListener(
 "click",
-()=>{
-
-updateStatus(
-lead.id
-);
-
-}
-
+()=>updateStatus(lead.id)
 );
 
 
 
 
 
-const viewBtn =
-row.querySelector(".viewBtn");
-
-
-viewBtn.addEventListener(
+row
+.querySelector(".viewBtn")
+.addEventListener(
 "click",
-()=>{
-
-viewLead(
-lead
+()=>viewLead(lead)
 );
-
-}
-
-);
-
 
 
 
@@ -477,12 +576,76 @@ lead
 tbody.appendChild(row);
 
 
-
 }
 
 );
 
 
+
+
+
+const pageInfo =
+document.getElementById(
+"pageInfo"
+);
+
+
+if(pageInfo){
+
+pageInfo.innerText =
+`Page ${data.page} / ${data.pages || 1}`;
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+function statusOptions(
+current
+){
+
+
+const list=[
+
+"New",
+
+"Reviewed",
+
+"Contacted",
+
+"Qualified",
+
+"Proposal Sent",
+
+"Won",
+
+"Lost"
+
+];
+
+
+
+return list.map(
+item=>`
+
+<option value="${item}"
+${current===item?"selected":""}>
+${item}
+</option>
+
+`
+)
+.join("");
 
 }
 
@@ -497,25 +660,18 @@ tbody.appendChild(row);
 async function updateStatus(id){
 
 
-
 const select =
 document.querySelector(
+
 `.statusSelect[data-id="${id}"]`
+
 );
-
-
-
-if(!select){
-
-return;
-
-}
-
 
 
 
 const status =
 select.value;
+
 
 
 
@@ -535,7 +691,7 @@ headers:{
 "application/json",
 
 "Authorization":
-"Bearer " + adminSession
+"Bearer "+adminSession
 
 },
 
@@ -555,6 +711,7 @@ status
 
 
 
+
 const data =
 await response.json();
 
@@ -562,7 +719,6 @@ await response.json();
 
 
 if(data.success){
-
 
 alert(
 "Status updated"
@@ -577,7 +733,8 @@ else{
 
 
 alert(
-data.error || "Update failed"
+data.error ||
+"Update failed"
 );
 
 
@@ -594,7 +751,13 @@ data.error || "Update failed"
 
 
 
-function viewLead(lead){
+async function viewLead(
+lead
+){
+
+
+currentLead =
+lead;
 
 
 
@@ -609,15 +772,6 @@ const content =
 document.getElementById(
 "detailsContent"
 );
-
-
-
-
-if(!box || !content){
-
-return;
-
-}
 
 
 
@@ -649,13 +803,139 @@ content.innerHTML = `
 <p>${lead.message || ""}</p>
 
 
+<h3>
+Activity History
+</h3>
+
+<div id="historyContent">
+Loading...
+</div>
+
+
 `;
 
 
 
-box.classList.remove(
-"hidden"
+box
+.classList
+.remove("hidden");
+
+
+
+loadHistory(
+lead.id
 );
 
+
+}
+
+
+
+
+
+
+
+
+
+async function loadHistory(id){
+
+
+const historyBox =
+document.getElementById(
+"historyContent"
+);
+
+
+
+if(!historyBox){
+
+return;
+
+}
+
+
+
+
+
+const response =
+await fetch(
+
+`${HISTORY_URL}?id=${id}`,
+
+{
+
+headers:{
+
+"Authorization":
+"Bearer "+adminSession
+
+}
+
+}
+
+);
+
+
+
+
+
+const data =
+await response.json();
+
+
+
+
+if(!data.success){
+
+historyBox.innerHTML =
+"No history";
+
+return;
+
+}
+
+
+
+
+
+if(!data.history.length){
+
+historyBox.innerHTML =
+"No activity yet";
+
+return;
+
+}
+
+
+
+
+
+historyBox.innerHTML =
+data.history
+.map(
+
+item=>`
+
+<p>
+
+<b>${item.action}</b><br>
+
+${item.from}
+→
+${item.to}
+
+<br>
+
+${item.date}
+
+${item.note ? "<br>"+item.note:""}
+
+</p>
+
+`
+
+)
+.join("");
 
 }
