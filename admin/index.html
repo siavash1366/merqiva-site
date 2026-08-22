@@ -322,21 +322,11 @@ function logout(){
 
 
 localStorage.removeItem(
-"admin_token"
+"admin_session"
 );
-
-
 location.reload();
-
-
 }
-
-
-
-
-
 async function loadLeads(){
-
 
 const response=
 await fetch(
@@ -344,17 +334,12 @@ API_URL,
 {
 headers:{
 "Authorization":
-"Bearer "+adminToken
-}
+"Bearer "+adminSession}
 }
 );
 
-
-
 const data=
 await response.json();
-
-
 
 if(!data.success){
 
@@ -366,13 +351,10 @@ return;
 
 }
 
-
-
 const tbody=
 document.getElementById(
 "leadTable"
 );
-
 
 tbody.innerHTML="";
 
