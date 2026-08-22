@@ -82,7 +82,12 @@ export async function onRequestPost(context) {
 
 
     await env.ADMIN_SESSIONS_KV.put(
+const check =
+  await env.ADMIN_SESSIONS_KV.get(
+    `session:${sessionId}`
+  );
 
+console.log("SESSION CHECK:", check);
       `session:${sessionId}`,
 
       JSON.stringify({
@@ -93,48 +98,27 @@ export async function onRequestPost(context) {
       }),
 
       {
-
         expirationTtl:
           60 * 60 * 8
-
       }
-
     );
-
-
 
     return jsonResponse(
-
       {
-
         success:true,
-
         session:
           sessionId
-
       },
-
       200
-
     );
-
-
   }
-
-
   catch(error) {
-
-
     console.error(
       "Admin login error:",
       error
     );
-
-
     return jsonResponse(
-
       {
-
         success:false,
 
         error:"Login failed"
