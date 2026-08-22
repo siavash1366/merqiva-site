@@ -11,7 +11,11 @@ const API_HEADERS = {
 
   "X-Frame-Options":
     "DENY"
+
 };
+
+
+
 function jsonResponse(
   data,
   status = 200
@@ -22,12 +26,10 @@ function jsonResponse(
     JSON.stringify(data),
 
     {
-
       status,
 
       headers:
         API_HEADERS
-
     }
 
   );
@@ -48,9 +50,106 @@ export async function onRequestGet(
     env
   } = context;
 
+
+
   /*
-   * Admin Authentication
+   * Session Authentication
    */
+
+
+  const authorization =
+    request.headers.get(
+      "Authorization"
+    );
+
+
+
+  if (
+    !authorization ||
+    !authorization.startsWith("Bearer ")
+  ) {
+
+    return jsonResponse(
+
+      {
+        success:false,
+        error:"Unauthorized"
+      },
+
+      401
+
+    );
+
+  }
+
+
+
+
+  const sessionId =
+    authorization.substring(7);
+
+
+
+
+  if (
+    !env.ADMIN_SESSIONS_KV ||
+    typeof env.ADMIN_SESSIONS_KV.get !== "function"
+  ) {
+
+    console.error(
+      "ADMIN_SESSIONS_KV missing"
+    );
+
+
+    return jsonResponse(
+
+      {
+        success:false,
+        error:"Session storage unavailable"
+      },
+
+      500
+
+    );
+
+  }
+
+
+
+
+
+  const session =
+    await env.ADMIN_SESSIONS_KV.get(
+      `session:${sessionId}`
+    );
+
+
+
+  if (!session) {
+
+    return jsonResponse(
+
+      {
+        success:false,
+        error:"Session expired"
+      },
+
+      401
+
+    );
+
+  }
+
+
+
+
+
+
+
+  /*
+   * Leads KV Check
+   */
+
 
   if (
 
@@ -69,21 +168,15 @@ export async function onRequestGet(
     return jsonResponse(
 
       {
-
         success:false,
-
-        error:
-          "Lead storage unavailable"
-
+        error:"Lead storage unavailable"
       },
 
       500
 
     );
 
-
   }
-
 
 
 
@@ -95,7 +188,7 @@ export async function onRequestGet(
 
 
     /*
-     * Read Index
+     * Read Lead Index
      */
 
 
@@ -116,10 +209,7 @@ export async function onRequestGet(
 
 
 
-
-    const leads =
-      [];
-
+    const leads = [];
 
 
 
@@ -136,8 +226,7 @@ export async function onRequestGet(
           `lead:${leadId}`,
 
           {
-            type:
-              "json"
+            type:"json"
           }
 
         );
@@ -154,7 +243,6 @@ export async function onRequestGet(
 
 
     }
-
 
 
 
@@ -183,8 +271,6 @@ export async function onRequestGet(
 
 
 
-
-
   } catch(error) {
 
 
@@ -198,12 +284,8 @@ export async function onRequestGet(
     return jsonResponse(
 
       {
-
         success:false,
-
-        error:
-          "Failed to load leads"
-
+        error:"Failed to load leads"
       },
 
       500
