@@ -16,6 +16,7 @@ const API_HEADERS = {
 
 
 
+
 function jsonResponse(
   data,
   status = 200
@@ -27,14 +28,14 @@ function jsonResponse(
 
     {
       status,
-
-      headers:
-        API_HEADERS
+      headers: API_HEADERS
     }
 
   );
 
 }
+
+
 
 
 
@@ -79,6 +80,7 @@ return !!session;
 
 
 }
+
 
 
 
@@ -147,6 +149,7 @@ const status =
 url.searchParams.get("status")
 ||
 "";
+
 
 
 
@@ -351,6 +354,7 @@ env
 
 
 
+
 if(
 !(await checkSession(request,env))
 ){
@@ -388,28 +392,23 @@ body.status;
 
 
 const note =
-body.note ||
-"";
+(body.note || "").trim();
 
 
 
 
 
-if(
-!id ||
-!newStatus
-){
+if(!id){
 
 return jsonResponse(
 {
 success:false,
-error:"Missing data"
+error:"Missing lead id"
 },
 400
 );
 
 }
-
 
 
 
@@ -443,28 +442,38 @@ error:"Lead not found"
 }
 
 
+
+
+
 const oldStatus =
-lead.status ||
-"New";
+lead.status || "New";
 
 
-// جلوگیری از ثبت History تکراری
-if(oldStatus === newStatus){
 
-return jsonResponse({
 
-success:true,
 
-lead
+let statusChanged =
+false;
 
-});
 
-}
 
+
+
+
+/*
+STATUS UPDATE
+*/
+
+
+if(
+newStatus &&
+newStatus !== oldStatus
+){
 
 
 lead.status =
 newStatus;
+
 
 
 lead.updatedAt =
@@ -472,24 +481,15 @@ new Date().toISOString();
 
 
 
-await env.LEADS_KV.put(
-
-`lead:${id}`,
-
-JSON.stringify(
-lead
-)
-
-);
-
-
-
-
+statusChanged =
+true;
 
 
 
 const historyKey =
 `lead_history:${id}`;
+
+
 
 
 
@@ -522,9 +522,7 @@ from:
 oldStatus,
 
 to:
-newStatus,
-
-note
+newStatus
 
 });
 
@@ -544,6 +542,67 @@ history
 
 
 
+}
+
+
+
+
+
+
+
+/*
+INTERNAL NOTES
+*/
+
+
+if(note){
+
+
+if(!lead.notes){
+
+lead.notes=[];
+
+}
+
+
+
+lead.notes.push({
+
+text:
+note,
+
+date:
+new Date().toISOString()
+
+});
+
+
+lead.updatedAt =
+new Date().toISOString();
+
+
+}
+
+
+
+
+
+
+
+
+await env.LEADS_KV.put(
+
+`lead:${id}`,
+
+JSON.stringify(
+lead
+)
+
+);
+
+
+
+
 
 
 
@@ -551,9 +610,12 @@ return jsonResponse({
 
 success:true,
 
-lead
+lead,
+
+statusChanged
 
 });
+
 
 
 
@@ -563,8 +625,10 @@ catch(error){
 
 
 console.error(
+"Update lead error:",
 error
 );
+
 
 
 return jsonResponse(
