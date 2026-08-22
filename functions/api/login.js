@@ -78,37 +78,44 @@ export async function onRequestPost(context) {
 
     const sessionId =
       crypto.randomUUID();
-
-
-
     await env.ADMIN_SESSIONS_KV.put(
+const check =
+ await env.ADMIN_SESSIONS_KV.put(
+
+  `session:${sessionId}`,
+
+  JSON.stringify({
+    createdAt:
+      new Date().toISOString()
+  }),
+
+  {
+    expirationTtl:
+      60 * 60 * 8
+  }
+
+);
+
+
 const check =
   await env.ADMIN_SESSIONS_KV.get(
     `session:${sessionId}`
   );
 
-console.log("SESSION CHECK:", check);
-      `session:${sessionId}`,
+console.log(
+  "SESSION CHECK:",
+  check
+);
 
-      JSON.stringify({
 
-        createdAt:
-          new Date().toISOString()
+return jsonResponse({
 
-      }),
+  success:true,
 
-      {
-        expirationTtl:
-          60 * 60 * 8
-      }
-    );
+  session:
+    sessionId
 
-    return jsonResponse(
-      {
-        success:true,
-        session:
-          sessionId
-      },
+});
       200
     );
   }
