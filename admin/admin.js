@@ -1,6 +1,6 @@
-const LOGIN_URL="/api/login";
+const LOGIN_URL = "/api/login";
 
-const API_URL="/api/admin/leads";
+const API_URL = "/api/admin/leads";
 
 
 let adminSession =
@@ -8,46 +8,95 @@ localStorage.getItem("admin_session");
 
 
 
-document
-.getElementById("loginBtn")
-.addEventListener(
+
+// Login button
+
+const loginBtn =
+document.getElementById("loginBtn");
+
+
+if(loginBtn){
+
+loginBtn.addEventListener(
 "click",
 login
 );
 
+}
 
 
-document
-.getElementById("refreshBtn")
-.addEventListener(
+
+
+// Refresh button
+
+const refreshBtn =
+document.getElementById("refreshBtn");
+
+
+if(refreshBtn){
+
+refreshBtn.addEventListener(
 "click",
 loadLeads
 );
 
+}
 
 
-document
-.getElementById("logoutBtn")
-.addEventListener(
+
+
+// Logout button
+
+const logoutBtn =
+document.getElementById("logoutBtn");
+
+
+if(logoutBtn){
+
+logoutBtn.addEventListener(
 "click",
 logout
 );
 
+}
 
 
-document
-.getElementById("closeDetails")
-.addEventListener(
+
+
+// Close details button
+
+const closeBtn =
+document.getElementById("closeDetails");
+
+
+if(closeBtn){
+
+closeBtn.addEventListener(
 "click",
-function(){
+()=>{
 
-document
-.getElementById("leadDetails")
-.classList
-.add("hidden");
+
+const box =
+document.getElementById(
+"leadDetails"
+);
+
+
+if(box){
+
+box.classList.add(
+"hidden"
+);
 
 }
+
+
+}
+
 );
+
+}
+
 
 
 
@@ -58,6 +107,8 @@ if(adminSession){
 showPanel();
 
 }
+
+
 
 
 
@@ -83,9 +134,12 @@ return;
 
 
 
+
 const response =
 await fetch(
+
 LOGIN_URL,
+
 {
 
 method:"POST",
@@ -109,8 +163,10 @@ token:token
 
 
 
+
 const data =
 await response.json();
+
 
 
 
@@ -136,7 +192,6 @@ showPanel();
 
 
 }
-
 else{
 
 
@@ -149,7 +204,11 @@ document
 }
 
 
+
 }
+
+
+
 
 
 
@@ -160,17 +219,37 @@ document
 function showPanel(){
 
 
-document
-.getElementById("loginBox")
-.classList
-.add("hidden");
+
+const loginBox =
+document.getElementById(
+"loginBox"
+);
+
+
+const panel =
+document.getElementById(
+"panel"
+);
 
 
 
-document
-.getElementById("panel")
-.classList
-.remove("hidden");
+if(loginBox){
+
+loginBox.classList.add(
+"hidden"
+);
+
+}
+
+
+
+if(panel){
+
+panel.classList.remove(
+"hidden"
+);
+
+}
 
 
 
@@ -178,6 +257,7 @@ loadLeads();
 
 
 }
+
 
 
 
@@ -194,7 +274,9 @@ localStorage.removeItem(
 );
 
 
-adminSession=null;
+
+adminSession = null;
+
 
 
 location.reload();
@@ -224,7 +306,7 @@ headers:{
 
 "Authorization":
 
-"Bearer "+adminSession
+"Bearer " + adminSession
 
 }
 
@@ -239,11 +321,14 @@ await response.json();
 
 
 
+
 if(!data.success){
+
 
 logout();
 
 return;
+
 
 }
 
@@ -251,12 +336,21 @@ return;
 
 
 const tbody =
-document
-.getElementById("leadTable");
+document.getElementById(
+"leadTable"
+);
 
 
 
-tbody.innerHTML="";
+if(!tbody){
+
+return;
+
+}
+
+
+
+tbody.innerHTML = "";
 
 
 
@@ -268,11 +362,13 @@ lead=>{
 
 
 const row =
-document.createElement("tr");
+document.createElement(
+"tr"
+);
 
 
 
-row.innerHTML=`
+row.innerHTML = `
 
 
 <td>${lead.id || ""}</td>
@@ -288,44 +384,56 @@ row.innerHTML=`
 <td>${lead.offering || ""}</td>
 
 
+
 <td>
 
 <select id="status-${lead.id}">
+
 
 <option ${lead.status==="New"?"selected":""}>
 New
 </option>
 
+
 <option ${lead.status==="Reviewed"?"selected":""}>
 Reviewed
 </option>
+
 
 <option ${lead.status==="Contacted"?"selected":""}>
 Contacted
 </option>
 
+
 <option ${lead.status==="Qualified"?"selected":""}>
 Qualified
 </option>
+
 
 <option ${lead.status==="Proposal Sent"?"selected":""}>
 Proposal Sent
 </option>
 
+
 <option ${lead.status==="Won"?"selected":""}>
 Won
 </option>
 
+
 <option ${lead.status==="Lost"?"selected":""}>
 Lost
 </option>
+
 
 </select>
 
 </td>
 
 
+
+
 <td>
+
 
 <button onclick="updateStatus('${lead.id}')">
 Save
@@ -347,9 +455,11 @@ View
 tbody.appendChild(row);
 
 
+
 }
 
 );
+
 
 
 }
@@ -365,12 +475,26 @@ tbody.appendChild(row);
 async function updateStatus(id){
 
 
+
+const select =
+document.getElementById(
+"status-" + id
+);
+
+
+
+if(!select){
+
+return;
+
+}
+
+
+
 const status =
-document
-.getElementById(
-"status-"+id
-)
-.value;
+select.value;
+
+
 
 
 
@@ -389,7 +513,7 @@ headers:{
 "application/json",
 
 "Authorization":
-"Bearer "+adminSession
+"Bearer " + adminSession
 
 },
 
@@ -408,28 +532,40 @@ status:status
 
 
 
+
 const data =
 await response.json();
 
 
 
+
 if(data.success){
 
-alert("Status updated");
+
+alert(
+"Status updated"
+);
+
+
 
 loadLeads();
 
+
 }
 else{
+
 
 alert(
 data.error || "Update failed"
 );
 
+
 }
 
 
+
 }
+
 
 
 
@@ -441,19 +577,29 @@ data.error || "Update failed"
 function viewLead(lead){
 
 
+
 const box =
-document
-.getElementById(
+document.getElementById(
 "leadDetails"
 );
 
 
 
 const content =
-document
-.getElementById(
+document.getElementById(
 "detailsContent"
 );
+
+
+
+
+if(!box || !content){
+
+return;
+
+}
+
+
 
 
 
@@ -480,16 +626,18 @@ content.innerHTML = `
 
 <p><b>Message:</b></p>
 
-<p>${lead.message || ""}</p>
+<p>
+${lead.message || ""}
+</p>
 
 
 `;
 
 
 
-box
-.classList
-.remove("hidden");
+box.classList.remove(
+"hidden"
+);
 
 
 }
