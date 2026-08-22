@@ -114,16 +114,10 @@ export async function onRequestGet(
 
   }
 
-
-
-
-
   const session =
     await env.ADMIN_SESSIONS_KV.get(
       `session:${sessionId}`
     );
-
-
 
   if (!session) {
 
