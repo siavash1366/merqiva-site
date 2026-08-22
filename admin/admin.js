@@ -4,7 +4,13 @@ const API_URL="/api/admin/leads";
 
 
 let adminSession =
-localStorage.getItem("admin_session");
+localStorage.getItem(
+"admin_session"
+);
+
+
+
+let leadsCache = [];
 
 
 
@@ -35,6 +41,22 @@ logout
 
 
 
+document
+.getElementById("closeDetails")
+.addEventListener(
+"click",
+()=>{
+
+document
+.getElementById("leadDetails")
+.classList
+.add("hidden");
+
+}
+);
+
+
+
 
 
 if(adminSession){
@@ -42,6 +64,7 @@ if(adminSession){
 showPanel();
 
 }
+
 
 
 
@@ -81,7 +104,7 @@ headers:{
 
 body:JSON.stringify({
 
-token:token
+token
 
 })
 
@@ -138,6 +161,8 @@ document
 
 
 
+
+
 function showPanel(){
 
 
@@ -147,16 +172,19 @@ document
 .add("hidden");
 
 
+
 document
 .getElementById("panel")
 .classList
 .remove("hidden");
 
 
+
 loadLeads();
 
 
 }
+
 
 
 
@@ -172,6 +200,7 @@ localStorage.removeItem(
 );
 
 
+
 adminSession=null;
 
 
@@ -179,6 +208,7 @@ location.reload();
 
 
 }
+
 
 
 
@@ -218,12 +248,23 @@ await response.json();
 
 if(!data.success){
 
+
+alert(
+data.error || "Unauthorized"
+);
+
+
 logout();
+
 
 return;
 
 }
 
+
+
+leadsCache =
+data.leads;
 
 
 
@@ -237,6 +278,8 @@ tbody.innerHTML="";
 
 
 
+
+
 data.leads.forEach(
 
 lead=>{
@@ -247,7 +290,8 @@ document.createElement("tr");
 
 
 
-row.innerHTML=`
+row.innerHTML = `
+
 
 <td>${lead.id || ""}</td>
 
@@ -259,37 +303,40 @@ row.innerHTML=`
 
 <td>${lead.country || ""}</td>
 
+
 <td>${lead.offering || ""}</td>
+
+
 
 <td>
 
 <select id="status-${lead.id}">
 
-<option ${lead.status==="New" ? "selected":""}>
+<option ${lead.status==="New"?"selected":""}>
 New
 </option>
 
-<option ${lead.status==="Reviewed" ? "selected":""}>
+<option ${lead.status==="Reviewed"?"selected":""}>
 Reviewed
 </option>
 
-<option ${lead.status==="Contacted" ? "selected":""}>
+<option ${lead.status==="Contacted"?"selected":""}>
 Contacted
 </option>
 
-<option ${lead.status==="Qualified" ? "selected":""}>
+<option ${lead.status==="Qualified"?"selected":""}>
 Qualified
 </option>
 
-<option ${lead.status==="Proposal Sent" ? "selected":""}>
+<option ${lead.status==="Proposal Sent"?"selected":""}>
 Proposal Sent
 </option>
 
-<option ${lead.status==="Won" ? "selected":""}>
+<option ${lead.status==="Won"?"selected":""}>
 Won
 </option>
 
-<option ${lead.status==="Lost" ? "selected":""}>
+<option ${lead.status==="Lost"?"selected":""}>
 Lost
 </option>
 
@@ -298,13 +345,22 @@ Lost
 </td>
 
 
+
+
 <td>
 
 <button onclick="updateStatus('${lead.id}')">
 Save
 </button>
 
+
+<button onclick='viewLead(${JSON.stringify(lead)})'>
+View
+</button>
+
+
 </td>
+
 
 `;
 
@@ -317,37 +373,55 @@ tbody.appendChild(row);
 
 );
 
+
+}
+
+
+
+
+
+
+
+
+
+
 async function updateStatus(id){
 
 
 const status =
-document.getElementById(
+document
+.getElementById(
 "status-"+id
-).value;
+)
+.value;
 
 
 
 const response =
 await fetch(
+
 API_URL,
+
 {
 
 method:"PATCH",
 
 headers:{
 
-"Content-Type":"application/json",
+"Content-Type":
+"application/json",
 
 "Authorization":
 "Bearer "+adminSession
 
 },
 
+
 body:JSON.stringify({
 
-id:id,
+id,
 
-status:status
+status
 
 })
 
@@ -364,19 +438,86 @@ await response.json();
 
 if(data.success){
 
-alert("Status updated");
+alert(
+"Status updated"
+);
+
 
 loadLeads();
 
+
 }
+
 else{
+
 
 alert(
 data.error || "Update failed"
 );
 
+
 }
 
 
 }
+
+
+
+
+
+
+
+
+
+
+function viewLead(lead){
+
+
+const box =
+document
+.getElementById(
+"leadDetails"
+);
+
+
+
+const content =
+document
+.getElementById(
+"detailsContent"
+);
+
+
+
+content.innerHTML = `
+
+
+<p><b>ID:</b> ${lead.id || ""}</p>
+
+<p><b>Name:</b> ${lead.name || ""}</p>
+
+<p><b>Email:</b> ${lead.email || ""}</p>
+
+<p><b>Company:</b> ${lead.company || ""}</p>
+
+<p><b>Country:</b> ${lead.country || ""}</p>
+
+<p><b>Market:</b> ${lead.market || ""}</p>
+
+<p><b>Offering:</b> ${lead.offering || ""}</p>
+
+<p><b>Status:</b> ${lead.status || ""}</p>
+
+<p><b>Created:</b> ${lead.createdAt || ""}</p>
+
+<p><b>Message:</b></p>
+
+<p>
+${lead.message || ""}
+</p>
+
+`;
+box
+.classList
+.remove("hidden");
 }
