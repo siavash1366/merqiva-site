@@ -2,16 +2,25 @@ body{
 
 margin:0;
 padding:40px;
-font-family:Arial,Helvetica,sans-serif;
-background:#08111f;
+
+font-family:
+Inter,
+Arial,
+Helvetica,
+sans-serif;
+
+background:#050d18;
+
 color:#ffffff;
 
 }
 
 
+
 .container{
 
-max-width:1100px;
+max-width:1200px;
+
 margin:auto;
 
 }
@@ -21,18 +30,65 @@ margin:auto;
 .card{
 
 background:#101c30;
+
 border:1px solid #24364d;
-border-radius:12px;
+
+border-radius:14px;
+
 padding:25px;
+
 margin-bottom:25px;
+
+box-shadow:
+0 10px 30px rgba(0,0,0,.25);
 
 }
 
 
 
-h1,h2{
+
+h1,
+h2,
+h3{
 
 margin-top:0;
+
+color:#ffffff;
+
+}
+
+
+
+
+
+.toolbar{
+
+display:flex;
+
+gap:12px;
+
+}
+
+
+
+
+
+input,
+select{
+
+padding:12px;
+
+border-radius:8px;
+
+border:
+
+1px solid #34495e;
+
+background:#07101d;
+
+color:white;
+
+outline:none;
 
 }
 
@@ -40,36 +96,45 @@ margin-top:0;
 
 input{
 
-width:300px;
-padding:12px;
-border-radius:6px;
-border:1px solid #34495e;
-background:#07101d;
-color:white;
+width:320px;
 
 }
+
+
 
 
 
 button{
 
-padding:12px 20px;
+padding:11px 18px;
+
 border:none;
-border-radius:6px;
+
+border-radius:8px;
+
 background:#39d5d0;
+
 color:#041018;
+
 font-weight:bold;
+
 cursor:pointer;
 
+transition:.2s;
+
 }
+
 
 
 
 button:hover{
 
-opacity:.85;
+transform:translateY(-2px);
+
+opacity:.9;
 
 }
+
 
 
 
@@ -81,21 +146,24 @@ display:none;
 
 
 
+
+
 table{
 
 width:100%;
+
 border-collapse:collapse;
+
 margin-top:20px;
 
 }
 
 
 
-th,td{
 
-padding:12px;
-border-bottom:1px solid #27384d;
-text-align:left;
+thead{
+
+background:#0b1728;
 
 }
 
@@ -103,26 +171,416 @@ text-align:left;
 
 th{
 
+padding:14px;
+
+text-align:left;
+
+color:#39d5d0;
+
+font-size:14px;
+
+}
+
+
+
+td{
+
+padding:14px;
+
+border-bottom:
+
+1px solid #24364d;
+
+font-size:14px;
+
+}
+
+
+
+
+
+tr:hover{
+
+background:#14243b;
+
+}
+
+
+
+
+
+.statusSelect{
+
+padding:7px;
+
+border-radius:6px;
+
+background:#07101d;
+
+color:white;
+
+}
+
+
+
+
+
+/*
+STATUS COLORS
+*/
+
+
+.status-new{
+
+color:#aaa;
+
+}
+
+
+.status-contacted{
+
+color:#4db8ff;
+
+}
+
+
+.status-qualified{
+
+color:#46e58a;
+
+}
+
+
+.status-won{
+
+color:#ffd166;
+
+}
+
+
+.status-lost{
+
+color:#ff6b6b;
+
+}
+
+
+
+
+
+
+
+.pagination{
+
+display:flex;
+
+align-items:center;
+
+gap:15px;
+
+margin-top:20px;
+
+}
+
+
+
+
+
+#pageInfo{
+
+color:#39d5d0;
+
+font-weight:bold;
+
+}
+
+
+
+
+
+/*
+LEAD DETAILS
+*/
+
+
+
+#leadDetails{
+
+animation:
+
+fadeIn .25s ease;
+
+}
+
+
+
+
+
+#detailsContent p{
+
+margin:
+
+10px 0;
+
+}
+
+
+
+
+
+#detailsContent b{
+
 color:#39d5d0;
 
 }
 
 
 
+
+
+.detailActions{
+
+display:flex;
+
+gap:10px;
+
+margin-top:20px;
+
+}
+
+
+
+
+
+/*
+HISTORY TIMELINE
+*/
+
+
+#historyContent{
+
+margin-top:15px;
+
+}
+
+
+
+
+.history-item{
+
+position:relative;
+
+padding:
+
+15px 15px 15px 25px;
+
+margin-bottom:15px;
+
+background:#0b1728;
+
+border-radius:10px;
+
+border-left:
+
+3px solid #39d5d0;
+
+}
+
+
+
+
+
+.history-item::before{
+
+content:"";
+
+position:absolute;
+
+left:-7px;
+
+top:18px;
+
+width:12px;
+
+height:12px;
+
+background:#39d5d0;
+
+border-radius:50%;
+
+}
+
+
+
+
+
+.history-date{
+
+font-size:12px;
+
+color:#8fa3b8;
+
+}
+
+
+
+
+
+.history-title{
+
+font-weight:bold;
+
+color:#39d5d0;
+
+}
+
+
+
+
+
+.history-change{
+
+margin-top:8px;
+
+}
+
+
+
+
+
+/*
+MESSAGES
+*/
+
+
 .message{
 
 margin-top:15px;
+
 color:#ff7777;
 
 }
 
 
 
-.badge{
 
-padding:5px 10px;
-border-radius:20px;
-background:#193040;
-color:#39d5d0;
+
+/*
+TOAST
+*/
+
+
+.toast{
+
+position:fixed;
+
+right:30px;
+
+bottom:30px;
+
+background:#39d5d0;
+
+color:#041018;
+
+padding:15px 22px;
+
+border-radius:10px;
+
+font-weight:bold;
+
+opacity:0;
+
+transform:
+
+translateY(20px);
+
+transition:.3s;
+
+z-index:9999;
+
+}
+
+
+
+.toast.show{
+
+opacity:1;
+
+transform:
+
+translateY(0);
+
+}
+
+
+
+
+
+/*
+LOGIN
+*/
+
+
+#loginBox{
+
+max-width:450px;
+
+margin:auto;
+
+}
+
+
+
+
+/*
+MOBILE
+*/
+
+
+@media(max-width:768px){
+
+
+body{
+
+padding:20px;
+
+}
+
+
+
+table{
+
+display:block;
+
+overflow-x:auto;
+
+}
+
+
+
+input{
+
+width:100%;
+
+}
+
+
+
+.toolbar,
+.detailActions{
+
+flex-direction:column;
+
+}
+
+
+
+button{
+
+width:100%;
+
+}
+
+
 
 }
