@@ -15,7 +15,6 @@ let currentStatus = "";
 
 
 
-
 // --------------------
 // INIT EVENTS
 // --------------------
@@ -37,6 +36,7 @@ document
 ()=>{
 
 currentPage=1;
+
 loadLeads();
 
 }
@@ -54,6 +54,8 @@ logout
 
 
 
+
+
 document
 .getElementById("searchBtn")
 ?.addEventListener(
@@ -68,10 +70,12 @@ document
 .trim();
 
 
+
 currentStatus =
 document
 .getElementById("statusFilter")
 .value;
+
 
 
 currentPage=1;
@@ -83,6 +87,7 @@ loadLeads();
 }
 
 );
+
 
 
 
@@ -112,6 +117,8 @@ loadLeads();
 
 
 
+
+
 document
 .getElementById("nextPage")
 ?.addEventListener(
@@ -127,6 +134,8 @@ loadLeads();
 }
 
 );
+
+
 
 
 
@@ -204,10 +213,25 @@ showToast(
 }
 
 
-
 }
 
 );
+
+
+
+
+
+
+
+// Internal Note
+
+document
+.getElementById("saveNoteBtn")
+?.addEventListener(
+"click",
+saveNote
+);
+
 
 
 
@@ -219,8 +243,6 @@ if(adminSession){
 showPanel();
 
 }
-
-
 
 
 
@@ -246,7 +268,6 @@ document
 
 if(!token)
 return;
-
 
 
 
@@ -320,7 +341,6 @@ document
 
 
 
-
 function showPanel(){
 
 
@@ -350,7 +370,6 @@ loadLeads();
 
 
 
-
 function logout(){
 
 
@@ -366,16 +385,6 @@ location.reload();
 
 
 }
-
-
-
-
-
-
-
-
-
-
 // --------------------
 // LOAD LEADS
 // --------------------
@@ -440,6 +449,11 @@ const tbody =
 document.getElementById(
 "leadTable"
 );
+
+
+
+if(!tbody)
+return;
 
 
 
@@ -508,7 +522,9 @@ View
 
 </td>
 
+
 `;
+
 
 
 
@@ -525,12 +541,14 @@ row
 
 
 
+
 row
 .querySelector(".viewBtn")
 .addEventListener(
 "click",
 ()=>viewLead(lead)
 );
+
 
 
 
@@ -547,11 +565,20 @@ tbody.appendChild(row);
 
 
 
+const pageInfo =
+document.getElementById(
+"pageInfo"
+);
 
-document
-.getElementById("pageInfo")
-.innerText =
+
+
+if(pageInfo){
+
+pageInfo.innerText =
 `Page ${data.page} / ${data.pages || 1}`;
+
+}
+
 
 
 }
@@ -569,7 +596,7 @@ current
 ){
 
 
-return [
+const statuses=[
 
 "New",
 
@@ -585,14 +612,18 @@ return [
 
 "Lost"
 
-]
+];
 
+
+
+return statuses
 .map(
+
 status=>`
 
 <option value="${status}"
-${current===status?"selected":""}
->
+
+${current===status?"selected":""}>
 
 ${status}
 
@@ -630,8 +661,14 @@ document.querySelector(
 
 
 
+if(!select)
+return;
+
+
+
 const status =
 select.value;
+
 
 
 
@@ -654,14 +691,11 @@ headers:{
 
 },
 
-
 body:JSON.stringify({
 
 id,
 
-status,
-
-note:"Updated from CRM"
+status
 
 })
 
@@ -675,6 +709,7 @@ note:"Updated from CRM"
 
 const data =
 await response.json();
+
 
 
 
@@ -740,6 +775,12 @@ document.getElementById(
 
 
 
+if(!box || !content)
+return;
+
+
+
+
 
 content.innerHTML = `
 
@@ -772,12 +813,14 @@ ${lead.message || ""}
 
 <div id="historyContent">
 
-Loading...
+Loading history...
 
 </div>
 
 
 `;
+
+
 
 
 
@@ -787,12 +830,19 @@ box
 
 
 
+
 loadHistory(
 lead.id
 );
 
 
+loadNotes(
+lead
+);
+
+
 }
+
 
 
 
@@ -819,6 +869,8 @@ document.getElementById(
 
 if(!box)
 return;
+
+
 
 
 
@@ -867,7 +919,9 @@ return;
 
 
 
+
 box.innerHTML =
+
 data.history
 .reverse()
 .map(
@@ -921,14 +975,219 @@ ${item.note}
 }
 
 
-
 </div>
-
 
 `
 
 )
 .join("");
+
+
+
+}
+
+
+
+
+
+
+
+
+
+// --------------------
+// INTERNAL NOTES
+// --------------------
+
+
+async function saveNote(){
+
+
+if(!currentLead)
+return;
+
+
+
+
+const input =
+document.getElementById(
+"noteInput"
+);
+
+
+
+if(!input)
+return;
+
+
+
+
+const note =
+input.value.trim();
+
+
+
+if(!note)
+return;
+
+
+
+
+
+const response =
+await fetch(
+
+API_URL,
+
+{
+
+method:"PATCH",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+"Authorization":
+"Bearer "+adminSession
+
+},
+
+body:JSON.stringify({
+
+id:currentLead.id,
+
+note
+
+})
+
+}
+
+);
+
+
+
+
+
+const data =
+await response.json();
+
+
+
+
+
+if(data.success){
+
+
+showToast(
+"Note saved"
+);
+
+
+
+input.value="";
+
+
+
+currentLead =
+data.lead;
+
+
+
+loadNotes(
+currentLead
+);
+
+
+}
+else{
+
+
+showToast(
+data.error || "Note failed"
+);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+function loadNotes(lead){
+
+
+const box =
+document.getElementById(
+"notesList"
+);
+
+
+
+if(!box)
+return;
+
+
+
+
+
+if(
+!lead.notes ||
+!lead.notes.length
+){
+
+
+box.innerHTML =
+"No notes";
+
+
+return;
+
+}
+
+
+
+
+
+box.innerHTML =
+
+lead.notes
+.map(
+
+note=>`
+
+<div class="note-item">
+
+
+<div>
+
+${note.text}
+
+</div>
+
+
+<div class="note-date">
+
+${new Date(note.date)
+.toLocaleString()}
+
+</div>
+
+
+</div>
+
+`
+
+)
+.join("");
+
 
 
 }
@@ -990,12 +1249,15 @@ toast.classList.add(
 
 
 
+
+
 setTimeout(
 ()=>{
 
 toast.classList.remove(
 "show"
 );
+
 
 },
 2000
