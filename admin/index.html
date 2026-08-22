@@ -1,1 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>Merqiva Admin</title>
+
+<style>
+
+body{
+    margin:0;
+    padding:40px;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#08111f;
+    color:#ffffff;
+}
+
+
+.container{
+    max-width:1100px;
+    margin:auto;
+}
+
+
+.card{
+    background:#101c30;
+    border:1px solid #24364d;
+    border-radius:12px;
+    padding:25px;
+    margin-bottom:25px;
+}
+
+
+h1,h2{
+    margin-top:0;
+}
+
+
+input{
+    width:300px;
+    padding:12px;
+    border-radius:6px;
+    border:1px solid #34495e;
+    background:#07101d;
+    color:white;
+}
+
+
+button{
+    padding:12px 20px;
+    border:none;
+    border-radius:6px;
+    background:#39d5d0;
+    color:#041018;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+
+button:hover{
+    opacity:.85;
+}
+
+
+.hidden{
+    display:none;
+}
+
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #27384d;
+    text-align:left;
+}
+
+
+th{
+    color:#39d5d0;
+}
+
+
+.message{
+    margin-top:15px;
+    color:#ff7777;
+}
+
+
+.badge{
+    padding:5px 10px;
+    border-radius:20px;
+    background:#193040;
+    color:#39d5d0;
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<div id="loginBox" class="card">
+
+<h1>Merqiva Admin Login</h1>
+
+
+<input
+id="token"
+type="password"
+placeholder="Admin Token"
+/>
+
+
+<button onclick="login()">
+Login
+</button>
+
+
+<div id="loginError" class="message"></div>
+
+
+</div>
+
+
+
+
+<div id="panel" class="hidden">
+
+
+<div class="card">
+
+<h1>
+Lead Management
+</h1>
+
+
+<button onclick="loadLeads()">
+Refresh Leads
+</button>
+
+
+<button onclick="logout()">
+Logout
+</button>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+
+<h2>
+Website Leads
+</h2>
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Name</th>
+<th>Email</th>
+<th>Company</th>
+<th>Country</th>
+<th>Offering</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="leadTable">
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<script>
+
+
+const API_URL="/api/admin/leads";
+
+
+let adminToken=
+localStorage.getItem("admin_token");
+
+
+
+if(adminToken){
+
+showPanel();
+
+}
+
+
+
+
+async function login(){
+
+
+const token=
+document.getElementById("token").value.trim();
+
+
+if(!token){
+
+return;
+
+}
+
+
+const response=
+await fetch(
+API_URL,
+{
+headers:{
+"Authorization":
+"Bearer "+token
+}
+}
+);
+
+
+
+const data=
+await response.json();
+
+
+
+if(data.success){
+
+
+localStorage.setItem(
+"admin_token",
+token
+);
+
+
+adminToken=token;
+
+
+showPanel();
+
+
+}
+else{
+
+
+document.getElementById("loginError")
+.innerText=
+"Invalid token";
+
+
+}
+
+
+}
+
+
+
+
+function showPanel(){
+
+
+document
+.getElementById("loginBox")
+.classList
+.add("hidden");
+
+
+document
+.getElementById("panel")
+.classList
+.remove("hidden");
+
+
+loadLeads();
+
+
+}
+
+
+
+
+function logout(){
+
+
+localStorage.removeItem(
+"admin_token"
+);
+
+
+location.reload();
+
+
+}
+
+
+
+
+
+async function loadLeads(){
+
+
+const response=
+await fetch(
+API_URL,
+{
+headers:{
+"Authorization":
+"Bearer "+adminToken
+}
+}
+);
+
+
+
+const data=
+await response.json();
+
+
+
+if(!data.success){
+
+alert("Unauthorized");
+
+logout();
+
+return;
+
+}
+
+
+
+const tbody=
+document.getElementById(
+"leadTable"
+);
+
+
+tbody.innerHTML="";
+
+
+
+data.leads.forEach(
+lead=>{
+
+
+const row=
+document.createElement(
+"tr"
+);
+
+
+
+row.innerHTML=`
+
+<td>${lead.id || ""}</td>
+
+<td>${lead.name || ""}</td>
+
+<td>${lead.email || ""}</td>
+
+<td>${lead.company || ""}</td>
+
+<td>${lead.country || ""}</td>
+
+<td>${lead.offering || ""}</td>
+
+<td>
+<span class="badge">
+${lead.status || "new"}
+</span>
+</td>
+
+`;
+
+
+
+tbody.appendChild(row);
+
+
+});
+
+
+}
+
+
+
+</script>
+
+
+</body>
+</html>
