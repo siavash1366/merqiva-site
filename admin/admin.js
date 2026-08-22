@@ -803,10 +803,6 @@ content.innerHTML = `
 <p>${lead.message || ""}</p>
 
 
-<h3>
-Activity History
-</h3>
-
 <div id="historyContent">
 Loading...
 </div>
