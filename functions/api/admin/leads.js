@@ -4,7 +4,7 @@ const API_HEADERS = {
     "application/json; charset=UTF-8",
 
   "Cache-Control":
-    "no-store, max-age=0",
+    "no-store",
 
   "X-Content-Type-Options":
     "nosniff",
@@ -19,7 +19,7 @@ const API_HEADERS = {
 function jsonResponse(
   data,
   status = 200
-) {
+){
 
   return new Response(
 
@@ -40,273 +40,66 @@ function jsonResponse(
 
 
 
-export async function onRequestGet(
-  context
-) {
-
-
-  const {
-    request,
-    env
-  } = context;
-
-
-
-  /*
-   * Session Authentication
-   */
-
-
-  const authorization =
-    request.headers.get(
-      "Authorization"
-    );
-
-
-
-  if (
-    !authorization ||
-    !authorization.startsWith("Bearer ")
-  ) {
-
-    return jsonResponse(
-
-      {
-        success:false,
-        error:"Unauthorized"
-      },
-
-      401
-
-    );
-
-  }
-
-
-
-
-  const sessionId =
-    authorization.substring(7);
-
-
-
-
-  if (
-    !env.ADMIN_SESSIONS_KV ||
-    typeof env.ADMIN_SESSIONS_KV.get !== "function"
-  ) {
-
-    console.error(
-      "ADMIN_SESSIONS_KV missing"
-    );
-
-
-    return jsonResponse(
-
-      {
-        success:false,
-        error:"Session storage unavailable"
-      },
-
-      500
-
-    );
-
-  }
-
-  const session =
-    await env.ADMIN_SESSIONS_KV.get(
-      `session:${sessionId}`
-    );
-
-  if (!session) {
-
-    return jsonResponse(
-
-      {
-        success:false,
-        error:"Session expired"
-      },
-
-      401
-
-    );
-
-  }
-
-
-
-
-
-
-
-  /*
-   * Leads KV Check
-   */
-
-
-  if (
-
-    !env.LEADS_KV ||
-
-    typeof env.LEADS_KV.get !== "function"
-
-  ) {
-
-
-    console.error(
-      "LEADS_KV missing"
-    );
-
-
-    return jsonResponse(
-
-      {
-        success:false,
-        error:"Lead storage unavailable"
-      },
-
-      500
-
-    );
-
-  }
-
-
-
-
-
-
-
-  try {
-
-
-    /*
-     * Read Lead Index
-     */
-
-
-    const index =
-      JSON.parse(
-
-        await env.LEADS_KV.get(
-          "leads:index"
-        )
-
-        ||
-
-        "[]"
-
-      );
-
-
-
-
-
-    const leads = [];
-
-
-
-
-
-    for (
-      const leadId of index
-    ) {
-
-
-      const lead =
-        await env.LEADS_KV.get(
-
-          `lead:${leadId}`,
-
-          {
-            type:"json"
-          }
-
-        );
-
-
-
-      if (lead) {
-
-        leads.push(
-          lead
-        );
-
-      }
-
-
-    }
-
-
-
-
-
-
-
-    return jsonResponse(
-
-      {
-
-        success:true,
-
-        count:
-          leads.length,
-
-        leads
-
-      },
-
-      200
-
-    );
-
-
-
-
-
-  } catch(error) {
-
-
-    console.error(
-      "Admin leads error:",
-      error
-    );
-
-
-
-    return jsonResponse(
-
-      {
-        success:false,
-        error:"Failed to load leads"
-      },
-
-      500
-
-    );
-
-
-  }
-
-
-}
-export async function onRequestPatch(context){
-
-const {
- request,
- env
-}=context;
-
-
+async function checkSession(
+  request,
+  env
+){
 
 const authorization =
-request.headers.get("Authorization");
+request.headers.get(
+"Authorization"
+);
+
 
 
 if(
 !authorization ||
 !authorization.startsWith("Bearer ")
+){
+
+return false;
+
+}
+
+
+
+const sessionId =
+authorization.substring(7);
+
+
+
+const session =
+await env.ADMIN_SESSIONS_KV.get(
+`session:${sessionId}`
+);
+
+
+
+return !!session;
+
+
+}
+
+
+
+
+
+
+
+
+export async function onRequestGet(
+context
+){
+
+const {
+request,
+env
+}=context;
+
+
+
+if(
+!(await checkSession(request,env))
 ){
 
 return jsonResponse(
@@ -321,32 +114,258 @@ error:"Unauthorized"
 
 
 
-const sessionId =
-authorization.replace(
-"Bearer ",
+try{
+
+
+const url =
+new URL(request.url);
+
+
+
+const page =
+Number(
+url.searchParams.get("page")
+) || 1;
+
+
+
+const limit = 20;
+
+
+
+const search =
+(
+url.searchParams.get("search")
+||
 ""
+)
+.toLowerCase();
+
+
+
+const status =
+url.searchParams.get("status")
+||
+"";
+
+
+
+
+const index =
+JSON.parse(
+
+await env.LEADS_KV.get(
+"leads:index"
+)
+
+||
+
+"[]"
+
 );
 
 
 
-const session =
-await env.ADMIN_SESSIONS_KV.get(
-`session:${sessionId}`
+
+
+let leads=[];
+
+
+
+
+for(
+const leadId of index
+){
+
+
+const lead =
+await env.LEADS_KV.get(
+
+`lead:${leadId}`,
+
+{
+type:"json"
+}
+
 );
 
 
 
-if(!session){
+if(lead){
+
+leads.push(
+lead
+);
+
+}
+
+
+}
+
+
+
+
+
+if(search){
+
+
+leads =
+leads.filter(
+
+lead=>{
+
+
+const text =
+
+`${lead.name || ""}
+${lead.email || ""}
+${lead.company || ""}
+${lead.country || ""}
+${lead.offering || ""}`
+
+.toLowerCase();
+
+
+
+return text.includes(
+search
+);
+
+
+}
+
+);
+
+
+}
+
+
+
+
+
+
+if(status){
+
+
+leads =
+leads.filter(
+
+lead=>
+
+lead.status === status
+
+);
+
+
+}
+
+
+
+
+
+const total =
+leads.length;
+
+
+
+const start =
+(page - 1) * limit;
+
+
+
+const paginated =
+leads.slice(
+
+start,
+
+start + limit
+
+);
+
+
+
+
+
+return jsonResponse({
+
+success:true,
+
+page,
+
+limit,
+
+total,
+
+pages:
+Math.ceil(
+total / limit
+),
+
+leads:
+paginated
+
+});
+
+
+
+}
+catch(error){
+
+
+console.error(
+error
+);
+
 
 return jsonResponse(
 {
 success:false,
-error:"Session expired"
+error:"Failed to load leads"
+},
+500
+);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+export async function onRequestPatch(
+context
+){
+
+const {
+request,
+env
+}=context;
+
+
+
+if(
+!(await checkSession(request,env))
+){
+
+return jsonResponse(
+{
+success:false,
+error:"Unauthorized"
 },
 401
 );
 
 }
+
+
 
 
 
@@ -358,19 +377,27 @@ await request.json();
 
 
 
-const leadId =
+const id =
 body.id;
 
 
 
-const status =
+const newStatus =
 body.status;
 
 
 
+const note =
+body.note ||
+"";
+
+
+
+
+
 if(
-!leadId ||
-!status
+!id ||
+!newStatus
 ){
 
 return jsonResponse(
@@ -385,13 +412,21 @@ error:"Missing data"
 
 
 
+
+
+
 const lead =
 await env.LEADS_KV.get(
-`lead:${leadId}`,
+
+`lead:${id}`,
+
 {
 type:"json"
 }
+
 );
+
+
 
 
 
@@ -409,30 +444,122 @@ error:"Lead not found"
 
 
 
-lead.status=status;
+
+
+const oldStatus =
+lead.status ||
+"New";
+
+
+
+
+lead.status =
+newStatus;
+
+
 
 lead.updatedAt =
 new Date().toISOString();
 
 
 
+
+
 await env.LEADS_KV.put(
 
-`lead:${leadId}`,
+`lead:${id}`,
 
-JSON.stringify(lead)
+JSON.stringify(
+lead
+)
 
 );
-return jsonResponse({
-success:true,
-lead
+
+
+
+
+
+
+
+const historyKey =
+`lead_history:${id}`;
+
+
+
+const history =
+JSON.parse(
+
+await env.LEADS_KV.get(
+historyKey
+)
+
+||
+
+"[]"
+
+);
+
+
+
+
+
+history.push({
+
+date:
+new Date().toISOString(),
+
+action:
+"Status changed",
+
+from:
+oldStatus,
+
+to:
+newStatus,
+
+note
+
 });
+
+
+
+
+
+await env.LEADS_KV.put(
+
+historyKey,
+
+JSON.stringify(
+history
+)
+
+);
+
+
+
+
+
+
+return jsonResponse({
+
+success:true,
+
+lead
+
+});
+
+
+
+
 }
 catch(error){
+
+
 console.error(
-"Update lead error:",
 error
 );
+
+
 return jsonResponse(
 {
 success:false,
@@ -440,5 +567,9 @@ error:"Update failed"
 },
 500
 );
+
+
 }
+
+
 }
