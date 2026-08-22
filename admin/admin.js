@@ -262,9 +262,48 @@ row.innerHTML=`
 <td>${lead.offering || ""}</td>
 
 <td>
-<span class="badge">
-${lead.status || "new"}
-</span>
+
+<select id="status-${lead.id}">
+
+<option ${lead.status==="New" ? "selected":""}>
+New
+</option>
+
+<option ${lead.status==="Reviewed" ? "selected":""}>
+Reviewed
+</option>
+
+<option ${lead.status==="Contacted" ? "selected":""}>
+Contacted
+</option>
+
+<option ${lead.status==="Qualified" ? "selected":""}>
+Qualified
+</option>
+
+<option ${lead.status==="Proposal Sent" ? "selected":""}>
+Proposal Sent
+</option>
+
+<option ${lead.status==="Won" ? "selected":""}>
+Won
+</option>
+
+<option ${lead.status==="Lost" ? "selected":""}>
+Lost
+</option>
+
+</select>
+
+</td>
+
+
+<td>
+
+<button onclick="updateStatus('${lead.id}')">
+Save
+</button>
+
 </td>
 
 `;
