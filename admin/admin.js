@@ -317,5 +317,66 @@ tbody.appendChild(row);
 
 );
 
+async function updateStatus(id){
 
+
+const status =
+document.getElementById(
+"status-"+id
+).value;
+
+
+
+const response =
+await fetch(
+API_URL,
+{
+
+method:"PATCH",
+
+headers:{
+
+"Content-Type":"application/json",
+
+"Authorization":
+"Bearer "+adminSession
+
+},
+
+body:JSON.stringify({
+
+id:id,
+
+status:status
+
+})
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(data.success){
+
+alert("Status updated");
+
+loadLeads();
+
+}
+else{
+
+alert(
+data.error || "Update failed"
+);
+
+}
+
+
+}
 }
