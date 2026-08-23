@@ -621,14 +621,10 @@ selected
 const data =
 await res.json();
 
-
-
-
-
 if(data.success){
 
 
-alert(
+showToast(
 "Audience saved"
 );
 
@@ -637,7 +633,7 @@ alert(
 else{
 
 
-alert(
+showToast(
 data.error ||
 "Save failed"
 );
@@ -647,7 +643,7 @@ data.error ||
 
 
 
-}
+
 
 
 
@@ -758,6 +754,49 @@ count.innerText =
 selected.length;
 
 }
+
+function showToast(message){
+
+
+let toast =
+document.querySelector(".toast");
+
+
+
+if(!toast){
+
+
+toast =
+document.createElement("div");
+
+
+toast.className =
+"toast";
+
+
+document.body.appendChild(toast);
+
+
+}
+
+
+
+toast.innerText =
+message;
+
+
+
+toast.classList.add("show");
+
+
+
+setTimeout(()=>{
+
+
+toast.classList.remove("show");
+
+
+},2000);
 
 
 }
