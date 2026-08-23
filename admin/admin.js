@@ -358,10 +358,7 @@ location.reload();
 
 
 }
-const LOGIN_URL = "/api/login";
-const API_URL = "/api/admin/leads";
-const HISTORY_URL = "/api/admin/history";
-const CAMPAIGN_URL = "/api/admin/campaigns";
+
 
 
 let adminSession =
