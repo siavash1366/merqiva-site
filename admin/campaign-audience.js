@@ -20,7 +20,6 @@ localStorage.getItem(
 );
 
 
-
 let campaigns = [];
 
 let leads = [];
@@ -29,26 +28,9 @@ let selected = [];
 
 let currentCampaign = "";
 
-const params =
-new URLSearchParams(
-window.location.search
-);
 
 
-const campaignParam =
-params.get("campaign");
-
-
-if(campaignParam){
-
-currentCampaign =
-campaignParam;
-
-}
-
-
-
-// GET CAMPAIGN FROM URL
+// READ CAMPAIGN FROM URL
 
 const urlParams =
 new URLSearchParams(
@@ -56,29 +38,15 @@ window.location.search
 );
 
 
-const campaignFromUrl =
-urlParams.get(
-"campaign"
-);
-
-
-if(campaignFromUrl){
-
 currentCampaign =
-campaignFromUrl;
-
-}
+urlParams.get("campaign") || "";
 
 
 
 
-// --------------------
 // INIT
-// --------------------
 
-
-document
-.addEventListener(
+document.addEventListener(
 "DOMContentLoaded",
 ()=>{
 
@@ -102,15 +70,12 @@ loadRecipients();
 
 
 
-
 document
 .getElementById("filterBtn")
 ?.addEventListener(
 "click",
 loadLeads
 );
-
-
 
 
 
@@ -123,11 +88,7 @@ saveAudience
 
 
 
-
-loadCampaigns();
-
-loadLeads();
-
+initAudience();
 
 
 }
@@ -138,13 +99,23 @@ loadLeads();
 
 
 
+async function initAudience(){
+
+
+await loadCampaigns();
+
+await loadLeads();
+
+
+}
 
 
 
-// --------------------
+
+
+
+
 // LOAD CAMPAIGNS
-// --------------------
-
 
 async function loadCampaigns(){
 
@@ -174,7 +145,6 @@ await res.json();
 
 
 
-
 if(!data.success)
 return;
 
@@ -182,7 +152,6 @@ return;
 
 campaigns =
 data.campaigns || [];
-
 
 
 
@@ -198,7 +167,6 @@ return;
 
 
 
-
 select.innerHTML =
 
 `
@@ -206,8 +174,6 @@ select.innerHTML =
 Select Campaign
 </option>
 `;
-
-
 
 
 
@@ -222,21 +188,11 @@ select.innerHTML +=
 <option value="${campaign.id}">
 ${campaign.name}
 </option>
-
 `;
 
 }
 
 );
-if(currentCampaign){
-
-select.value =
-currentCampaign;
-
-loadRecipients();
-
-}
-
 
 
 
@@ -247,30 +203,25 @@ select.value =
 currentCampaign;
 
 
-loadRecipients();
+await loadRecipients();
+
+
+}
 
 
 }
 
 
 
-}
 
 
 
 
 
 
-
-
-
-// --------------------
 // LOAD LEADS
-// --------------------
-
 
 async function loadLeads(){
-
 
 
 const search =
@@ -300,8 +251,6 @@ document
 
 
 
-
-
 const params =
 new URLSearchParams({
 
@@ -314,9 +263,6 @@ search,
 status
 
 });
-
-
-
 
 
 
@@ -340,21 +286,13 @@ headers:{
 
 
 
-
-
-
 const data =
 await res.json();
 
 
 
-
-
-
 if(!data.success)
 return;
-
-
 
 
 
@@ -371,13 +309,7 @@ lead.country === country
 
 
 
-
-
-
 renderLeads();
-
-
-
 
 
 }
@@ -390,13 +322,9 @@ renderLeads();
 
 
 
-// --------------------
 // RENDER LEADS
-// --------------------
-
 
 function renderLeads(){
-
 
 
 const table =
@@ -415,12 +343,9 @@ table.innerHTML = "";
 
 
 
-
-
 leads.forEach(
 
 lead=>{
-
 
 
 table.innerHTML +=
@@ -446,36 +371,20 @@ ${selected.includes(lead.id) ? "checked":""}
 </td>
 
 
-<td>
-${lead.name || ""}
-</td>
+<td>${lead.name || ""}</td>
 
+<td>${lead.email || ""}</td>
 
-<td>
-${lead.email || ""}
-</td>
+<td>${lead.company || ""}</td>
 
+<td>${lead.country || ""}</td>
 
-<td>
-${lead.company || ""}
-</td>
-
-
-<td>
-${lead.country || ""}
-</td>
-
-
-<td>
-${lead.status || ""}
-</td>
+<td>${lead.status || ""}</td>
 
 
 </tr>
 
 `;
-
-
 
 }
 
@@ -483,14 +392,8 @@ ${lead.status || ""}
 
 
 
-
-
-
-
 document
-.querySelectorAll(
-".leadCheck"
-)
+.querySelectorAll(".leadCheck")
 .forEach(
 
 checkbox=>{
@@ -508,15 +411,10 @@ checkbox.dataset.id;
 
 
 
-
-if(
-checkbox.checked
-){
+if(checkbox.checked){
 
 
-if(
-!selected.includes(id)
-){
+if(!selected.includes(id)){
 
 selected.push(id);
 
@@ -530,8 +428,7 @@ else{
 selected =
 selected.filter(
 
-item=>
-item !== id
+item=>item!==id
 
 );
 
@@ -543,7 +440,6 @@ item !== id
 updateCount();
 
 
-
 }
 
 );
@@ -568,19 +464,15 @@ updateCount();
 
 
 
-// --------------------
 // SAVE AUDIENCE
-// --------------------
-
 
 async function saveAudience(){
-
 
 
 if(!currentCampaign){
 
 
-alert(
+showToast(
 "Select campaign first"
 );
 
@@ -589,8 +481,6 @@ return;
 
 
 }
-
-
 
 
 
@@ -605,32 +495,23 @@ method:"POST",
 
 headers:{
 
-
 "Content-Type":
 "application/json",
-
 
 "Authorization":
 "Bearer "+session
 
-
 },
 
-
-body:
-
-JSON.stringify({
+body:JSON.stringify({
 
 campaignId:
 currentCampaign,
 
-
 recipients:
 selected
 
-
 })
-
 
 }
 
@@ -638,11 +519,10 @@ selected
 
 
 
-
-
-
 const data =
 await res.json();
+
+
 
 if(data.success){
 
@@ -665,6 +545,7 @@ data.error ||
 }
 
 
+}
 
 
 
@@ -674,22 +555,13 @@ data.error ||
 
 
 
-
-
-// --------------------
 // LOAD RECIPIENTS
-// --------------------
-
 
 async function loadRecipients(){
 
 
-
 if(!currentCampaign)
 return;
-
-
-
 
 
 
@@ -702,10 +574,8 @@ await fetch(
 
 headers:{
 
-
 "Authorization":
 "Bearer "+session
-
 
 }
 
@@ -715,24 +585,16 @@ headers:{
 
 
 
-
-
-
 const data =
 await res.json();
-
-
-
 
 
 
 if(data.success){
 
 
-
 selected =
 data.recipients || [];
-
 
 
 updateCount();
@@ -741,25 +603,19 @@ updateCount();
 renderLeads();
 
 
+}
+
 
 }
 
 
 
-}
 
 
 
 
 
-
-
-
-
-// --------------------
 // COUNTER
-// --------------------
-
 
 function updateCount(){
 
@@ -777,6 +633,18 @@ count.innerText =
 selected.length;
 
 }
+
+
+}
+
+
+
+
+
+
+
+
+// TOAST
 
 function showToast(message){
 
@@ -809,15 +677,25 @@ message;
 
 
 
-toast.classList.add("show");
+toast.classList.add(
+"show"
+);
 
 
 
-setTimeout(()=>{
+setTimeout(
 
+()=>{
 
-toast.classList.remove("show");
+toast.classList.remove(
+"show"
+);
 
-},2000);
+},
+
+2000
+
+);
+
 
 }
