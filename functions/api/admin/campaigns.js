@@ -49,10 +49,49 @@ async function checkSession(
 ){
 
 
+async function checkSession(
+  request,
+  env
+){
+
 const authorization =
 request.headers.get(
 "Authorization"
 );
+
+
+if(
+!authorization ||
+!authorization.startsWith("Bearer ")
+){
+
+return false;
+
+}
+
+
+const sessionId =
+authorization.substring(7);
+
+
+
+const session =
+await env.ADMIN_SESSIONS_KV.get(
+`session:${sessionId}`
+);
+
+
+
+if(!session){
+
+return false;
+
+}
+
+
+return true;
+
+}
 
 
 
