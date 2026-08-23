@@ -2,7 +2,7 @@ const LOGIN_URL = "/api/login";
 const API_URL = "/api/admin/leads";
 const HISTORY_URL = "/api/admin/history";
 const CAMPAIGN_URL = "/api/admin/campaigns";
-
+const CAMPAIGN_URL = "/api/admin/campaigns";
 
 let adminSession =
 localStorage.getItem("admin_session");
@@ -1424,5 +1424,128 @@ toast.classList.remove(
 2000
 );
 
+
+}
+async function loadCampaigns(){
+
+
+const table =
+document.getElementById(
+"campaignTable"
+);
+
+
+if(!table)
+return;
+
+
+
+const response =
+await fetch(
+
+CAMPAIGN_URL,
+
+{
+
+headers:{
+
+"Authorization":
+"Bearer "+adminSession
+
+}
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(!data.success){
+
+return;
+
+}
+
+
+
+table.innerHTML="";
+
+
+
+data.campaigns.forEach(
+
+campaign=>{
+
+
+const row =
+document.createElement(
+"tr"
+);
+
+
+
+row.innerHTML = `
+
+
+<td>
+${campaign.id}
+</td>
+
+
+<td>
+${campaign.name}
+</td>
+
+
+<td>
+${campaign.subject}
+</td>
+
+
+<td>
+${campaign.status}
+</td>
+
+
+<td>
+
+
+<button
+onclick="openAudience('${campaign.id}')"
+>
+Audience
+</button>
+
+
+
+</td>
+
+
+`;
+
+
+
+table.appendChild(row);
+
+
+}
+
+);
+
+
+}
+
+
+
+
+function openAudience(id){
+
+window.location.href =
+`/admin/campaign-audience.html?campaign=${id}`;
 
 }
