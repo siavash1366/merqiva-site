@@ -2,7 +2,7 @@ const LOGIN_URL = "/api/login";
 const API_URL = "/api/admin/leads";
 const HISTORY_URL = "/api/admin/history";
 const CAMPAIGN_URL = "/api/admin/campaigns";
-const CAMPAIGN_URL = "/api/admin/campaigns";
+
 
 let adminSession =
 localStorage.getItem("admin_session");
@@ -16,9 +16,9 @@ let currentStatus = "";
 
 
 
-// --------------------
-// INIT EVENTS
-// --------------------
+// =====================
+// INIT
+// =====================
 
 
 document
@@ -36,7 +36,7 @@ document
 "click",
 ()=>{
 
-currentPage=1;
+currentPage = 1;
 
 loadLeads();
 loadCampaigns();
@@ -78,7 +78,7 @@ document
 
 
 
-currentPage=1;
+currentPage = 1;
 
 
 loadLeads();
@@ -105,15 +105,13 @@ document
 "click",
 ()=>{
 
-
-if(currentPage>1){
+if(currentPage > 1){
 
 currentPage--;
 
 loadLeads();
 
 }
-
 
 }
 
@@ -127,15 +125,15 @@ document
 "click",
 ()=>{
 
-
 currentPage++;
 
 loadLeads();
 
-
 }
 
 );
+
+
 
 
 
@@ -145,16 +143,16 @@ document
 "click",
 ()=>{
 
-
 document
 .getElementById("leadDetails")
 .classList
 .add("hidden");
 
-
 }
 
 );
+
+
 
 
 
@@ -164,7 +162,6 @@ document
 "click",
 ()=>{
 
-
 if(currentLead?.email){
 
 window.location.href =
@@ -172,10 +169,11 @@ window.location.href =
 
 }
 
-
 }
 
 );
+
+
 
 
 
@@ -185,9 +183,7 @@ document
 "click",
 async()=>{
 
-
 if(currentLead?.email){
-
 
 await navigator.clipboard.writeText(
 currentLead.email
@@ -198,13 +194,13 @@ showToast(
 "Email copied"
 );
 
-
 }
-
 
 }
 
 );
+
+
 
 
 
@@ -214,7 +210,6 @@ document
 "click",
 saveNote
 );
-
 
 
 
@@ -230,13 +225,9 @@ showPanel();
 
 
 
-
-
-
-
-// --------------------
+// =====================
 // LOGIN
-// --------------------
+// =====================
 
 
 async function login(){
@@ -323,6 +314,365 @@ document
 
 
 
+function showPanel(){
+
+
+document
+.getElementById("loginBox")
+?.classList
+.add("hidden");
+
+
+
+document
+.getElementById("panel")
+?.classList
+.remove("hidden");
+
+
+
+loadLeads();
+
+loadCampaigns();
+
+
+}
+
+
+
+
+
+
+function logout(){
+
+
+localStorage.removeItem(
+"admin_session"
+);
+
+
+adminSession = null;
+
+
+location.reload();
+
+
+}
+const LOGIN_URL = "/api/login";
+const API_URL = "/api/admin/leads";
+const HISTORY_URL = "/api/admin/history";
+const CAMPAIGN_URL = "/api/admin/campaigns";
+
+
+let adminSession =
+localStorage.getItem("admin_session");
+
+
+let currentPage = 1;
+let currentLead = null;
+let currentSearch = "";
+let currentStatus = "";
+
+
+
+
+// =====================
+// INIT
+// =====================
+
+
+document
+.getElementById("loginBtn")
+?.addEventListener(
+"click",
+login
+);
+
+
+
+document
+.getElementById("refreshBtn")
+?.addEventListener(
+"click",
+()=>{
+
+currentPage = 1;
+
+loadLeads();
+loadCampaigns();
+
+}
+
+);
+
+
+
+document
+.getElementById("logoutBtn")
+?.addEventListener(
+"click",
+logout
+);
+
+
+
+document
+.getElementById("searchBtn")
+?.addEventListener(
+"click",
+()=>{
+
+
+currentSearch =
+document
+.getElementById("searchInput")
+.value
+.trim();
+
+
+
+currentStatus =
+document
+.getElementById("statusFilter")
+.value;
+
+
+
+currentPage = 1;
+
+
+loadLeads();
+
+
+}
+
+);
+
+
+
+document
+.getElementById("createCampaignBtn")
+?.addEventListener(
+"click",
+createCampaign
+);
+
+
+
+document
+.getElementById("prevPage")
+?.addEventListener(
+"click",
+()=>{
+
+if(currentPage > 1){
+
+currentPage--;
+
+loadLeads();
+
+}
+
+}
+
+);
+
+
+
+document
+.getElementById("nextPage")
+?.addEventListener(
+"click",
+()=>{
+
+currentPage++;
+
+loadLeads();
+
+}
+
+);
+
+
+
+
+
+document
+.getElementById("closeDetails")
+?.addEventListener(
+"click",
+()=>{
+
+document
+.getElementById("leadDetails")
+.classList
+.add("hidden");
+
+}
+
+);
+
+
+
+
+
+document
+.getElementById("replyBtn")
+?.addEventListener(
+"click",
+()=>{
+
+if(currentLead?.email){
+
+window.location.href =
+`mailto:${currentLead.email}`;
+
+}
+
+}
+
+);
+
+
+
+
+
+document
+.getElementById("copyEmailBtn")
+?.addEventListener(
+"click",
+async()=>{
+
+if(currentLead?.email){
+
+await navigator.clipboard.writeText(
+currentLead.email
+);
+
+
+showToast(
+"Email copied"
+);
+
+}
+
+}
+
+);
+
+
+
+
+
+document
+.getElementById("saveNoteBtn")
+?.addEventListener(
+"click",
+saveNote
+);
+
+
+
+
+
+if(adminSession){
+
+showPanel();
+
+}
+
+
+
+
+
+// =====================
+// LOGIN
+// =====================
+
+
+async function login(){
+
+
+const token =
+document
+.getElementById("token")
+.value
+.trim();
+
+
+
+if(!token)
+return;
+
+
+
+const response =
+await fetch(
+LOGIN_URL,
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json"
+
+},
+
+body:JSON.stringify({
+
+token
+
+})
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(data.success){
+
+
+adminSession =
+data.session;
+
+
+localStorage.setItem(
+"admin_session",
+data.session
+);
+
+
+
+showPanel();
+
+
+}
+else{
+
+
+document
+.getElementById("loginError")
+.innerText =
+"Invalid token";
+
+
+}
+
+
+}
+
+
+
+
+
 
 function showPanel(){
 
@@ -353,7 +703,6 @@ loadCampaigns();
 
 
 
-
 function logout(){
 
 
@@ -362,439 +711,16 @@ localStorage.removeItem(
 );
 
 
-adminSession=null;
+adminSession = null;
 
 
 location.reload();
 
 
 }
-
-
-
-
-
-
-
-
-
-// --------------------
-// LOAD LEADS
-// --------------------
-
-
-async function loadLeads(){
-
-
-const params =
-new URLSearchParams({
-
-page:currentPage,
-
-limit:20,
-
-search:currentSearch,
-
-status:currentStatus
-
-});
-
-
-
-const response =
-await fetch(
-
-`${API_URL}?${params}`,
-
-{
-
-headers:{
-
-"Authorization":
-"Bearer "+adminSession
-
-}
-
-}
-
-);
-
-
-
-const data =
-await response.json();
-
-
-
-if(!data.success){
-
-logout();
-
-return;
-
-}
-
-
-
-const tbody =
-document.getElementById(
-"leadTable"
-);
-
-
-
-if(!tbody)
-return;
-
-
-
-tbody.innerHTML="";
-
-
-
-data.leads.forEach(
-lead=>{
-
-
-const row =
-document.createElement(
-"tr"
-);
-
-
-
-row.innerHTML = `
-
-
-<td>${lead.id || ""}</td>
-
-<td>${lead.name || ""}</td>
-
-<td>${lead.email || ""}</td>
-
-<td>${lead.company || ""}</td>
-
-<td>${lead.country || ""}</td>
-
-<td>${lead.offering || ""}</td>
-
-
-<td>
-
-<select
-class="statusSelect"
-data-id="${lead.id}"
->
-
-${statusOptions(lead.status)}
-
-</select>
-
-
-</td>
-
-
-<td>
-
-
-<button class="saveBtn">
-Save
-</button>
-
-
-<button class="viewBtn">
-View
-</button>
-
-
-</td>
-
-
-`;
-
-
-
-row
-.querySelector(".saveBtn")
-.addEventListener(
-"click",
-()=>updateStatus(lead.id)
-);
-
-
-
-row
-.querySelector(".viewBtn")
-.addEventListener(
-"click",
-()=>viewLead(lead)
-);
-
-
-
-tbody.appendChild(row);
-
-
-}
-
-);
-
-
-
-const pageInfo =
-document.getElementById(
-"pageInfo"
-);
-
-
-
-if(pageInfo){
-
-pageInfo.innerText =
-`Page ${data.page} / ${data.pages || 1}`;
-
-}
-
-
-}
-
-
-
-
-
-
-
-
-
-function statusOptions(current){
-
-
-const statuses=[
-
-"New",
-
-"Reviewed",
-
-"Contacted",
-
-"Qualified",
-
-"Proposal Sent",
-
-"Won",
-
-"Lost"
-
-];
-
-
-
-return statuses.map(
-
-status=>`
-
-<option value="${status}"
-
-${current===status?"selected":""}>
-
-${status}
-
-</option>
-
-`
-
-).join("");
-
-}
-
-
-
-
-
-
-
-
-
-async function updateStatus(id){
-
-
-const select =
-document.querySelector(
-
-`.statusSelect[data-id="${id}"]`
-
-);
-
-
-
-if(!select)
-return;
-
-
-
-const status =
-select.value;
-
-
-
-const response =
-await fetch(
-
-API_URL,
-
-{
-
-method:"PATCH",
-
-headers:{
-
-"Content-Type":
-"application/json",
-
-"Authorization":
-"Bearer "+adminSession
-
-},
-
-body:JSON.stringify({
-
-id,
-
-status
-
-})
-
-}
-
-);
-
-
-
-const data =
-await response.json();
-
-
-
-if(data.success){
-
-
-showToast(
-"Status updated"
-);
-
-
-loadLeads();
-
-
-}
-else{
-
-
-showToast(
-data.error || "Update failed"
-);
-
-
-}
-
-
-}
-
-
-
-
-
-
-
-
-
-function viewLead(lead){
-
-
-currentLead =
-lead;
-
-
-
-const box =
-document.getElementById(
-"leadDetails"
-);
-
-
-
-const content =
-document.getElementById(
-"detailsContent"
-);
-
-
-
-if(!box || !content)
-return;
-
-
-
-content.innerHTML = `
-
-<p><b>ID:</b> ${lead.id || ""}</p>
-
-<p><b>Name:</b> ${lead.name || ""}</p>
-
-<p><b>Email:</b> ${lead.email || ""}</p>
-
-<p><b>Company:</b> ${lead.company || ""}</p>
-
-<p><b>Country:</b> ${lead.country || ""}</p>
-
-<p><b>Market:</b> ${lead.market || ""}</p>
-
-<p><b>Offering:</b> ${lead.offering || ""}</p>
-
-<p><b>Status:</b> ${lead.status || ""}</p>
-
-<p><b>Created:</b> ${lead.createdAt || ""}</p>
-
-
-<p><b>Message:</b></p>
-
-<p>${lead.message || ""}</p>
-
-
-<div id="historyContent">
-
-Loading history...
-
-</div>
-
-`;
-
-
-
-box.classList.remove(
-"hidden"
-);
-
-
-
-loadHistory(
-lead.id
-);
-
-
-loadNotes(
-lead
-);
-
-
-}
-
-
-
-
-
-
-
+// =====================
+// HISTORY
+// =====================
 
 
 async function loadHistory(id){
@@ -853,17 +779,21 @@ return;
 
 box.innerHTML =
 
-data.history.reverse().map(
+data.history
+.reverse()
+.map(
 
 item=>`
 
 <div class="history-item">
+
 
 <div class="history-title">
 
 ${item.action}
 
 </div>
+
 
 <div class="history-change">
 
@@ -875,27 +805,37 @@ ${item.to}
 
 </div>
 
+
 <div class="history-date">
 
-${new Date(item.date).toLocaleString()}
+${new Date(item.date)
+.toLocaleString()}
 
 </div>
 
 
 ${item.note ?
 
-`<div>Note: ${item.note}</div>`
+`
+<div>
+Note:
+${item.note}
+</div>
+`
 
 :
 
-""}
+""
+
+}
 
 
 </div>
 
 `
 
-).join("");
+)
+.join("");
 
 }
 
@@ -905,6 +845,11 @@ ${item.note ?
 
 
 
+
+
+// =====================
+// INTERNAL NOTES
+// =====================
 
 
 async function saveNote(){
@@ -984,13 +929,18 @@ showToast(
 
 
 
-input.value="";
+input.value = "";
 
 
-currentLead=data.lead;
+
+currentLead =
+data.lead;
 
 
-loadNotes(currentLead);
+
+loadNotes(
+currentLead
+);
 
 
 }
@@ -1043,25 +993,34 @@ return;
 
 
 box.innerHTML =
-lead.notes.map(
+
+lead.notes
+.map(
 
 note=>`
 
 <div class="note-item">
 
-<div>${note.text}</div>
+
+<div>
+${note.text}
+</div>
+
 
 <div class="note-date">
 
-${new Date(note.date).toLocaleString()}
+${new Date(note.date)
+.toLocaleString()}
 
 </div>
+
 
 </div>
 
 `
 
-).join("");
+)
+.join("");
 
 }
 
@@ -1073,9 +1032,9 @@ ${new Date(note.date).toLocaleString()}
 
 
 
-// --------------------
+// =====================
 // CAMPAIGNS
-// --------------------
+// =====================
 
 
 async function loadCampaigns(){
@@ -1123,7 +1082,7 @@ return;
 
 
 
-table.innerHTML="";
+table.innerHTML = "";
 
 
 
@@ -1139,26 +1098,63 @@ document.createElement(
 
 
 
-row.innerHTML=`
+row.innerHTML = `
 
-<td>${campaign.id}</td>
 
-<td>${campaign.name}</td>
+<td>
+${campaign.id}
+</td>
 
-<td>${campaign.subject}</td>
 
-<td>${campaign.status}</td>
+<td>
+${campaign.name}
+</td>
+
+
+<td>
+${campaign.subject}
+</td>
+
+
+<td>
+${campaign.status}
+</td>
+
 
 <td>
 
+
 <button
-class="deleteCampaignBtn">
+class="audienceBtn"
+>
+Audience
+</button>
+
+
+<button
+class="deleteCampaignBtn"
+>
 Delete
 </button>
 
+
 </td>
 
+
 `;
+
+
+
+
+
+row
+.querySelector(".audienceBtn")
+.addEventListener(
+"click",
+()=>openAudience(campaign.id)
+);
+
+
 
 
 
@@ -1168,6 +1164,8 @@ row
 "click",
 ()=>deleteCampaign(campaign.id)
 );
+
+
 
 
 
@@ -1195,21 +1193,24 @@ async function createCampaign(){
 const name =
 document
 .getElementById("campaignName")
-.value.trim();
+.value
+.trim();
 
 
 
 const subject =
 document
 .getElementById("campaignSubject")
-.value.trim();
+.value
+.trim();
 
 
 
 const body =
 document
 .getElementById("campaignBody")
-.value.trim();
+.value
+.trim();
 
 
 
@@ -1222,6 +1223,7 @@ showToast(
 return;
 
 }
+
 
 
 
@@ -1273,9 +1275,21 @@ showToast(
 );
 
 
-document.getElementById("campaignName").value="";
-document.getElementById("campaignSubject").value="";
-document.getElementById("campaignBody").value="";
+
+document
+.getElementById("campaignName")
+.value="";
+
+
+document
+.getElementById("campaignSubject")
+.value="";
+
+
+document
+.getElementById("campaignBody")
+.value="";
+
 
 
 loadCampaigns();
@@ -1294,6 +1308,7 @@ data.error || "Campaign failed"
 
 
 }
+
 
 
 
@@ -1350,10 +1365,23 @@ showToast(
 
 loadCampaigns();
 
+}
 
 }
 
 
+
+
+
+
+
+
+
+function openAudience(id){
+
+window.location.href =
+`/admin/campaign-audience.html?campaign=${id}`;
+
 }
 
 
@@ -1364,9 +1392,9 @@ loadCampaigns();
 
 
 
-// --------------------
+// =====================
 // TOAST
-// --------------------
+// =====================
 
 
 function showToast(message){
@@ -1419,133 +1447,9 @@ toast.classList.remove(
 "show"
 );
 
-
 },
 2000
 );
 
-
-}
-async function loadCampaigns(){
-
-
-const table =
-document.getElementById(
-"campaignTable"
-);
-
-
-if(!table)
-return;
-
-
-
-const response =
-await fetch(
-
-CAMPAIGN_URL,
-
-{
-
-headers:{
-
-"Authorization":
-"Bearer "+adminSession
-
-}
-
-}
-
-);
-
-
-
-const data =
-await response.json();
-
-
-
-if(!data.success){
-
-return;
-
-}
-
-
-
-table.innerHTML="";
-
-
-
-data.campaigns.forEach(
-
-campaign=>{
-
-
-const row =
-document.createElement(
-"tr"
-);
-
-
-
-row.innerHTML = `
-
-
-<td>
-${campaign.id}
-</td>
-
-
-<td>
-${campaign.name}
-</td>
-
-
-<td>
-${campaign.subject}
-</td>
-
-
-<td>
-${campaign.status}
-</td>
-
-
-<td>
-
-
-<button
-onclick="openAudience('${campaign.id}')"
->
-Audience
-</button>
-
-
-
-</td>
-
-
-`;
-
-
-
-table.appendChild(row);
-
-
-}
-
-);
-
-
-}
-
-
-
-
-function openAudience(id){
-
-window.location.href =
-`/admin/campaign-audience.html?campaign=${id}`;
 
 }
