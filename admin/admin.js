@@ -1194,6 +1194,7 @@ ${campaign.status}
 
 <button
 class="audienceBtn"
+data-id="${campaign.id}"
 >
 Audience
 </button>
@@ -1335,7 +1336,24 @@ showToast(
 "Campaign created"
 );
 
+document
+.querySelectorAll(".audienceBtn")
+.forEach(btn => {
 
+btn.addEventListener(
+"click",
+()=>{
+
+const id = btn.dataset.id;
+
+window.location.href =
+`/admin/campaign-audience.html?campaign=${id}`;
+
+}
+
+);
+
+});
 
 document
 .getElementById("campaignName")
