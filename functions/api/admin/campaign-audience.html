@@ -1,0 +1,252 @@
+<!-- admin/campaign-audience.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Campaign Audience</title>
+
+<link rel="stylesheet" href="/admin/admin.css">
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<div class="card">
+
+
+<h1>
+Campaign Audience
+</h1>
+
+
+<select id="campaignSelect">
+
+<option value="">
+Select Campaign
+</option>
+
+</select>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+Lead Filter
+</h2>
+
+
+
+<input
+id="searchAudience"
+placeholder="Search name, email, company"
+/>
+
+
+
+<select id="countryFilter">
+
+<option value="">
+All Countries
+</option>
+
+</select>
+
+
+
+
+
+<select id="statusFilter">
+
+
+<option value="">
+All Status
+</option>
+
+
+<option>
+New
+</option>
+
+
+<option>
+Reviewed
+</option>
+
+
+<option>
+Contacted
+</option>
+
+
+<option>
+Qualified
+</option>
+
+
+<option>
+Proposal Sent
+</option>
+
+
+<option>
+Won
+</option>
+
+
+<option>
+Lost
+</option>
+
+
+</select>
+
+
+
+
+<button id="filterBtn">
+Filter
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+Select Recipients
+</h2>
+
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>
+Select
+</th>
+
+
+<th>
+Name
+</th>
+
+
+<th>
+Email
+</th>
+
+
+<th>
+Company
+</th>
+
+
+<th>
+Country
+</th>
+
+
+<th>
+Status
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="audienceTable">
+
+</tbody>
+
+
+
+</table>
+
+
+
+
+<br>
+
+
+<button id="saveAudienceBtn">
+
+Save Audience
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h3>
+
+Selected Leads:
+
+<span id="selectedCount">
+0
+</span>
+
+</h3>
+
+
+</div>
+
+
+
+</div>
+
+
+
+<script src="/admin/campaign-audience.js"></script>
+
+
+</body>
+
+</html>
