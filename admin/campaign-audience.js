@@ -29,6 +29,22 @@ let selected = [];
 
 let currentCampaign = "";
 
+const params =
+new URLSearchParams(
+window.location.search
+);
+
+
+const campaignParam =
+params.get("campaign");
+
+
+if(campaignParam){
+
+currentCampaign =
+campaignParam;
+
+}
 
 
 
@@ -212,7 +228,14 @@ ${campaign.name}
 }
 
 );
+if(currentCampaign){
 
+select.value =
+currentCampaign;
+
+loadRecipients();
+
+}
 
 
 
