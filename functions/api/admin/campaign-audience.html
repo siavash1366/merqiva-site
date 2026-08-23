@@ -22,6 +22,9 @@
 <div class="container">
 
 
+
+<!-- CAMPAIGN SELECT -->
+
 <div class="card">
 
 
@@ -30,11 +33,18 @@ Campaign Audience
 </h1>
 
 
+
+<p>
+Select Campaign
+</p>
+
+
 <select id="campaignSelect">
 
 <option value="">
 Select Campaign
 </option>
+
 
 </select>
 
@@ -47,6 +57,7 @@ Select Campaign
 
 
 
+<!-- FILTER -->
 
 <div class="card">
 
@@ -58,19 +69,29 @@ Lead Filter
 
 
 <input
+
 id="searchAudience"
+
+type="text"
+
 placeholder="Search name, email, company"
+
 />
+
+
 
 
 
 <select id="countryFilter">
 
+
 <option value="">
 All Countries
 </option>
 
+
 </select>
+
 
 
 
@@ -84,39 +105,40 @@ All Status
 </option>
 
 
-<option>
+<option value="New">
 New
 </option>
 
 
-<option>
+<option value="Reviewed">
 Reviewed
 </option>
 
 
-<option>
+<option value="Contacted">
 Contacted
 </option>
 
 
-<option>
+<option value="Qualified">
 Qualified
 </option>
 
 
-<option>
+<option value="Proposal Sent">
 Proposal Sent
 </option>
 
 
-<option>
+<option value="Won">
 Won
 </option>
 
 
-<option>
+<option value="Lost">
 Lost
 </option>
+
 
 
 </select>
@@ -124,9 +146,13 @@ Lost
 
 
 
+
 <button id="filterBtn">
+
 Filter
+
 </button>
+
 
 
 </div>
@@ -137,6 +163,8 @@ Filter
 
 
 
+
+<!-- RECIPIENT TABLE -->
 
 
 <div class="card">
@@ -153,7 +181,9 @@ Select Recipients
 
 <thead>
 
+
 <tr>
+
 
 <th>
 Select
@@ -192,7 +222,9 @@ Status
 
 
 
+
 <tbody id="audienceTable">
+
 
 </tbody>
 
@@ -203,7 +235,12 @@ Status
 
 
 
+
 <br>
+
+
+
+<div class="toolbar">
 
 
 <button id="saveAudienceBtn">
@@ -213,6 +250,9 @@ Save Audience
 </button>
 
 
+</div>
+
+
 
 </div>
 
@@ -220,6 +260,9 @@ Save Audience
 
 
 
+
+
+<!-- COUNTER -->
 
 
 <div class="card">
@@ -233,6 +276,7 @@ Selected Leads:
 0
 </span>
 
+
 </h3>
 
 
@@ -240,7 +284,13 @@ Selected Leads:
 
 
 
+
+
+
+
 </div>
+
+
 
 
 
