@@ -31,12 +31,16 @@ let selected=[];
 
 let currentCampaign="";
 
+const urlParams = new URLSearchParams(
+window.location.search
+);
 
+const campaignFromUrl =
+urlParams.get("campaign");
 
-
-
-
-
+if(campaignFromUrl){
+currentCampaign = campaignFromUrl;
+}
 
 
 document
@@ -146,16 +150,16 @@ ${c.name}
 
 }
 
+if(currentCampaign){
 
+select.value = currentCampaign;
 
+loadRecipients();
 
-
-
-
+}
 
 
 async function loadLeads(){
-
 
 const search =
 document
