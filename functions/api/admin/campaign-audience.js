@@ -514,11 +514,13 @@ selected.length;
 
 }
 
+async function init(){
+
+await loadCampaigns();
+
+await loadLeads();
+
+}
 
 
-
-
-
-loadCampaigns();
-
-loadLeads();
+init();
