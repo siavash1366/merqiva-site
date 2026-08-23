@@ -52,6 +52,7 @@ Login
 
 
 
+
 <!-- CRM PANEL -->
 
 <div id="panel" class="hidden">
@@ -90,7 +91,11 @@ Logout
 
 
 
+
+
+
 <!-- FILTERS -->
+
 
 <div class="card">
 
@@ -171,6 +176,106 @@ Search
 
 
 
+
+<!-- CAMPAIGN MANAGEMENT -->
+
+
+<div class="card">
+
+
+<h2>
+Campaign Management
+</h2>
+
+
+
+<div class="campaign-form">
+
+
+<input
+id="campaignName"
+type="text"
+placeholder="Campaign Name"
+/>
+
+
+
+<input
+id="campaignSubject"
+type="text"
+placeholder="Email Subject"
+/>
+
+
+
+<textarea
+id="campaignBody"
+placeholder="Email Content"
+></textarea>
+
+
+
+<button id="createCampaignBtn">
+Create Campaign
+</button>
+
+
+</div>
+
+
+
+
+
+<h3>
+Campaign List
+</h3>
+
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+
+<th>Name</th>
+
+<th>Subject</th>
+
+<th>Status</th>
+
+<th>Action</th>
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="campaignTable">
+
+</tbody>
+
+
+
+</table>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
 <!-- LEADS TABLE -->
 
 
@@ -207,6 +312,7 @@ Website Leads
 <th>Action</th>
 
 </tr>
+
 
 </thead>
 
@@ -265,6 +371,7 @@ id="leadDetails"
 class="card hidden"
 >
 
+
 <h2>
 Lead Details
 </h2>
@@ -274,6 +381,7 @@ Lead Details
 <div id="detailsContent">
 
 </div>
+
 
 
 
@@ -344,7 +452,6 @@ Activity History
 
 
 
-
 <!-- ACTIONS -->
 
 
@@ -378,11 +485,13 @@ Close
 
 
 
-</div>
-
-
 
 </div>
+
+
+
+</div>
+
 
 
 
