@@ -318,29 +318,22 @@ Date.now();
 
 const campaign = {
 
+  id,
 
-id,
+  name:
+    body.name,
 
+  subject:
+    body.subject,
 
-name:
-body.name,
+  body:
+    body.body,
 
+  status:
+    "Draft",
 
-subject:
-body.subject,
-
-
-body.body,
-
-
-status:
-"Draft",
-
-
-createdAt:
-new Date()
-.toISOString()
-
+  createdAt:
+    new Date().toISOString()
 
 };
 
