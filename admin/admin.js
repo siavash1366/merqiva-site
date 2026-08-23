@@ -1,6 +1,7 @@
 const LOGIN_URL = "/api/login";
 const API_URL = "/api/admin/leads";
 const HISTORY_URL = "/api/admin/history";
+const CAMPAIGN_URL = "/api/admin/campaigns";
 
 
 let adminSession =
@@ -38,6 +39,7 @@ document
 currentPage=1;
 
 loadLeads();
+loadCampaigns();
 
 }
 
@@ -51,8 +53,6 @@ document
 "click",
 logout
 );
-
-
 
 
 
@@ -90,6 +90,12 @@ loadLeads();
 
 
 
+document
+.getElementById("createCampaignBtn")
+?.addEventListener(
+"click",
+createCampaign
+);
 
 
 
@@ -115,10 +121,6 @@ loadLeads();
 
 
 
-
-
-
-
 document
 .getElementById("nextPage")
 ?.addEventListener(
@@ -134,11 +136,6 @@ loadLeads();
 }
 
 );
-
-
-
-
-
 
 
 
@@ -161,10 +158,6 @@ document
 
 
 
-
-
-
-
 document
 .getElementById("replyBtn")
 ?.addEventListener(
@@ -183,10 +176,6 @@ window.location.href =
 }
 
 );
-
-
-
-
 
 
 
@@ -219,12 +208,6 @@ showToast(
 
 
 
-
-
-
-
-// Internal Note
-
 document
 .getElementById("saveNoteBtn")
 ?.addEventListener(
@@ -237,12 +220,13 @@ saveNote
 
 
 
-
 if(adminSession){
 
 showPanel();
 
 }
+
+
 
 
 
@@ -299,7 +283,6 @@ token
 
 const data =
 await response.json();
-
 
 
 
@@ -360,9 +343,10 @@ document
 
 loadLeads();
 
+loadCampaigns();
+
 
 }
-
 
 
 
@@ -385,6 +369,15 @@ location.reload();
 
 
 }
+
+
+
+
+
+
+
+
+
 // --------------------
 // LOAD LEADS
 // --------------------
@@ -433,7 +426,6 @@ await response.json();
 
 
 
-
 if(!data.success){
 
 logout();
@@ -441,7 +433,6 @@ logout();
 return;
 
 }
-
 
 
 
@@ -458,8 +449,6 @@ return;
 
 
 tbody.innerHTML="";
-
-
 
 
 
@@ -497,9 +486,7 @@ class="statusSelect"
 data-id="${lead.id}"
 >
 
-${statusOptions(
-lead.status
-)}
+${statusOptions(lead.status)}
 
 </select>
 
@@ -527,18 +514,12 @@ View
 
 
 
-
-
-
 row
 .querySelector(".saveBtn")
 .addEventListener(
 "click",
 ()=>updateStatus(lead.id)
 );
-
-
-
 
 
 
@@ -551,17 +532,12 @@ row
 
 
 
-
-
-
 tbody.appendChild(row);
 
 
 }
 
 );
-
-
 
 
 
@@ -580,7 +556,6 @@ pageInfo.innerText =
 }
 
 
-
 }
 
 
@@ -591,9 +566,7 @@ pageInfo.innerText =
 
 
 
-function statusOptions(
-current
-){
+function statusOptions(current){
 
 
 const statuses=[
@@ -616,8 +589,7 @@ const statuses=[
 
 
 
-return statuses
-.map(
+return statuses.map(
 
 status=>`
 
@@ -631,8 +603,7 @@ ${status}
 
 `
 
-)
-.join("");
+).join("");
 
 }
 
@@ -642,11 +613,6 @@ ${status}
 
 
 
-
-
-// --------------------
-// UPDATE STATUS
-// --------------------
 
 
 async function updateStatus(id){
@@ -668,7 +634,6 @@ return;
 
 const status =
 select.value;
-
 
 
 
@@ -705,12 +670,8 @@ status
 
 
 
-
-
 const data =
 await response.json();
-
-
 
 
 
@@ -747,11 +708,6 @@ data.error || "Update failed"
 
 
 
-// --------------------
-// VIEW LEAD
-// --------------------
-
-
 function viewLead(lead){
 
 
@@ -774,16 +730,12 @@ document.getElementById(
 
 
 
-
 if(!box || !content)
 return;
 
 
 
-
-
 content.innerHTML = `
-
 
 <p><b>ID:</b> ${lead.id || ""}</p>
 
@@ -806,9 +758,7 @@ content.innerHTML = `
 
 <p><b>Message:</b></p>
 
-<p>
-${lead.message || ""}
-</p>
+<p>${lead.message || ""}</p>
 
 
 <div id="historyContent">
@@ -817,17 +767,13 @@ Loading history...
 
 </div>
 
-
 `;
 
 
 
-
-
-box
-.classList
-.remove("hidden");
-
+box.classList.remove(
+"hidden"
+);
 
 
 
@@ -851,12 +797,6 @@ lead
 
 
 
-
-// --------------------
-// HISTORY
-// --------------------
-
-
 async function loadHistory(id){
 
 
@@ -869,8 +809,6 @@ document.getElementById(
 
 if(!box)
 return;
-
-
 
 
 
@@ -894,12 +832,8 @@ headers:{
 
 
 
-
-
 const data =
 await response.json();
-
-
 
 
 
@@ -917,27 +851,19 @@ return;
 
 
 
-
-
-
 box.innerHTML =
 
-data.history
-.reverse()
-.map(
+data.history.reverse().map(
 
 item=>`
 
 <div class="history-item">
-
 
 <div class="history-title">
 
 ${item.action}
 
 </div>
-
-
 
 <div class="history-change">
 
@@ -949,40 +875,27 @@ ${item.to}
 
 </div>
 
-
-
 <div class="history-date">
 
-${new Date(item.date)
-.toLocaleString()}
+${new Date(item.date).toLocaleString()}
 
 </div>
 
 
 ${item.note ?
 
-`
-<div>
-Note:
-${item.note}
-</div>
-`
+`<div>Note: ${item.note}</div>`
 
 :
 
-""
-
-}
+""}
 
 
 </div>
 
 `
 
-)
-.join("");
-
-
+).join("");
 
 }
 
@@ -992,11 +905,6 @@ ${item.note}
 
 
 
-
-
-// --------------------
-// INTERNAL NOTES
-// --------------------
 
 
 async function saveNote(){
@@ -1004,7 +912,6 @@ async function saveNote(){
 
 if(!currentLead)
 return;
-
 
 
 
@@ -1020,7 +927,6 @@ return;
 
 
 
-
 const note =
 input.value.trim();
 
@@ -1028,8 +934,6 @@ input.value.trim();
 
 if(!note)
 return;
-
-
 
 
 
@@ -1066,12 +970,8 @@ note
 
 
 
-
-
 const data =
 await response.json();
-
-
 
 
 
@@ -1087,15 +987,10 @@ showToast(
 input.value="";
 
 
-
-currentLead =
-data.lead;
+currentLead=data.lead;
 
 
-
-loadNotes(
-currentLead
-);
+loadNotes(currentLead);
 
 
 }
@@ -1110,10 +1005,7 @@ data.error || "Note failed"
 }
 
 
-
 }
-
-
 
 
 
@@ -1136,17 +1028,13 @@ return;
 
 
 
-
-
 if(
 !lead.notes ||
 !lead.notes.length
 ){
 
-
 box.innerHTML =
 "No notes";
-
 
 return;
 
@@ -1154,40 +1042,316 @@ return;
 
 
 
-
-
 box.innerHTML =
-
-lead.notes
-.map(
+lead.notes.map(
 
 note=>`
 
 <div class="note-item">
 
-
-<div>
-
-${note.text}
-
-</div>
-
+<div>${note.text}</div>
 
 <div class="note-date">
 
-${new Date(note.date)
-.toLocaleString()}
+${new Date(note.date).toLocaleString()}
 
 </div>
-
 
 </div>
 
 `
 
-)
-.join("");
+).join("");
 
+}
+
+
+
+
+
+
+
+
+
+// --------------------
+// CAMPAIGNS
+// --------------------
+
+
+async function loadCampaigns(){
+
+
+const table =
+document.getElementById(
+"campaignTable"
+);
+
+
+
+if(!table)
+return;
+
+
+
+const response =
+await fetch(
+
+CAMPAIGN_URL,
+
+{
+
+headers:{
+
+"Authorization":
+"Bearer "+adminSession
+
+}
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(!data.success)
+return;
+
+
+
+table.innerHTML="";
+
+
+
+data.campaigns.forEach(
+
+campaign=>{
+
+
+const row =
+document.createElement(
+"tr"
+);
+
+
+
+row.innerHTML=`
+
+<td>${campaign.id}</td>
+
+<td>${campaign.name}</td>
+
+<td>${campaign.subject}</td>
+
+<td>${campaign.status}</td>
+
+<td>
+
+<button
+class="deleteCampaignBtn">
+Delete
+</button>
+
+</td>
+
+`;
+
+
+
+row
+.querySelector(".deleteCampaignBtn")
+.addEventListener(
+"click",
+()=>deleteCampaign(campaign.id)
+);
+
+
+
+table.appendChild(row);
+
+
+}
+
+);
+
+
+}
+
+
+
+
+
+
+
+
+
+async function createCampaign(){
+
+
+const name =
+document
+.getElementById("campaignName")
+.value.trim();
+
+
+
+const subject =
+document
+.getElementById("campaignSubject")
+.value.trim();
+
+
+
+const body =
+document
+.getElementById("campaignBody")
+.value.trim();
+
+
+
+if(!name || !subject || !body){
+
+showToast(
+"Fill all fields"
+);
+
+return;
+
+}
+
+
+
+const response =
+await fetch(
+
+CAMPAIGN_URL,
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+"Authorization":
+"Bearer "+adminSession
+
+},
+
+body:JSON.stringify({
+
+name,
+
+subject,
+
+body
+
+})
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(data.success){
+
+
+showToast(
+"Campaign created"
+);
+
+
+document.getElementById("campaignName").value="";
+document.getElementById("campaignSubject").value="";
+document.getElementById("campaignBody").value="";
+
+
+loadCampaigns();
+
+
+}
+else{
+
+
+showToast(
+data.error || "Campaign failed"
+);
+
+
+}
+
+
+}
+
+
+
+
+
+
+
+
+async function deleteCampaign(id){
+
+
+const response =
+await fetch(
+
+CAMPAIGN_URL,
+
+{
+
+method:"DELETE",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+"Authorization":
+"Bearer "+adminSession
+
+},
+
+body:JSON.stringify({
+
+id
+
+})
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(data.success){
+
+showToast(
+"Campaign deleted"
+);
+
+
+loadCampaigns();
+
+
+}
 
 
 }
@@ -1237,7 +1401,6 @@ toast
 
 
 
-
 toast.innerText =
 message;
 
@@ -1246,8 +1409,6 @@ message;
 toast.classList.add(
 "show"
 );
-
-
 
 
 
