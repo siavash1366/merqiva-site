@@ -17,7 +17,7 @@ let currentStatus = "";
 
 
 // =====================
-// INIT
+// INIT EVENTS
 // =====================
 
 
@@ -62,7 +62,6 @@ document
 "click",
 ()=>{
 
-
 currentSearch =
 document
 .getElementById("searchInput")
@@ -82,7 +81,6 @@ currentPage = 1;
 
 
 loadLeads();
-
 
 }
 
@@ -135,8 +133,6 @@ loadLeads();
 
 
 
-
-
 document
 .getElementById("closeDetails")
 ?.addEventListener(
@@ -151,8 +147,6 @@ document
 }
 
 );
-
-
 
 
 
@@ -172,8 +166,6 @@ window.location.href =
 }
 
 );
-
-
 
 
 
@@ -202,8 +194,6 @@ showToast(
 
 
 
-
-
 document
 .getElementById("saveNoteBtn")
 ?.addEventListener(
@@ -220,6 +210,8 @@ if(adminSession){
 showPanel();
 
 }
+
+
 
 
 
@@ -313,7 +305,6 @@ document
 
 
 
-
 function showPanel(){
 
 
@@ -359,267 +350,304 @@ location.reload();
 
 }
 
-
-
-let adminSession =
-localStorage.getItem("admin_session");
-
-
-let currentPage = 1;
-let currentLead = null;
-let currentSearch = "";
-let currentStatus = "";
-
-
-
-
 // =====================
-// INIT
+// LOAD LEADS
 // =====================
 
 
-document
-.getElementById("loginBtn")
-?.addEventListener(
-"click",
-login
-);
+async function loadLeads(){
 
 
+const params =
+new URLSearchParams({
 
-document
-.getElementById("refreshBtn")
-?.addEventListener(
-"click",
-()=>{
+page:currentPage,
 
-currentPage = 1;
+limit:20,
 
-loadLeads();
-loadCampaigns();
+search:currentSearch,
 
-}
+status:currentStatus
 
-);
-
-
-
-document
-.getElementById("logoutBtn")
-?.addEventListener(
-"click",
-logout
-);
-
-
-
-document
-.getElementById("searchBtn")
-?.addEventListener(
-"click",
-()=>{
-
-
-currentSearch =
-document
-.getElementById("searchInput")
-.value
-.trim();
-
-
-
-currentStatus =
-document
-.getElementById("statusFilter")
-.value;
-
-
-
-currentPage = 1;
-
-
-loadLeads();
-
-
-}
-
-);
-
-
-
-document
-.getElementById("createCampaignBtn")
-?.addEventListener(
-"click",
-createCampaign
-);
-
-
-
-document
-.getElementById("prevPage")
-?.addEventListener(
-"click",
-()=>{
-
-if(currentPage > 1){
-
-currentPage--;
-
-loadLeads();
-
-}
-
-}
-
-);
-
-
-
-document
-.getElementById("nextPage")
-?.addEventListener(
-"click",
-()=>{
-
-currentPage++;
-
-loadLeads();
-
-}
-
-);
-
-
-
-
-
-document
-.getElementById("closeDetails")
-?.addEventListener(
-"click",
-()=>{
-
-document
-.getElementById("leadDetails")
-.classList
-.add("hidden");
-
-}
-
-);
-
-
-
-
-
-document
-.getElementById("replyBtn")
-?.addEventListener(
-"click",
-()=>{
-
-if(currentLead?.email){
-
-window.location.href =
-`mailto:${currentLead.email}`;
-
-}
-
-}
-
-);
-
-
-
-
-
-document
-.getElementById("copyEmailBtn")
-?.addEventListener(
-"click",
-async()=>{
-
-if(currentLead?.email){
-
-await navigator.clipboard.writeText(
-currentLead.email
-);
-
-
-showToast(
-"Email copied"
-);
-
-}
-
-}
-
-);
-
-
-
-
-
-document
-.getElementById("saveNoteBtn")
-?.addEventListener(
-"click",
-saveNote
-);
-
-
-
-
-
-if(adminSession){
-
-showPanel();
-
-}
-
-
-
-
-
-// =====================
-// LOGIN
-// =====================
-
-
-async function login(){
-
-
-const token =
-document
-.getElementById("token")
-.value
-.trim();
-
-
-
-if(!token)
-return;
+});
 
 
 
 const response =
 await fetch(
-LOGIN_URL,
+
+`${API_URL}?${params}`,
+
 {
 
-method:"POST",
+headers:{
+
+"Authorization":
+"Bearer "+adminSession
+
+}
+
+}
+
+);
+
+
+
+const data =
+await response.json();
+
+
+
+if(!data.success){
+
+logout();
+
+return;
+
+}
+
+
+
+const tbody =
+document.getElementById(
+"leadTable"
+);
+
+
+
+if(!tbody)
+return;
+
+
+
+tbody.innerHTML = "";
+
+
+
+data.leads.forEach(
+
+lead=>{
+
+
+const row =
+document.createElement(
+"tr"
+);
+
+
+
+row.innerHTML = `
+
+
+<td>${lead.id || ""}</td>
+
+<td>${lead.name || ""}</td>
+
+<td>${lead.email || ""}</td>
+
+<td>${lead.company || ""}</td>
+
+<td>${lead.country || ""}</td>
+
+<td>${lead.offering || ""}</td>
+
+
+<td>
+
+<select
+class="statusSelect"
+data-id="${lead.id}"
+>
+
+${statusOptions(lead.status)}
+
+</select>
+
+
+</td>
+
+
+<td>
+
+
+<button class="saveBtn">
+Save
+</button>
+
+
+<button class="viewBtn">
+View
+</button>
+
+
+</td>
+
+
+`;
+
+
+
+
+
+row
+.querySelector(".saveBtn")
+.addEventListener(
+"click",
+()=>updateStatus(lead.id)
+);
+
+
+
+
+
+row
+.querySelector(".viewBtn")
+.addEventListener(
+"click",
+()=>viewLead(lead)
+);
+
+
+
+
+
+tbody.appendChild(row);
+
+
+}
+
+);
+
+
+
+
+
+const pageInfo =
+document.getElementById(
+"pageInfo"
+);
+
+
+
+if(pageInfo){
+
+pageInfo.innerText =
+`Page ${data.page} / ${data.pages || 1}`;
+
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+function statusOptions(current){
+
+
+const statuses = [
+
+"New",
+
+"Reviewed",
+
+"Contacted",
+
+"Qualified",
+
+"Proposal Sent",
+
+"Won",
+
+"Lost"
+
+];
+
+
+
+return statuses.map(
+
+status=>`
+
+<option value="${status}"
+
+${current===status?"selected":""}>
+
+${status}
+
+</option>
+
+`
+
+)
+.join("");
+
+}
+
+
+
+
+
+
+
+
+
+// =====================
+// UPDATE STATUS
+// =====================
+
+
+async function updateStatus(id){
+
+
+const select =
+document.querySelector(
+
+`.statusSelect[data-id="${id}"]`
+
+);
+
+
+
+if(!select)
+return;
+
+
+
+const status =
+select.value;
+
+
+
+const response =
+await fetch(
+
+API_URL,
+
+{
+
+method:"PATCH",
 
 headers:{
 
 "Content-Type":
-"application/json"
+"application/json",
+
+"Authorization":
+"Bearer "+adminSession
 
 },
 
 body:JSON.stringify({
 
-token
+id,
+
+status
 
 })
 
@@ -637,28 +665,21 @@ await response.json();
 if(data.success){
 
 
-adminSession =
-data.session;
-
-
-localStorage.setItem(
-"admin_session",
-data.session
+showToast(
+"Status updated"
 );
 
 
-
-showPanel();
+loadLeads();
 
 
 }
 else{
 
 
-document
-.getElementById("loginError")
-.innerText =
-"Invalid token";
+showToast(
+data.error || "Update failed"
+);
 
 
 }
@@ -671,47 +692,95 @@ document
 
 
 
-function showPanel(){
-
-
-document
-.getElementById("loginBox")
-?.classList
-.add("hidden");
 
 
 
-document
-.getElementById("panel")
-?.classList
+// =====================
+// VIEW LEAD
+// =====================
+
+
+function viewLead(lead){
+
+
+currentLead =
+lead;
+
+
+
+const box =
+document.getElementById(
+"leadDetails"
+);
+
+
+
+const content =
+document.getElementById(
+"detailsContent"
+);
+
+
+
+if(!box || !content)
+return;
+
+
+
+content.innerHTML = `
+
+
+<p><b>ID:</b> ${lead.id || ""}</p>
+
+<p><b>Name:</b> ${lead.name || ""}</p>
+
+<p><b>Email:</b> ${lead.email || ""}</p>
+
+<p><b>Company:</b> ${lead.company || ""}</p>
+
+<p><b>Country:</b> ${lead.country || ""}</p>
+
+<p><b>Market:</b> ${lead.market || ""}</p>
+
+<p><b>Offering:</b> ${lead.offering || ""}</p>
+
+<p><b>Status:</b> ${lead.status || ""}</p>
+
+<p><b>Created:</b> ${lead.createdAt || ""}</p>
+
+
+<p><b>Message:</b></p>
+
+<p>
+${lead.message || ""}
+</p>
+
+
+<div id="historyContent">
+
+Loading history...
+
+</div>
+
+
+`;
+
+
+
+box
+.classList
 .remove("hidden");
 
 
 
-loadLeads();
-
-loadCampaigns();
-
-
-}
-
-
-
-
-
-
-function logout(){
-
-
-localStorage.removeItem(
-"admin_session"
+loadHistory(
+lead.id
 );
 
 
-adminSession = null;
-
-
-location.reload();
+loadNotes(
+lead
+);
 
 
 }
@@ -926,7 +995,7 @@ showToast(
 
 
 
-input.value = "";
+input.value="";
 
 
 
@@ -953,6 +1022,8 @@ data.error || "Note failed"
 
 
 }
+
+
 
 
 
@@ -1079,7 +1150,7 @@ return;
 
 
 
-table.innerHTML = "";
+table.innerHTML="";
 
 
 
@@ -1142,8 +1213,6 @@ Delete
 
 
 
-
-
 row
 .querySelector(".audienceBtn")
 .addEventListener(
@@ -1153,16 +1222,12 @@ row
 
 
 
-
-
 row
 .querySelector(".deleteCampaignBtn")
 .addEventListener(
 "click",
 ()=>deleteCampaign(campaign.id)
 );
-
-
 
 
 
@@ -1220,7 +1285,6 @@ showToast(
 return;
 
 }
-
 
 
 
@@ -1362,7 +1426,9 @@ showToast(
 
 loadCampaigns();
 
+
 }
+
 
 }
 
@@ -1376,8 +1442,11 @@ loadCampaigns();
 
 function openAudience(id){
 
+
 window.location.href =
+
 `/admin/campaign-audience.html?campaign=${id}`;
+
 
 }
 
@@ -1444,9 +1513,9 @@ toast.classList.remove(
 "show"
 );
 
+
 },
 2000
 );
-
 
 }
