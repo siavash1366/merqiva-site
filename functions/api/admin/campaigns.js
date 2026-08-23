@@ -16,7 +16,6 @@ const API_HEADERS = {
 
 
 
-
 function jsonResponse(
   data,
   status = 200
@@ -28,9 +27,7 @@ function jsonResponse(
 
     {
       status,
-
-      headers:
-        API_HEADERS
+      headers: API_HEADERS
     }
 
   );
@@ -42,13 +39,6 @@ function jsonResponse(
 
 
 
-
-async function checkSession(
-  request,
-  env
-){
-
-
 async function checkSession(
   request,
   env
@@ -58,40 +48,6 @@ const authorization =
 request.headers.get(
 "Authorization"
 );
-
-
-if(
-!authorization ||
-!authorization.startsWith("Bearer ")
-){
-
-return false;
-
-}
-
-
-const sessionId =
-authorization.substring(7);
-
-
-
-const session =
-await env.ADMIN_SESSIONS_KV.get(
-`session:${sessionId}`
-);
-
-
-
-if(!session){
-
-return false;
-
-}
-
-
-return true;
-
-}
 
 
 
@@ -140,12 +96,10 @@ export async function onRequestGet(
 context
 ){
 
-
 const {
 request,
 env
 }=context;
-
 
 
 
@@ -154,14 +108,11 @@ if(
 ){
 
 return jsonResponse(
-
 {
 success:false,
 error:"Unauthorized"
 },
-
 401
-
 );
 
 }
@@ -183,8 +134,6 @@ await env.LEADS_KV.get(
 "[]"
 
 );
-
-
 
 
 
@@ -212,9 +161,7 @@ type:"json"
 
 if(campaign){
 
-campaigns.push(
-campaign
-);
+campaigns.push(campaign);
 
 }
 
@@ -236,8 +183,6 @@ campaigns
 });
 
 
-
-
 }
 catch(error){
 
@@ -248,21 +193,16 @@ error
 );
 
 
-
 return jsonResponse(
-
 {
 success:false,
 error:"Failed to load campaigns"
 },
-
 500
-
 );
 
 
 }
-
 
 
 }
@@ -284,12 +224,10 @@ export async function onRequestPost(
 context
 ){
 
-
 const {
 request,
 env
 }=context;
-
 
 
 
@@ -298,18 +236,14 @@ if(
 ){
 
 return jsonResponse(
-
 {
 success:false,
 error:"Unauthorized"
 },
-
 401
-
 );
 
 }
-
 
 
 
@@ -321,7 +255,6 @@ await request.json();
 
 
 
-
 if(
 !body.name ||
 !body.subject ||
@@ -329,14 +262,11 @@ if(
 ){
 
 return jsonResponse(
-
 {
 success:false,
 error:"Missing campaign data"
 },
-
 400
-
 );
 
 }
@@ -345,38 +275,30 @@ error:"Missing campaign data"
 
 
 const id =
-
-"CMP" +
-
-Date.now();
-
-
-
+"CMP" + Date.now();
 
 
 
 const campaign = {
 
-  id,
+id,
 
-  name:
-    body.name,
+name:
+body.name,
 
-  subject:
-    body.subject,
+subject:
+body.subject,
 
-  body:
-    body.body,
+body:
+body.body,
 
-  status:
-    "Draft",
+status:
+"Draft",
 
-  createdAt:
-    new Date().toISOString()
+createdAt:
+new Date().toISOString()
 
 };
-
-
 
 
 
@@ -386,13 +308,9 @@ await env.LEADS_KV.put(
 
 `campaign:${id}`,
 
-JSON.stringify(
-campaign
-)
+JSON.stringify(campaign)
 
 );
-
-
 
 
 
@@ -413,11 +331,7 @@ await env.LEADS_KV.get(
 
 
 
-
-
 index.push(id);
-
-
 
 
 
@@ -425,12 +339,9 @@ await env.LEADS_KV.put(
 
 "campaigns:index",
 
-JSON.stringify(
-index
-)
+JSON.stringify(index)
 
 );
-
 
 
 
@@ -445,8 +356,6 @@ campaign
 });
 
 
-
-
 }
 catch(error){
 
@@ -459,19 +368,15 @@ error
 
 
 return jsonResponse(
-
 {
 success:false,
 error:"Create failed"
 },
-
 500
-
 );
 
 
 }
-
 
 
 }
@@ -493,13 +398,10 @@ export async function onRequestDelete(
 context
 ){
 
-
 const {
 request,
 env
 }=context;
-
-
 
 
 
@@ -508,19 +410,14 @@ if(
 ){
 
 return jsonResponse(
-
 {
 success:false,
 error:"Unauthorized"
 },
-
 401
-
 );
 
 }
-
-
 
 
 
@@ -541,18 +438,14 @@ body.id;
 if(!id){
 
 return jsonResponse(
-
 {
 success:false,
 error:"Missing id"
 },
-
 400
-
 );
 
 }
-
 
 
 
@@ -563,8 +456,6 @@ await env.LEADS_KV.delete(
 `campaign:${id}`
 
 );
-
-
 
 
 
@@ -585,19 +476,11 @@ await env.LEADS_KV.get(
 
 
 
-
-
-
 index =
 index.filter(
-
-item=>
+item =>
 item !== id
-
 );
-
-
-
 
 
 
@@ -605,12 +488,9 @@ await env.LEADS_KV.put(
 
 "campaigns:index",
 
-JSON.stringify(
-index
-)
+JSON.stringify(index)
 
 );
-
 
 
 
@@ -621,8 +501,6 @@ return jsonResponse({
 success:true
 
 });
-
-
 
 
 }
@@ -637,19 +515,15 @@ error
 
 
 return jsonResponse(
-
 {
 success:false,
 error:"Delete failed"
 },
-
 500
-
 );
 
 
 }
-
 
 
 }
