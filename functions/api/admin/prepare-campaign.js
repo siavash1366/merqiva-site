@@ -48,49 +48,139 @@ async function checkSession(request, env) {
 }
 
 
-function isValidEmail(email) {
+function escapeHTML(value) {
 
-  if (
-    !email ||
-    typeof email !== "string"
-  ) {
-    return false;
-  }
-
-
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    .test(email.trim());
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
 
-function markRecipient(
-  recipient,
-  status,
-  reason = null
+function cleanSubject(value) {
+
+  return String(value || "")
+    .replace(/[\r\n]+/g, " ")
+    .trim()
+    .slice(0, 200);
+
+}
+
+
+function bytesToHex(bytes) {
+
+  return Array
+    .from(new Uint8Array(bytes))
+    .map(
+      byte =>
+        byte
+          .toString(16)
+          .padStart(2, "0")
+    )
+    .join("");
+
+}
+
+
+async function createToken(
+  email,
+  secret
 ) {
 
-  recipient.status = status;
+  const encoder =
+    new TextEncoder();
 
 
-  if (reason) {
+  const key =
+    await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      {
+        name: "HMAC",
+        hash: "SHA-256"
+      },
+      false,
+      [
+        "sign"
+      ]
+    );
 
-    recipient.error = reason;
 
-    recipient.statusReason = reason;
+  const signature =
+    await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(email)
+    );
 
-  } else {
 
-    recipient.error = null;
-
-    delete recipient.statusReason;
-
-  }
+  return bytesToHex(
+    signature
+  );
 
 }
 
 
-function calculateQueueStats(queue) {
+async function saveCampaign(
+  env,
+  campaign
+) {
+
+  await env.LEADS_KV.put(
+    `campaign:${campaign.id}`,
+    JSON.stringify(campaign)
+  );
+
+}
+
+
+async function saveQueue(
+  env,
+  queue
+) {
+
+  await env.LEADS_KV.put(
+    `email_queue:${queue.id}`,
+    JSON.stringify(queue)
+  );
+
+}
+
+
+function getQueueRecipient(
+  queue,
+  leadId
+) {
+
+  return (
+    queue.recipients || []
+  ).find(
+    item =>
+      item.leadId === leadId
+  );
+
+}
+
+
+function isTerminalRecipientStatus(
+  status
+) {
+
+  return (
+    status === "Sent" ||
+    status === "Suppressed" ||
+    status === "Skipped"
+  );
+
+}
+
+
+function calculateQueueStats(
+  queue
+) {
 
   const recipients =
     queue.recipients || [];
@@ -98,131 +188,324 @@ function calculateQueueStats(queue) {
 
   queue.sent =
     recipients.filter(
-      item => item.status === "Sent"
+      item =>
+        item.status === "Sent"
     ).length;
 
 
   queue.failed =
     recipients.filter(
-      item => item.status === "Failed"
+      item =>
+        item.status === "Failed"
     ).length;
 
 
   queue.suppressed =
     recipients.filter(
-      item => item.status === "Suppressed"
+      item =>
+        item.status === "Suppressed"
     ).length;
 
 
   queue.skipped =
     recipients.filter(
-      item => item.status === "Skipped"
+      item =>
+        item.status === "Skipped"
     ).length;
 
 
   queue.pending =
     recipients.filter(
-      item => item.status === "Pending"
+      item =>
+        item.status === "Pending"
+    ).length;
+
+
+  queue.sending =
+    recipients.filter(
+      item =>
+        item.status === "Sending"
     ).length;
 
 }
 
 
+function countPreparedRemaining(
+  prepared,
+  queue
+) {
 
-// =======================
-// GET PREPARED CAMPAIGN
-// =======================
+  return (
+    prepared.recipients || []
+  ).filter(
+    item => {
 
-export async function onRequestGet(context) {
-
-  const {
-    request,
-    env
-  } = context;
-
-
-  if (
-    !(await checkSession(request, env))
-  ) {
-
-    return jsonResponse(
-      {
-        success: false,
-        error: "Unauthorized"
-      },
-      401
-    );
-
-  }
+      const qr =
+        getQueueRecipient(
+          queue,
+          item.leadId
+        );
 
 
-  try {
-
-    const url =
-      new URL(request.url);
-
-
-    const campaignId =
-      url.searchParams.get("campaignId");
+      if (!qr) {
+        return false;
+      }
 
 
-    if (!campaignId) {
-
-      return jsonResponse(
-        {
-          success: false,
-          error: "Missing campaignId"
-        },
-        400
+      return !isTerminalRecipientStatus(
+        qr.status
       );
 
     }
+  ).length;
+
+}
 
 
-    const prepared =
-      await env.LEADS_KV.get(
-        `campaign_prepared:${campaignId}`,
-        {
-          type: "json"
-        }
-      );
+function completeCampaign(
+  queue,
+  campaign,
+  completedAt
+) {
+
+  calculateQueueStats(queue);
 
 
-    return jsonResponse({
-      success: true,
-      prepared: !!prepared,
-      data: prepared || null
-    });
+  queue.status =
+    "Sent";
 
-  }
-  catch (error) {
 
-    console.error(
-      "Prepare GET error:",
-      error
+  queue.completedAt =
+    completedAt;
+
+
+  campaign.status =
+    "Sent";
+
+
+  campaign.sentAt =
+    completedAt;
+
+}
+
+
+function buildEmailHTML(
+  campaign,
+  recipient,
+  unsubscribeUrl
+) {
+
+  const safeName =
+    escapeHTML(
+      recipient.name
     );
 
 
-    return jsonResponse(
-      {
-        success: false,
-        error:
-          "Failed to load prepared campaign"
-      },
-      500
+  const safeBody =
+    escapeHTML(
+      campaign.body || ""
+    )
+    .replace(
+      /\r?\n/g,
+      "<br>"
     );
 
-  }
+
+  const safeUnsubscribe =
+    escapeHTML(
+      unsubscribeUrl
+    );
+
+
+  return `
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+</head>
+
+<body style="
+margin:0;
+padding:0;
+background:#f4f7fb;
+font-family:Arial,Helvetica,sans-serif;
+color:#172033;
+">
+
+<table
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+background:#f4f7fb;
+padding:30px 15px;
+"
+>
+
+<tr>
+
+<td align="center">
+
+<table
+width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+max-width:650px;
+background:#ffffff;
+border-radius:10px;
+overflow:hidden;
+"
+>
+
+<tr>
+
+<td style="
+background:#0b1729;
+padding:24px 30px;
+color:#ffffff;
+"
+>
+
+<div style="
+font-weight:700;
+letter-spacing:2px;
+color:#42d6d1;
+">
+MERQIVA
+</div>
+
+</td>
+
+</tr>
+
+
+<tr>
+
+<td style="
+padding:32px 30px;
+font-size:16px;
+line-height:1.7;
+"
+>
+
+${
+safeName
+?
+`
+<p>
+Hello ${safeName},
+</p>
+`
+:
+""
+}
+
+<div>
+${safeBody}
+</div>
+
+
+<p style="
+margin-top:34px;
+">
+Regards,<br>
+<strong>Merqiva Intelligence</strong>
+</p>
+
+</td>
+
+</tr>
+
+
+<tr>
+
+<td style="
+padding:22px 30px;
+background:#f7f9fc;
+font-size:12px;
+line-height:1.6;
+color:#68758a;
+text-align:center;
+"
+>
+
+You are receiving this marketing email from Merqiva.
+
+<br><br>
+
+<a
+href="${safeUnsubscribe}"
+style="
+color:#50657d;
+text-decoration:underline;
+"
+>
+Unsubscribe
+</a>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+</table>
+
+</body>
+
+</html>
+`;
+
+}
+
+
+function buildEmailText(
+  campaign,
+  recipient,
+  unsubscribeUrl
+) {
+
+  const greeting =
+    recipient.name
+      ? `Hello ${recipient.name},\n\n`
+      : "";
+
+
+  return (
+    greeting +
+    String(
+      campaign.body || ""
+    ) +
+    "\n\nRegards,\nMerqiva Intelligence" +
+    "\n\nUnsubscribe:\n" +
+    unsubscribeUrl
+  );
 
 }
 
 
 
 // =======================
-// PREPARE CAMPAIGN
+// SEND ONE RECIPIENT
 // =======================
 
-export async function onRequestPost(context) {
+export async function onRequestPost(
+  context
+) {
 
   const {
     request,
@@ -231,7 +514,10 @@ export async function onRequestPost(context) {
 
 
   if (
-    !(await checkSession(request, env))
+    !(await checkSession(
+      request,
+      env
+    ))
   ) {
 
     return jsonResponse(
@@ -245,13 +531,22 @@ export async function onRequestPost(context) {
   }
 
 
-  if (!env.SUPPRESSIONS_DB) {
+  if (
+    !env.RESEND_API_KEY ||
+    !env.UNSUBSCRIBE_SECRET ||
+    !env.SUPPRESSIONS_DB
+  ) {
+
+    console.error(
+      "Missing campaign email configuration"
+    );
+
 
     return jsonResponse(
       {
         success: false,
         error:
-          "Suppression database unavailable"
+          "Email configuration missing"
       },
       500
     );
@@ -271,12 +566,34 @@ export async function onRequestPost(context) {
       ).trim();
 
 
+    const confirm =
+      String(
+        body.confirm || ""
+      );
+
+
     if (!campaignId) {
 
       return jsonResponse(
         {
           success: false,
           error: "Missing campaignId"
+        },
+        400
+      );
+
+    }
+
+
+    if (
+      confirm !== "SEND_ONE"
+    ) {
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Explicit send confirmation required"
         },
         400
       );
@@ -328,9 +645,9 @@ export async function onRequestPost(context) {
         {
           success: false,
           error:
-            "Campaign is not queued"
+            "Campaign queue not found"
         },
-        400
+        404
       );
 
     }
@@ -360,26 +677,58 @@ export async function onRequestPost(context) {
 
 
     // -----------------------
-    // DO NOT RE-PREPARE
-    // WHILE SENDING / SENT
+    // LOAD PREPARED SNAPSHOT
     // -----------------------
 
+    const prepared =
+      await env.LEADS_KV.get(
+        `campaign_prepared:${campaignId}`,
+        {
+          type: "json"
+        }
+      );
+
+
     if (
-      campaign.status === "Sending" ||
-      queue.status === "Sending"
+      !prepared ||
+      !Array.isArray(
+        prepared.recipients
+      ) ||
+      prepared.recipients.length === 0
     ) {
 
       return jsonResponse(
         {
           success: false,
           error:
-            "Campaign is currently sending"
+            "Campaign is not prepared"
+        },
+        400
+      );
+
+    }
+
+
+    if (
+      prepared.queueId !== queueId
+    ) {
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Prepared campaign does not match queue"
         },
         409
       );
 
     }
 
+
+
+    // -----------------------
+    // BLOCK COMPLETED CAMPAIGN
+    // -----------------------
 
     if (
       campaign.status === "Sent" ||
@@ -390,7 +739,7 @@ export async function onRequestPost(context) {
         {
           success: false,
           error:
-            "Campaign has already been sent"
+            "Campaign already sent"
         },
         409
       );
@@ -398,22 +747,16 @@ export async function onRequestPost(context) {
     }
 
 
-    const sendingAlreadyStarted =
-      (queue.recipients || [])
-      .some(
-        recipient =>
-          recipient.status === "Sent" ||
-          recipient.status === "Sending"
-      );
-
-
-    if (sendingAlreadyStarted) {
+    if (
+      campaign.status === "Sending" ||
+      queue.status === "Sending"
+    ) {
 
       return jsonResponse(
         {
           success: false,
           error:
-            "Campaign sending has already started"
+            "Campaign is already sending"
         },
         409
       );
@@ -423,312 +766,283 @@ export async function onRequestPost(context) {
 
 
     // -----------------------
-    // INVALIDATE OLD SNAPSHOT
+    // FIND NEXT RECIPIENT
     // -----------------------
 
-    await env.LEADS_KV.delete(
-      `campaign_prepared:${campaignId}`
-    );
+    let recipient = null;
 
-
-
-    // -----------------------
-    // RESOLVE RECIPIENTS
-    // -----------------------
-
-    const preparedRecipients = [];
-
-    const skippedRecipients = [];
-
-    const seenEmails =
-      new Set();
-
-
-    let suppressedRecipients = 0;
-
+    let queueRecipient = null;
 
 
     for (
-      const recipient of
-      queue.recipients || []
+      const item of
+      prepared.recipients
     ) {
 
-      const leadId =
-        recipient.leadId;
-
-
-      if (!leadId) {
-
-        markRecipient(
-          recipient,
-          "Skipped",
-          "Missing lead ID"
+      const qr =
+        getQueueRecipient(
+          queue,
+          item.leadId
         );
 
 
-        skippedRecipients.push({
-          leadId: null,
-          reason: "Missing lead ID"
-        });
-
-
+      if (!qr) {
         continue;
-
       }
 
 
-
-      const lead =
-        await env.LEADS_KV.get(
-          `lead:${leadId}`,
-          {
-            type: "json"
-          }
-        );
-
-
-      if (!lead) {
-
-        markRecipient(
-          recipient,
-          "Skipped",
-          "Lead not found"
-        );
-
-
-        skippedRecipients.push({
-          leadId,
-          reason: "Lead not found"
-        });
-
-
-        continue;
-
-      }
-
-
-
-      const email =
-        String(
-          lead.email || ""
+      if (
+        isTerminalRecipientStatus(
+          qr.status
         )
-        .trim()
-        .toLowerCase();
-
-
-
-      // -----------------------
-      // INVALID EMAIL
-      // -----------------------
-
-      if (!isValidEmail(email)) {
-
-        markRecipient(
-          recipient,
-          "Skipped",
-          "Invalid email"
-        );
-
-
-        skippedRecipients.push({
-          leadId,
-          email,
-          reason: "Invalid email"
-        });
-
-
+      ) {
         continue;
-
       }
 
 
-
-      // -----------------------
-      // D1 SUPPRESSION CHECK
-      // -----------------------
-
-      const suppression =
-        await env.SUPPRESSIONS_DB
-        .prepare(
-          `
-          SELECT
-            email,
-            reason,
-            source,
-            created_at AS createdAt
-          FROM suppressions
-          WHERE email = ?
-          LIMIT 1
-          `
-        )
-        .bind(email)
-        .first();
+      recipient =
+        item;
 
 
-      if (suppression) {
-
-        suppressedRecipients++;
-
-
-        const reason =
-          `Suppressed: ${
-            suppression.reason ||
-            "Do Not Send"
-          }`;
+      queueRecipient =
+        qr;
 
 
-        markRecipient(
-          recipient,
-          "Suppressed",
-          reason
-        );
+      break;
 
-
-        skippedRecipients.push({
-          leadId,
-          email,
-          reason
-        });
-
-
-        continue;
-
-      }
+    }
 
 
 
-      // -----------------------
-      // DUPLICATE EMAIL
-      // -----------------------
+    // -----------------------
+    // NOTHING LEFT
+    // -----------------------
 
-      if (seenEmails.has(email)) {
+    if (
+      !recipient ||
+      !queueRecipient
+    ) {
 
-        markRecipient(
-          recipient,
-          "Skipped",
-          "Duplicate email"
-        );
-
-
-        skippedRecipients.push({
-          leadId,
-          email,
-          reason: "Duplicate email"
-        });
+      const completedAt =
+        new Date().toISOString();
 
 
-        continue;
-
-      }
-
-
-      seenEmails.add(email);
-
-
-
-      // -----------------------
-      // VALID RECIPIENT
-      // -----------------------
-
-      markRecipient(
-        recipient,
-        "Pending"
+      completeCampaign(
+        queue,
+        campaign,
+        completedAt
       );
 
 
-      preparedRecipients.push({
-        leadId,
+      await saveQueue(
+        env,
+        queue
+      );
 
-        name:
-          lead.name || "",
 
-        email,
+      await saveCampaign(
+        env,
+        campaign
+      );
 
-        company:
-          lead.company || "",
 
-        country:
-          lead.country || ""
+      return jsonResponse({
+
+        success: true,
+
+        sent: false,
+
+        completed: true,
+
+        remaining: 0,
+
+        campaignStatus:
+          campaign.status,
+
+        message:
+          "Campaign completed"
+
       });
 
     }
 
 
 
-    const now =
-      new Date().toISOString();
+    const email =
+      String(
+        recipient.email || ""
+      )
+      .trim()
+      .toLowerCase();
 
 
 
     // -----------------------
-    // UPDATE QUEUE METADATA
+    // LIVE D1 SUPPRESSION
     // -----------------------
 
-    queue.lastPrepareAttemptAt =
-      now;
+    const suppression =
+      await env.SUPPRESSIONS_DB
+      .prepare(
+        `
+        SELECT
+          email,
+          reason
+        FROM suppressions
+        WHERE email = ?
+        LIMIT 1
+        `
+      )
+      .bind(email)
+      .first();
 
 
-    queue.validRecipients =
-      preparedRecipients.length;
+    if (suppression) {
+
+      const now =
+        new Date().toISOString();
 
 
-    queue.suppressedRecipients =
-      suppressedRecipients;
+      queueRecipient.status =
+        "Suppressed";
 
 
-    queue.skippedRecipients =
-      skippedRecipients.length;
+      queueRecipient.error =
+        `Suppressed: ${
+          suppression.reason ||
+          "Do Not Send"
+        }`;
 
 
-    queue.preparedAt =
-      preparedRecipients.length > 0
-        ? now
-        : null;
+      queueRecipient.statusReason =
+        queueRecipient.error;
 
 
-    calculateQueueStats(queue);
+      queueRecipient.lastAttemptAt =
+        now;
 
 
-    await env.LEADS_KV.put(
-      `email_queue:${queueId}`,
-      JSON.stringify(queue)
-    );
+      calculateQueueStats(
+        queue
+      );
+
+
+      const remaining =
+        countPreparedRemaining(
+          prepared,
+          queue
+        );
+
+
+      if (remaining === 0) {
+
+        completeCampaign(
+          queue,
+          campaign,
+          now
+        );
+
+      } else {
+
+        queue.status =
+          "Queued";
+
+
+        campaign.status =
+          "Queued";
+
+      }
+
+
+      await saveQueue(
+        env,
+        queue
+      );
+
+
+      await saveCampaign(
+        env,
+        campaign
+      );
+
+
+      return jsonResponse({
+
+        success: true,
+
+        sent: false,
+
+        suppressed: true,
+
+        campaignId,
+
+        queueId,
+
+        leadId:
+          recipient.leadId,
+
+        email,
+
+        reason:
+          suppression.reason ||
+          "Do Not Send",
+
+        remaining,
+
+        campaignStatus:
+          campaign.status
+
+      });
+
+    }
 
 
 
     // -----------------------
-    // BLOCK EMPTY CAMPAIGN
+    // CREATE UNSUBSCRIBE URL
     // -----------------------
 
-    if (
-      preparedRecipients.length === 0
-    ) {
+    const unsubscribeToken =
+      await createToken(
+        email,
+        env.UNSUBSCRIBE_SECRET
+      );
+
+
+    const origin =
+      new URL(
+        request.url
+      ).origin;
+
+
+    const unsubscribeUrl =
+      `${origin}/api/unsubscribe?email=${
+        encodeURIComponent(email)
+      }&token=${
+        encodeURIComponent(
+          unsubscribeToken
+        )
+      }`;
+
+
+
+    // -----------------------
+    // BUILD EMAIL
+    // -----------------------
+
+    const subject =
+      cleanSubject(
+        campaign.subject
+      );
+
+
+    if (!subject) {
 
       return jsonResponse(
         {
           success: false,
-
           error:
-            "No valid recipients found",
-
-          campaignId,
-
-          queueId,
-
-          queued:
-            queue.recipients?.length || 0,
-
-          validRecipients: 0,
-
-          suppressedRecipients,
-
-          skippedRecipients:
-            skippedRecipients.length,
-
-          prepared: false,
-
-          skipped:
-            skippedRecipients
+            "Campaign subject missing"
         },
         400
       );
@@ -736,59 +1050,386 @@ export async function onRequestPost(context) {
     }
 
 
+    const html =
+      buildEmailHTML(
+        campaign,
+        recipient,
+        unsubscribeUrl
+      );
 
-    // -----------------------
-    // CREATE FRESH SNAPSHOT
-    // -----------------------
 
-    const preparedCampaign = {
-
-      campaignId,
-
-      queueId,
-
-      campaignName:
-        campaign.name,
-
-      subject:
-        campaign.subject,
-
-      body:
-        campaign.body,
-
-      preparedAt:
-        now,
-
-      totalQueued:
-        queue.recipients?.length || 0,
-
-      validRecipients:
-        preparedRecipients.length,
-
-      suppressedRecipients,
-
-      skippedRecipients:
-        skippedRecipients.length,
-
-      recipients:
-        preparedRecipients,
-
-      skipped:
-        skippedRecipients
-
-    };
+    const text =
+      buildEmailText(
+        campaign,
+        recipient,
+        unsubscribeUrl
+      );
 
 
 
     // -----------------------
-    // SAVE FRESH SNAPSHOT
+    // MARK AS SENDING
     // -----------------------
 
-    await env.LEADS_KV.put(
-      `campaign_prepared:${campaignId}`,
-      JSON.stringify(
-        preparedCampaign
-      )
+    const attemptTime =
+      new Date().toISOString();
+
+
+    queue.status =
+      "Sending";
+
+
+    queue.startedAt =
+      queue.startedAt ||
+      attemptTime;
+
+
+    queueRecipient.status =
+      "Sending";
+
+
+    queueRecipient.attempts =
+      Number(
+        queueRecipient.attempts || 0
+      ) + 1;
+
+
+    queueRecipient.lastAttemptAt =
+      attemptTime;
+
+
+    queueRecipient.error =
+      null;
+
+
+    delete queueRecipient.statusReason;
+
+
+    campaign.status =
+      "Sending";
+
+
+    calculateQueueStats(
+      queue
+    );
+
+
+    await saveQueue(
+      env,
+      queue
+    );
+
+
+    await saveCampaign(
+      env,
+      campaign
+    );
+
+
+
+    // -----------------------
+    // RESEND API
+    // -----------------------
+
+    const idempotencyKey =
+      `campaign/${campaignId}/lead/${recipient.leadId}`;
+
+
+    let resendResponse;
+
+
+    try {
+
+      resendResponse =
+        await fetch(
+          "https://api.resend.com/emails",
+          {
+            method: "POST",
+
+            headers: {
+              "Authorization":
+                `Bearer ${env.RESEND_API_KEY}`,
+
+              "Content-Type":
+                "application/json",
+
+              "User-Agent":
+                "Merqiva-Campaign-Engine/1.0",
+
+              "Idempotency-Key":
+                idempotencyKey
+            },
+
+            body:
+              JSON.stringify({
+                from:
+                  "Merqiva <hello@merqivaintel.com>",
+
+                to: [
+                  email
+                ],
+
+                reply_to:
+                  "hello@merqivaintel.com",
+
+                subject,
+
+                html,
+
+                text,
+
+                headers: {
+                  "List-Unsubscribe":
+                    `<${unsubscribeUrl}>`,
+
+                  "X-Entity-Ref-ID":
+                    `${campaignId}-${recipient.leadId}`
+                }
+              })
+          }
+        );
+
+    }
+    catch (error) {
+
+      console.error(
+        "Resend network error:",
+        error
+      );
+
+
+      queueRecipient.status =
+        "Failed";
+
+
+      queueRecipient.error =
+        "Resend network error";
+
+
+      queueRecipient.statusReason =
+        queueRecipient.error;
+
+
+      queue.status =
+        "Queued";
+
+
+      campaign.status =
+        "Queued";
+
+
+      calculateQueueStats(
+        queue
+      );
+
+
+      await saveQueue(
+        env,
+        queue
+      );
+
+
+      await saveCampaign(
+        env,
+        campaign
+      );
+
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Email provider unavailable"
+        },
+        503
+      );
+
+    }
+
+
+
+    // -----------------------
+    // HANDLE RESEND ERROR
+    // -----------------------
+
+    if (!resendResponse.ok) {
+
+      const errorText =
+        await resendResponse.text();
+
+
+      console.error(
+        "Resend send error:",
+        resendResponse.status,
+        errorText.slice(
+          0,
+          500
+        )
+      );
+
+
+      queueRecipient.status =
+        "Failed";
+
+
+      queueRecipient.error =
+        `Resend ${resendResponse.status}`;
+
+
+      queueRecipient.statusReason =
+        queueRecipient.error;
+
+
+      queue.status =
+        "Queued";
+
+
+      campaign.status =
+        "Queued";
+
+
+      calculateQueueStats(
+        queue
+      );
+
+
+      await saveQueue(
+        env,
+        queue
+      );
+
+
+      await saveCampaign(
+        env,
+        campaign
+      );
+
+
+      return jsonResponse(
+        {
+          success: false,
+
+          error:
+            "Email send failed",
+
+          providerStatus:
+            resendResponse.status
+        },
+        502
+      );
+
+    }
+
+
+
+    // -----------------------
+    // RESEND SUCCESS
+    // -----------------------
+
+    const resendData =
+      await resendResponse.json();
+
+
+    const sentAt =
+      new Date().toISOString();
+
+
+    queueRecipient.status =
+      "Sent";
+
+
+    queueRecipient.sentAt =
+      sentAt;
+
+
+    queueRecipient.resendId =
+      resendData.id || null;
+
+
+    queueRecipient.error =
+      null;
+
+
+    delete queueRecipient.statusReason;
+
+
+
+    // -----------------------
+    // SAVE RESEND REVERSE INDEX
+    // -----------------------
+
+    if (resendData.id) {
+
+      await env.LEADS_KV.put(
+        `resend_email:${resendData.id}`,
+        JSON.stringify({
+          campaignId,
+          queueId,
+          leadId:
+            recipient.leadId,
+
+          email,
+
+          createdAt:
+            sentAt
+        }),
+        {
+          expirationTtl:
+            60 * 60 * 24 * 90
+        }
+      );
+
+    }
+
+
+
+    calculateQueueStats(
+      queue
+    );
+
+
+
+    // -----------------------
+    // CHECK REMAINING
+    // -----------------------
+
+    const remaining =
+      countPreparedRemaining(
+        prepared,
+        queue
+      );
+
+
+    if (remaining === 0) {
+
+      completeCampaign(
+        queue,
+        campaign,
+        sentAt
+      );
+
+    } else {
+
+      queue.status =
+        "Queued";
+
+
+      campaign.status =
+        "Queued";
+
+    }
+
+
+
+    await saveQueue(
+      env,
+      queue
+    );
+
+
+    await saveCampaign(
+      env,
+      campaign
     );
 
 
@@ -796,25 +1437,26 @@ export async function onRequestPost(context) {
 
       success: true,
 
-      message:
-        "Campaign prepared",
+      sent: true,
 
       campaignId,
 
       queueId,
 
-      queued:
-        queue.recipients?.length || 0,
+      leadId:
+        recipient.leadId,
 
-      validRecipients:
-        preparedRecipients.length,
+      email,
 
-      suppressedRecipients,
+      resendId:
+        resendData.id || null,
 
-      skippedRecipients:
-        skippedRecipients.length,
+      sentAt,
 
-      prepared: true
+      remaining,
+
+      campaignStatus:
+        campaign.status
 
     });
 
@@ -822,7 +1464,7 @@ export async function onRequestPost(context) {
   catch (error) {
 
     console.error(
-      "Prepare campaign error:",
+      "Send prepared campaign error:",
       error
     );
 
@@ -831,7 +1473,7 @@ export async function onRequestPost(context) {
       {
         success: false,
         error:
-          "Failed to prepare campaign"
+          "Campaign send failed"
       },
       500
     );
