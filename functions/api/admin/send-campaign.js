@@ -18,7 +18,6 @@ function jsonResponse(data, status = 200) {
 
 }
 
-
 async function checkSession(request, env) {
 
   const authorization =
