@@ -1,60 +1,35 @@
 const API_HEADERS = {
-
-  "Content-Type":
-    "application/json; charset=UTF-8",
-
-  "Cache-Control":
-    "no-store",
-
-  "X-Content-Type-Options":
-    "nosniff",
-
-  "X-Frame-Options":
-    "DENY"
-
+  "Content-Type": "application/json; charset=UTF-8",
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY"
 };
 
 
-
-function jsonResponse(
-  data,
-  status = 200
-){
+function jsonResponse(data, status = 200) {
 
   return new Response(
     JSON.stringify(data),
     {
       status,
-      headers:API_HEADERS
+      headers: API_HEADERS
     }
   );
 
 }
 
 
-
-
-
-async function checkSession(
-  request,
-  env
-){
+async function checkSession(request, env) {
 
   const authorization =
-    request.headers.get(
-      "Authorization"
-    );
+    request.headers.get("Authorization");
 
 
-  if(
+  if (
     !authorization ||
-    !authorization.startsWith(
-      "Bearer "
-    )
-  ){
-
+    !authorization.startsWith("Bearer ")
+  ) {
     return false;
-
   }
 
 
@@ -73,94 +48,47 @@ async function checkSession(
 }
 
 
+function escapeHTML(value) {
 
-
-
-function escapeHTML(value){
-
-  return String(
-    value || ""
-  )
-
-  .replace(
-    /&/g,
-    "&amp;"
-  )
-
-  .replace(
-    /</g,
-    "&lt;"
-  )
-
-  .replace(
-    />/g,
-    "&gt;"
-  )
-
-  .replace(
-    /"/g,
-    "&quot;"
-  )
-
-  .replace(
-    /'/g,
-    "&#039;"
-  );
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
 
+function cleanSubject(value) {
 
-
-
-function cleanSubject(value){
-
-  return String(
-    value || ""
-  )
-  .replace(
-    /[\r\n]+/g,
-    " "
-  )
-  .trim()
-  .slice(
-    0,
-    200
-  );
+  return String(value || "")
+    .replace(/[\r\n]+/g, " ")
+    .trim()
+    .slice(0, 200);
 
 }
 
 
-
-
-
-function bytesToHex(bytes){
+function bytesToHex(bytes) {
 
   return Array
-    .from(
-      new Uint8Array(bytes)
-    )
+    .from(new Uint8Array(bytes))
     .map(
       byte =>
         byte
-        .toString(16)
-        .padStart(
-          2,
-          "0"
-        )
+          .toString(16)
+          .padStart(2, "0")
     )
     .join("");
 
 }
 
 
-
-
-
 async function createToken(
   email,
   secret
-){
+) {
 
   const encoder =
     new TextEncoder();
@@ -168,98 +96,66 @@ async function createToken(
 
   const key =
     await crypto.subtle.importKey(
-
       "raw",
-
       encoder.encode(secret),
-
       {
-        name:"HMAC",
-        hash:"SHA-256"
+        name: "HMAC",
+        hash: "SHA-256"
       },
-
       false,
-
       [
         "sign"
       ]
-
     );
 
 
   const signature =
     await crypto.subtle.sign(
-
       "HMAC",
-
       key,
-
       encoder.encode(email)
-
     );
 
 
-  return bytesToHex(
-    signature
-  );
+  return bytesToHex(signature);
 
 }
-
-
-
 
 
 async function saveCampaign(
   env,
   campaign
-){
+) {
 
   await env.LEADS_KV.put(
-
     `campaign:${campaign.id}`,
-
-    JSON.stringify(
-      campaign
-    )
-
+    JSON.stringify(campaign)
   );
 
 }
-
-
-
 
 
 async function saveQueue(
   env,
   queue
-){
+) {
 
   await env.LEADS_KV.put(
-
     `email_queue:${queue.id}`,
-
-    JSON.stringify(
-      queue
-    )
-
+    JSON.stringify(queue)
   );
 
 }
 
 
-
-
-
 function getQueueRecipient(
   queue,
   leadId
-){
+) {
 
   return (
     queue.recipients || []
-  )
-  .find(
+  ).find(
     item =>
       item.leadId === leadId
   );
@@ -267,12 +163,20 @@ function getQueueRecipient(
 }
 
 
+function isTerminalRecipientStatus(
+  status
+) {
+
+  return (
+    status === "Sent" ||
+    status === "Suppressed" ||
+    status === "Skipped"
+  );
+
+}
 
 
-
-function calculateQueueStats(
-  queue
-){
+function calculateQueueStats(queue) {
 
   const recipients =
     queue.recipients || [];
@@ -298,17 +202,94 @@ function calculateQueueStats(
         item.status === "Suppressed"
     ).length;
 
+
+  queue.skipped =
+    recipients.filter(
+      item =>
+        item.status === "Skipped"
+    ).length;
+
+
+  queue.pending =
+    recipients.filter(
+      item =>
+        item.status === "Pending"
+    ).length;
+
+
+  queue.sending =
+    recipients.filter(
+      item =>
+        item.status === "Sending"
+    ).length;
+
 }
 
 
+function countPreparedRemaining(
+  prepared,
+  queue
+) {
 
+  return (
+    prepared.recipients || []
+  ).filter(
+    item => {
+
+      const qr =
+        getQueueRecipient(
+          queue,
+          item.leadId
+        );
+
+
+      if (!qr) {
+        return false;
+      }
+
+
+      return !isTerminalRecipientStatus(
+        qr.status
+      );
+
+    }
+  ).length;
+
+}
+
+
+function completeCampaign(
+  queue,
+  campaign,
+  completedAt
+) {
+
+  calculateQueueStats(queue);
+
+
+  queue.status =
+    "Sent";
+
+
+  queue.completedAt =
+    completedAt;
+
+
+  campaign.status =
+    "Sent";
+
+
+  campaign.sentAt =
+    completedAt;
+
+}
 
 
 function buildEmailHTML(
   campaign,
   recipient,
   unsubscribeUrl
-){
+) {
 
   const safeName =
     escapeHTML(
@@ -488,14 +469,11 @@ Unsubscribe
 }
 
 
-
-
-
 function buildEmailText(
   campaign,
   recipient,
   unsubscribeUrl
-){
+) {
 
   const greeting =
     recipient.name
@@ -504,27 +482,16 @@ function buildEmailText(
 
 
   return (
-
     greeting +
-
     String(
       campaign.body || ""
     ) +
-
     "\n\nRegards,\nMerqiva Intelligence" +
-
     "\n\nUnsubscribe:\n" +
-
     unsubscribeUrl
-
   );
 
 }
-
-
-
-
-
 
 
 
@@ -532,10 +499,9 @@ function buildEmailText(
 // SEND ONE RECIPIENT
 // =======================
 
-
 export async function onRequestPost(
   context
-){
+) {
 
   const {
     request,
@@ -543,17 +509,17 @@ export async function onRequestPost(
   } = context;
 
 
-  if(
+  if (
     !(await checkSession(
       request,
       env
     ))
-  ){
+  ) {
 
     return jsonResponse(
       {
-        success:false,
-        error:"Unauthorized"
+        success: false,
+        error: "Unauthorized"
       },
       401
     );
@@ -561,14 +527,11 @@ export async function onRequestPost(
   }
 
 
-
-
-
-  if(
+  if (
     !env.RESEND_API_KEY ||
     !env.UNSUBSCRIBE_SECRET ||
     !env.SUPPRESSIONS_DB
-  ){
+  ) {
 
     console.error(
       "Missing campaign email configuration"
@@ -577,7 +540,7 @@ export async function onRequestPost(
 
     return jsonResponse(
       {
-        success:false,
+        success: false,
         error:
           "Email configuration missing"
       },
@@ -587,11 +550,7 @@ export async function onRequestPost(
   }
 
 
-
-
-
-  try{
-
+  try {
 
     const body =
       await request.json();
@@ -600,8 +559,7 @@ export async function onRequestPost(
     const campaignId =
       String(
         body.campaignId || ""
-      )
-      .trim();
+      ).trim();
 
 
     const confirm =
@@ -610,12 +568,12 @@ export async function onRequestPost(
       );
 
 
-    if(!campaignId){
+    if (!campaignId) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Missing campaignId"
+          success: false,
+          error: "Missing campaignId"
         },
         400
       );
@@ -623,13 +581,13 @@ export async function onRequestPost(
     }
 
 
-    if(
+    if (
       confirm !== "SEND_ONE"
-    ){
+    ) {
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
           error:
             "Explicit send confirmation required"
         },
@@ -640,32 +598,25 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // LOAD CAMPAIGN
     // -----------------------
 
-
     const campaign =
       await env.LEADS_KV.get(
-
         `campaign:${campaignId}`,
-
         {
-          type:"json"
+          type: "json"
         }
-
       );
 
 
-    if(!campaign){
+    if (!campaign) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Campaign not found"
+          success: false,
+          error: "Campaign not found"
         },
         404
       );
@@ -674,13 +625,9 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // LOAD QUEUE
     // -----------------------
-
 
     const queueId =
       await env.LEADS_KV.get(
@@ -688,12 +635,13 @@ export async function onRequestPost(
       );
 
 
-    if(!queueId){
+    if (!queueId) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Campaign queue not found"
+          success: false,
+          error:
+            "Campaign queue not found"
         },
         404
       );
@@ -703,22 +651,19 @@ export async function onRequestPost(
 
     const queue =
       await env.LEADS_KV.get(
-
         `email_queue:${queueId}`,
-
         {
-          type:"json"
+          type: "json"
         }
-
       );
 
 
-    if(!queue){
+    if (!queue) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Queue not found"
+          success: false,
+          error: "Queue not found"
         },
         404
       );
@@ -727,37 +672,30 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // LOAD PREPARED SNAPSHOT
     // -----------------------
 
-
     const prepared =
       await env.LEADS_KV.get(
-
         `campaign_prepared:${campaignId}`,
-
         {
-          type:"json"
+          type: "json"
         }
-
       );
 
 
-    if(
+    if (
       !prepared ||
       !Array.isArray(
         prepared.recipients
       ) ||
       prepared.recipients.length === 0
-    ){
+    ) {
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
           error:
             "Campaign is not prepared"
         },
@@ -767,13 +705,13 @@ export async function onRequestPost(
     }
 
 
-    if(
+    if (
       prepared.queueId !== queueId
-    ){
+    ) {
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
           error:
             "Prepared campaign does not match queue"
         },
@@ -784,22 +722,18 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // BLOCK COMPLETED CAMPAIGN
     // -----------------------
 
-
-    if(
+    if (
       campaign.status === "Sent" ||
       queue.status === "Sent"
-    ){
+    ) {
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
           error:
             "Campaign already sent"
         },
@@ -809,14 +743,14 @@ export async function onRequestPost(
     }
 
 
-    if(
+    if (
       campaign.status === "Sending" ||
       queue.status === "Sending"
-    ){
+    ) {
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
           error:
             "Campaign is already sending"
         },
@@ -827,24 +761,19 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // FIND NEXT RECIPIENT
     // -----------------------
-
 
     let recipient = null;
 
     let queueRecipient = null;
 
 
-    for(
+    for (
       const item of
       prepared.recipients
-    ){
-
+    ) {
 
       const qr =
         getQueueRecipient(
@@ -853,19 +782,17 @@ export async function onRequestPost(
         );
 
 
-      if(!qr){
-
+      if (!qr) {
         continue;
-
       }
 
 
-      if(
-        qr.status === "Sent"
-      ){
-
+      if (
+        isTerminalRecipientStatus(
+          qr.status
+        )
+      ) {
         continue;
-
       }
 
 
@@ -879,40 +806,28 @@ export async function onRequestPost(
 
       break;
 
-
     }
 
 
 
+    // -----------------------
+    // NOTHING LEFT
+    // -----------------------
 
-
-
-    if(
+    if (
       !recipient ||
       !queueRecipient
-    ){
+    ) {
+
+      const completedAt =
+        new Date().toISOString();
 
 
-      calculateQueueStats(
-        queue
+      completeCampaign(
+        queue,
+        campaign,
+        completedAt
       );
-
-
-      queue.status =
-        "Sent";
-
-
-      queue.completedAt =
-        new Date()
-        .toISOString();
-
-
-      campaign.status =
-        "Sent";
-
-
-      campaign.sentAt =
-        queue.completedAt;
 
 
       await saveQueue(
@@ -929,11 +844,16 @@ export async function onRequestPost(
 
       return jsonResponse({
 
-        success:true,
+        success: true,
 
-        sent:false,
+        sent: false,
 
-        completed:true,
+        completed: true,
+
+        remaining: 0,
+
+        campaignStatus:
+          campaign.status,
 
         message:
           "Campaign completed"
@@ -941,9 +861,6 @@ export async function onRequestPost(
       });
 
     }
-
-
-
 
 
 
@@ -956,13 +873,9 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
-    // LIVE D1 SUPPRESSION CHECK
+    // LIVE D1 SUPPRESSION
     // -----------------------
-
 
     const suppression =
       await env.SUPPRESSIONS_DB
@@ -976,14 +889,14 @@ export async function onRequestPost(
         LIMIT 1
         `
       )
-      .bind(
-        email
-      )
+      .bind(email)
       .first();
 
 
+    if (suppression) {
 
-    if(suppression){
+      const now =
+        new Date().toISOString();
 
 
       queueRecipient.status =
@@ -997,9 +910,12 @@ export async function onRequestPost(
         }`;
 
 
+      queueRecipient.statusReason =
+        queueRecipient.error;
+
+
       queueRecipient.lastAttemptAt =
-        new Date()
-        .toISOString();
+        now;
 
 
       calculateQueueStats(
@@ -1007,12 +923,31 @@ export async function onRequestPost(
       );
 
 
-      queue.status =
-        "Queued";
+      const remaining =
+        countPreparedRemaining(
+          prepared,
+          queue
+        );
 
 
-      campaign.status =
-        "Queued";
+      if (remaining === 0) {
+
+        completeCampaign(
+          queue,
+          campaign,
+          now
+        );
+
+      } else {
+
+        queue.status =
+          "Queued";
+
+
+        campaign.status =
+          "Queued";
+
+      }
 
 
       await saveQueue(
@@ -1029,17 +964,29 @@ export async function onRequestPost(
 
       return jsonResponse({
 
-        success:true,
+        success: true,
 
-        sent:false,
+        sent: false,
 
-        suppressed:true,
+        suppressed: true,
+
+        campaignId,
+
+        queueId,
+
+        leadId:
+          recipient.leadId,
 
         email,
 
         reason:
           suppression.reason ||
-          "Do Not Send"
+          "Do Not Send",
+
+        remaining,
+
+        campaignStatus:
+          campaign.status
 
       });
 
@@ -1047,21 +994,14 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // CREATE UNSUBSCRIBE URL
     // -----------------------
 
-
     const unsubscribeToken =
       await createToken(
-
         email,
-
         env.UNSUBSCRIBE_SECRET
-
       );
 
 
@@ -1072,7 +1012,6 @@ export async function onRequestPost(
 
 
     const unsubscribeUrl =
-
       `${origin}/api/unsubscribe?email=${
         encodeURIComponent(email)
       }&token=${
@@ -1083,13 +1022,9 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // BUILD EMAIL
     // -----------------------
-
 
     const subject =
       cleanSubject(
@@ -1097,12 +1032,13 @@ export async function onRequestPost(
       );
 
 
-    if(!subject){
+    if (!subject) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Campaign subject missing"
+          success: false,
+          error:
+            "Campaign subject missing"
         },
         400
       );
@@ -1112,40 +1048,27 @@ export async function onRequestPost(
 
     const html =
       buildEmailHTML(
-
         campaign,
-
         recipient,
-
         unsubscribeUrl
-
       );
 
 
     const text =
       buildEmailText(
-
         campaign,
-
         recipient,
-
         unsubscribeUrl
-
       );
 
 
 
-
-
-
     // -----------------------
-    // MARK AS SENDING
+    // MARK SENDING
     // -----------------------
-
 
     const attemptTime =
-      new Date()
-      .toISOString();
+      new Date().toISOString();
 
 
     queue.status =
@@ -1175,8 +1098,16 @@ export async function onRequestPost(
       null;
 
 
+    delete queueRecipient.statusReason;
+
+
     campaign.status =
       "Sending";
+
+
+    calculateQueueStats(
+      queue
+    );
 
 
     await saveQueue(
@@ -1192,36 +1123,26 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
-    // RESEND API
+    // SEND VIA RESEND
     // -----------------------
-
 
     const idempotencyKey =
-
       `campaign/${campaignId}/lead/${recipient.leadId}`;
 
 
     let resendResponse;
 
 
-    try{
-
+    try {
 
       resendResponse =
         await fetch(
-
           "https://api.resend.com/emails",
-
           {
+            method: "POST",
 
-            method:"POST",
-
-            headers:{
-
+            headers: {
               "Authorization":
                 `Bearer ${env.RESEND_API_KEY}`,
 
@@ -1233,16 +1154,14 @@ export async function onRequestPost(
 
               "Idempotency-Key":
                 idempotencyKey
-
             },
 
             body:
               JSON.stringify({
-
                 from:
                   "Merqiva <hello@merqivaintel.com>",
 
-                to:[
+                to: [
                   email
                 ],
 
@@ -1255,26 +1174,19 @@ export async function onRequestPost(
 
                 text,
 
-                headers:{
-
+                headers: {
                   "List-Unsubscribe":
                     `<${unsubscribeUrl}>`,
 
                   "X-Entity-Ref-ID":
                     `${campaignId}-${recipient.leadId}`
-
                 }
-
               })
-
           }
-
         );
 
-
     }
-    catch(error){
-
+    catch (error) {
 
       console.error(
         "Resend network error:",
@@ -1288,6 +1200,10 @@ export async function onRequestPost(
 
       queueRecipient.error =
         "Resend network error";
+
+
+      queueRecipient.statusReason =
+        queueRecipient.error;
 
 
       queue.status =
@@ -1317,7 +1233,7 @@ export async function onRequestPost(
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
           error:
             "Email provider unavailable"
         },
@@ -1328,18 +1244,7 @@ export async function onRequestPost(
 
 
 
-
-
-
-    // -----------------------
-    // HANDLE RESEND ERROR
-    // -----------------------
-
-
-    if(
-      !resendResponse.ok
-    ){
-
+    if (!resendResponse.ok) {
 
       const errorText =
         await resendResponse.text();
@@ -1363,6 +1268,10 @@ export async function onRequestPost(
         `Resend ${resendResponse.status}`;
 
 
+      queueRecipient.statusReason =
+        queueRecipient.error;
+
+
       queue.status =
         "Queued";
 
@@ -1390,7 +1299,7 @@ export async function onRequestPost(
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
 
           error:
             "Email send failed",
@@ -1405,21 +1314,16 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
-    // RESEND SUCCESS
+    // SUCCESS
     // -----------------------
-
 
     const resendData =
       await resendResponse.json();
 
 
     const sentAt =
-      new Date()
-      .toISOString();
+      new Date().toISOString();
 
 
     queueRecipient.status =
@@ -1438,73 +1342,61 @@ export async function onRequestPost(
       null;
 
 
+    delete queueRecipient.statusReason;
+
+
+
+    // -----------------------
+    // REVERSE INDEX FOR WEBHOOK
+    // -----------------------
+
+    if (resendData.id) {
+
+      await env.LEADS_KV.put(
+        `resend_email:${resendData.id}`,
+        JSON.stringify({
+          campaignId,
+          queueId,
+
+          leadId:
+            recipient.leadId,
+
+          email,
+
+          createdAt:
+            sentAt
+        }),
+        {
+          expirationTtl:
+            60 * 60 * 24 * 90
+        }
+      );
+
+    }
+
+
+
     calculateQueueStats(
       queue
     );
 
 
-
-
-
-
-    // -----------------------
-    // CHECK REMAINING
-    // -----------------------
-
-
     const remaining =
-
-      prepared.recipients.filter(
-
-        item=>{
-
-
-          const qr =
-            getQueueRecipient(
-              queue,
-              item.leadId
-            );
+      countPreparedRemaining(
+        prepared,
+        queue
+      );
 
 
-          return (
-            qr &&
-            qr.status !== "Sent" &&
-            qr.status !== "Suppressed"
-          );
+    if (remaining === 0) {
 
-        }
+      completeCampaign(
+        queue,
+        campaign,
+        sentAt
+      );
 
-      ).length;
-
-
-
-
-
-
-    if(
-      remaining === 0
-    ){
-
-
-      queue.status =
-        "Sent";
-
-
-      queue.completedAt =
-        sentAt;
-
-
-      campaign.status =
-        "Sent";
-
-
-      campaign.sentAt =
-        sentAt;
-
-
-    }
-    else{
-
+    } else {
 
       queue.status =
         "Queued";
@@ -1513,11 +1405,7 @@ export async function onRequestPost(
       campaign.status =
         "Queued";
 
-
     }
-
-
-
 
 
     await saveQueue(
@@ -1532,15 +1420,11 @@ export async function onRequestPost(
     );
 
 
-
-
-
-
     return jsonResponse({
 
-      success:true,
+      success: true,
 
-      sent:true,
+      sent: true,
 
       campaignId,
 
@@ -1563,10 +1447,8 @@ export async function onRequestPost(
 
     });
 
-
   }
-  catch(error){
-
+  catch (error) {
 
     console.error(
       "Send prepared campaign error:",
@@ -1576,15 +1458,13 @@ export async function onRequestPost(
 
     return jsonResponse(
       {
-        success:false,
+        success: false,
         error:
           "Campaign send failed"
       },
       500
     );
 
-
   }
-
 
 }
