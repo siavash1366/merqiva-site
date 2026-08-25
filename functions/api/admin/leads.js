@@ -131,7 +131,20 @@ url.searchParams.get("page")
 
 
 
-const limit = 20;
+const requestedLimit =
+Number(
+url.searchParams.get("limit")
+) || 20;
+
+
+const limit =
+Math.min(
+Math.max(
+requestedLimit,
+1
+),
+100
+);
 
 
 
