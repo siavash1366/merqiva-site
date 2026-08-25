@@ -27,7 +27,7 @@ function jsonResponse(
 
     {
       status,
-      headers: API_HEADERS
+      headers:API_HEADERS
     }
 
   );
@@ -79,7 +79,6 @@ async function checkSession(
 
 function isValidEmail(email){
 
-
   if(
     !email ||
     typeof email !== "string"
@@ -90,13 +89,10 @@ function isValidEmail(email){
   }
 
 
-  const cleanEmail =
-    email.trim();
-
-
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    .test(cleanEmail);
-
+    .test(
+      email.trim()
+    );
 
 }
 
@@ -123,7 +119,7 @@ export async function onRequestGet(
 
 
   if(
-    !(await checkSession(request, env))
+    !(await checkSession(request,env))
   ){
 
     return jsonResponse(
@@ -180,8 +176,7 @@ export async function onRequestGet(
 
       success:true,
 
-      prepared:
-        !!prepared,
+      prepared:!!prepared,
 
       data:
         prepared || null
@@ -207,7 +202,9 @@ export async function onRequestGet(
       500
     );
 
+
   }
+
 
 }
 
@@ -234,7 +231,7 @@ export async function onRequestPost(
 
 
   if(
-    !(await checkSession(request, env))
+    !(await checkSession(request,env))
   ){
 
     return jsonResponse(
@@ -377,6 +374,9 @@ export async function onRequestPost(
       new Set();
 
 
+    let suppressedRecipients = 0;
+
+
 
     for(
       const recipient of
@@ -446,6 +446,8 @@ export async function onRequestPost(
 
           leadId,
 
+          email,
+
           reason:
             "Invalid email"
 
@@ -458,6 +460,62 @@ export async function onRequestPost(
 
 
 
+
+
+
+      // -----------------------
+      // CHECK SUPPRESSION
+      // -----------------------
+
+
+      const suppression =
+        await env.LEADS_KV.get(
+
+          `suppression:${email}`,
+
+          {
+            type:"json"
+          }
+
+        );
+
+
+
+      if(suppression){
+
+
+        suppressedRecipients++;
+
+
+        skippedRecipients.push({
+
+          leadId,
+
+          email,
+
+          reason:
+            `Suppressed: ${
+              suppression.reason ||
+              "Do Not Send"
+            }`
+
+        });
+
+
+        continue;
+
+      }
+
+
+
+
+
+
+      // -----------------------
+      // CHECK DUPLICATE EMAIL
+      // -----------------------
+
+
       if(
         seenEmails.has(email)
       ){
@@ -466,6 +524,8 @@ export async function onRequestPost(
         skippedRecipients.push({
 
           leadId,
+
+          email,
 
           reason:
             "Duplicate email"
@@ -481,6 +541,14 @@ export async function onRequestPost(
 
       seenEmails.add(email);
 
+
+
+
+
+
+      // -----------------------
+      // VALID RECIPIENT
+      // -----------------------
 
 
       preparedRecipients.push({
@@ -520,9 +588,22 @@ export async function onRequestPost(
       return jsonResponse(
         {
           success:false,
-          error:"No valid recipients found",
+
+          error:
+            "No valid recipients found",
+
+          queued:
+            queue.recipients?.length || 0,
+
+          validRecipients:0,
+
+          suppressedRecipients,
+
+          skippedRecipients:
+            skippedRecipients.length,
+
           skipped:
-            skippedRecipients.length
+            skippedRecipients
         },
         400
       );
@@ -567,6 +648,8 @@ export async function onRequestPost(
 
       validRecipients:
         preparedRecipients.length,
+
+      suppressedRecipients,
 
       skippedRecipients:
         skippedRecipients.length,
@@ -617,6 +700,10 @@ export async function onRequestPost(
       preparedRecipients.length;
 
 
+    queue.suppressedRecipients =
+      suppressedRecipients;
+
+
     queue.skippedRecipients =
       skippedRecipients.length;
 
@@ -652,6 +739,8 @@ export async function onRequestPost(
       validRecipients:
         preparedRecipients.length,
 
+      suppressedRecipients,
+
       skippedRecipients:
         skippedRecipients.length
 
@@ -676,6 +765,8 @@ export async function onRequestPost(
       500
     );
 
+
   }
+
 
 }
