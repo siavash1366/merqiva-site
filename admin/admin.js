@@ -2,6 +2,7 @@ const LOGIN_URL = "/api/login";
 const API_URL = "/api/admin/leads";
 const HISTORY_URL = "/api/admin/history";
 const CAMPAIGN_URL = "/api/admin/campaigns";
+const SEND_CAMPAIGN_URL = "/api/admin/send-campaign";
 
 
 let adminSession =
@@ -29,7 +30,6 @@ login
 );
 
 
-
 document
 .getElementById("refreshBtn")
 ?.addEventListener(
@@ -42,9 +42,7 @@ loadLeads();
 loadCampaigns();
 
 }
-
 );
-
 
 
 document
@@ -53,7 +51,6 @@ document
 "click",
 logout
 );
-
 
 
 document
@@ -69,23 +66,18 @@ document
 .trim();
 
 
-
 currentStatus =
 document
 .getElementById("statusFilter")
 .value;
 
 
-
 currentPage = 1;
-
 
 loadLeads();
 
 }
-
 );
-
 
 
 document
@@ -94,7 +86,6 @@ document
 "click",
 createCampaign
 );
-
 
 
 document
@@ -112,9 +103,7 @@ loadLeads();
 }
 
 }
-
 );
-
 
 
 document
@@ -129,8 +118,8 @@ loadLeads();
 
 }
 
+}
 );
-
 
 
 document
@@ -141,13 +130,11 @@ document
 
 document
 .getElementById("leadDetails")
-.classList
+?.classList
 .add("hidden");
 
 }
-
 );
-
 
 
 document
@@ -164,9 +151,7 @@ window.location.href =
 }
 
 }
-
 );
-
 
 
 document
@@ -181,7 +166,6 @@ await navigator.clipboard.writeText(
 currentLead.email
 );
 
-
 showToast(
 "Email copied"
 );
@@ -189,9 +173,7 @@ showToast(
 }
 
 }
-
 );
-
 
 
 document
@@ -202,15 +184,11 @@ saveNote
 );
 
 
-
-
-
 if(adminSession){
 
 showPanel();
 
 }
-
 
 
 
@@ -232,10 +210,8 @@ document
 .trim();
 
 
-
 if(!token)
 return;
-
 
 
 const response =
@@ -259,14 +235,11 @@ token
 })
 
 }
-
 );
-
 
 
 const data =
 await response.json();
-
 
 
 if(data.success){
@@ -280,7 +253,6 @@ localStorage.setItem(
 "admin_session",
 data.session
 );
-
 
 
 showPanel();
@@ -314,21 +286,17 @@ document
 .add("hidden");
 
 
-
 document
 .getElementById("panel")
 ?.classList
 .remove("hidden");
 
 
-
 loadLeads();
-
 loadCampaigns();
 
 
 }
-
 
 
 
@@ -349,6 +317,11 @@ location.reload();
 
 
 }
+
+
+
+
+
 
 // =====================
 // LOAD LEADS
@@ -372,7 +345,6 @@ status:currentStatus
 });
 
 
-
 const response =
 await fetch(
 
@@ -392,10 +364,8 @@ headers:{
 );
 
 
-
 const data =
 await response.json();
-
 
 
 if(!data.success){
@@ -407,21 +377,17 @@ return;
 }
 
 
-
 const tbody =
 document.getElementById(
 "leadTable"
 );
 
 
-
 if(!tbody)
 return;
 
 
-
 tbody.innerHTML = "";
-
 
 
 data.leads.forEach(
@@ -435,9 +401,7 @@ document.createElement(
 );
 
 
-
 row.innerHTML = `
-
 
 <td>${lead.id || ""}</td>
 
@@ -463,30 +427,22 @@ ${statusOptions(lead.status)}
 
 </select>
 
-
 </td>
 
 
 <td>
 
-
 <button class="saveBtn">
 Save
 </button>
-
 
 <button class="viewBtn">
 View
 </button>
 
-
 </td>
 
-
 `;
-
-
-
 
 
 row
@@ -497,18 +453,12 @@ row
 );
 
 
-
-
-
 row
 .querySelector(".viewBtn")
 .addEventListener(
 "click",
 ()=>viewLead(lead)
 );
-
-
-
 
 
 tbody.appendChild(row);
@@ -519,14 +469,10 @@ tbody.appendChild(row);
 );
 
 
-
-
-
 const pageInfo =
 document.getElementById(
 "pageInfo"
 );
-
 
 
 if(pageInfo){
@@ -544,39 +490,30 @@ pageInfo.innerText =
 
 
 
-
-
-
 function statusOptions(current){
 
 
 const statuses = [
 
 "New",
-
 "Reviewed",
-
 "Contacted",
-
 "Qualified",
-
 "Proposal Sent",
-
 "Won",
-
 "Lost"
 
 ];
-
 
 
 return statuses.map(
 
 status=>`
 
-<option value="${status}"
-
-${current===status?"selected":""}>
+<option
+value="${status}"
+${current===status ? "selected" : ""}
+>
 
 ${status}
 
@@ -587,10 +524,8 @@ ${status}
 )
 .join("");
 
+
 }
-
-
-
 
 
 
@@ -613,15 +548,12 @@ document.querySelector(
 );
 
 
-
 if(!select)
 return;
 
 
-
 const status =
 select.value;
-
 
 
 const response =
@@ -646,7 +578,6 @@ headers:{
 body:JSON.stringify({
 
 id,
-
 status
 
 })
@@ -656,10 +587,8 @@ status
 );
 
 
-
 const data =
 await response.json();
-
 
 
 if(data.success){
@@ -692,9 +621,6 @@ data.error || "Update failed"
 
 
 
-
-
-
 // =====================
 // VIEW LEAD
 // =====================
@@ -707,12 +633,10 @@ currentLead =
 lead;
 
 
-
 const box =
 document.getElementById(
 "leadDetails"
 );
-
 
 
 const content =
@@ -721,14 +645,11 @@ document.getElementById(
 );
 
 
-
 if(!box || !content)
 return;
 
 
-
 content.innerHTML = `
-
 
 <p><b>ID:</b> ${lead.id || ""}</p>
 
@@ -748,29 +669,22 @@ content.innerHTML = `
 
 <p><b>Created:</b> ${lead.createdAt || ""}</p>
 
-
 <p><b>Message:</b></p>
 
 <p>
 ${lead.message || ""}
 </p>
 
-
 <div id="historyContent">
-
 Loading history...
-
 </div>
 
-
 `;
-
 
 
 box
 .classList
 .remove("hidden");
-
 
 
 loadHistory(
@@ -784,6 +698,12 @@ lead
 
 
 }
+
+
+
+
+
+
 // =====================
 // HISTORY
 // =====================
@@ -798,10 +718,8 @@ document.getElementById(
 );
 
 
-
 if(!box)
 return;
-
 
 
 const response =
@@ -823,10 +741,8 @@ headers:{
 );
 
 
-
 const data =
 await response.json();
-
 
 
 if(
@@ -842,7 +758,6 @@ return;
 }
 
 
-
 box.innerHTML =
 
 data.history
@@ -853,48 +768,31 @@ item=>`
 
 <div class="history-item">
 
-
 <div class="history-title">
-
 ${item.action}
-
 </div>
-
 
 <div class="history-change">
-
 ${item.from}
-
 ↓
-
 ${item.to}
-
 </div>
-
 
 <div class="history-date">
-
-${new Date(item.date)
-.toLocaleString()}
-
+${new Date(item.date).toLocaleString()}
 </div>
 
-
-${item.note ?
-
+${item.note
+?
 `
 <div>
 Note:
 ${item.note}
 </div>
 `
-
 :
-
 ""
-
 }
-
 
 </div>
 
@@ -903,10 +801,8 @@ ${item.note}
 )
 .join("");
 
+
 }
-
-
-
 
 
 
@@ -925,27 +821,22 @@ if(!currentLead)
 return;
 
 
-
 const input =
 document.getElementById(
 "noteInput"
 );
 
 
-
 if(!input)
 return;
-
 
 
 const note =
 input.value.trim();
 
 
-
 if(!note)
 return;
-
 
 
 const response =
@@ -980,10 +871,8 @@ note
 );
 
 
-
 const data =
 await response.json();
-
 
 
 if(data.success){
@@ -994,14 +883,11 @@ showToast(
 );
 
 
-
-input.value="";
-
+input.value = "";
 
 
 currentLead =
 data.lead;
-
 
 
 loadNotes(
@@ -1028,9 +914,6 @@ data.error || "Note failed"
 
 
 
-
-
-
 function loadNotes(lead){
 
 
@@ -1040,10 +923,8 @@ document.getElementById(
 );
 
 
-
 if(!box)
 return;
-
 
 
 if(
@@ -1059,7 +940,6 @@ return;
 }
 
 
-
 box.innerHTML =
 
 lead.notes
@@ -1069,19 +949,13 @@ note=>`
 
 <div class="note-item">
 
-
 <div>
 ${note.text}
 </div>
 
-
 <div class="note-date">
-
-${new Date(note.date)
-.toLocaleString()}
-
+${new Date(note.date).toLocaleString()}
 </div>
-
 
 </div>
 
@@ -1090,10 +964,8 @@ ${new Date(note.date)
 )
 .join("");
 
+
 }
-
-
-
 
 
 
@@ -1114,10 +986,8 @@ document.getElementById(
 );
 
 
-
 if(!table)
 return;
-
 
 
 const response =
@@ -1139,19 +1009,15 @@ headers:{
 );
 
 
-
 const data =
 await response.json();
-
 
 
 if(!data.success)
 return;
 
 
-
-table.innerHTML="";
-
+table.innerHTML = "";
 
 
 data.campaigns.forEach(
@@ -1165,71 +1031,134 @@ document.createElement(
 );
 
 
+const isDraft =
+campaign.status === "Draft";
+
+
+let queueLabel =
+"Queue Campaign";
+
+
+if(campaign.status === "Queued"){
+
+queueLabel =
+"Queued";
+
+}
+else if(campaign.status === "Sending"){
+
+queueLabel =
+"Sending";
+
+}
+else if(campaign.status === "Sent"){
+
+queueLabel =
+"Sent";
+
+}
+
 
 row.innerHTML = `
-
 
 <td>
 ${campaign.id}
 </td>
 
-
 <td>
 ${campaign.name}
 </td>
-
 
 <td>
 ${campaign.subject}
 </td>
 
-
 <td>
 ${campaign.status}
 </td>
 
-
 <td>
-
 
 <button
 class="audienceBtn"
 data-id="${campaign.id}"
+${!isDraft ? "disabled" : ""}
 >
-Audience
+${isDraft ? "Audience" : "Audience Locked"}
+</button>
+
+
+<button
+class="queueCampaignBtn"
+data-id="${campaign.id}"
+${!isDraft ? "disabled" : ""}
+>
+${queueLabel}
 </button>
 
 
 <button
 class="deleteCampaignBtn"
+data-id="${campaign.id}"
+${!isDraft ? "disabled" : ""}
 >
 Delete
 </button>
 
-
 </td>
-
 
 `;
 
 
+const audienceBtn =
+row.querySelector(
+".audienceBtn"
+);
 
-row
-.querySelector(".audienceBtn")
-.addEventListener(
+
+if(isDraft){
+
+audienceBtn
+?.addEventListener(
 "click",
 ()=>openAudience(campaign.id)
 );
 
+}
 
 
-row
-.querySelector(".deleteCampaignBtn")
-.addEventListener(
+const queueBtn =
+row.querySelector(
+".queueCampaignBtn"
+);
+
+
+if(isDraft){
+
+queueBtn
+?.addEventListener(
+"click",
+()=>queueCampaign(campaign.id)
+);
+
+}
+
+
+const deleteBtn =
+row.querySelector(
+".deleteCampaignBtn"
+);
+
+
+if(isDraft){
+
+deleteBtn
+?.addEventListener(
 "click",
 ()=>deleteCampaign(campaign.id)
 );
 
+}
 
 
 table.appendChild(row);
@@ -1247,7 +1176,9 @@ table.appendChild(row);
 
 
 
-
+// =====================
+// CREATE CAMPAIGN
+// =====================
 
 
 async function createCampaign(){
@@ -1260,7 +1191,6 @@ document
 .trim();
 
 
-
 const subject =
 document
 .getElementById("campaignSubject")
@@ -1268,13 +1198,11 @@ document
 .trim();
 
 
-
 const body =
 document
 .getElementById("campaignBody")
 .value
 .trim();
-
 
 
 if(!name || !subject || !body){
@@ -1286,7 +1214,6 @@ showToast(
 return;
 
 }
-
 
 
 const response =
@@ -1311,9 +1238,7 @@ headers:{
 body:JSON.stringify({
 
 name,
-
 subject,
-
 body
 
 })
@@ -1323,10 +1248,8 @@ body
 );
 
 
-
 const data =
 await response.json();
-
 
 
 if(data.success){
@@ -1336,39 +1259,20 @@ showToast(
 "Campaign created"
 );
 
-document
-.querySelectorAll(".audienceBtn")
-.forEach(btn => {
-
-btn.addEventListener(
-"click",
-()=>{
-
-const id = btn.dataset.id;
-
-window.location.href =
-`/admin/campaign-audience.html?campaign=${id}`;
-
-}
-
-);
-
-});
 
 document
 .getElementById("campaignName")
-.value="";
+.value = "";
 
 
 document
 .getElementById("campaignSubject")
-.value="";
+.value = "";
 
 
 document
 .getElementById("campaignBody")
-.value="";
-
+.value = "";
 
 
 loadCampaigns();
@@ -1393,7 +1297,135 @@ data.error || "Campaign failed"
 
 
 
+// =====================
+// QUEUE CAMPAIGN
+// =====================
 
+
+async function queueCampaign(id){
+
+
+const button =
+document.querySelector(
+
+`.queueCampaignBtn[data-id="${id}"]`
+
+);
+
+
+if(button){
+
+button.disabled = true;
+
+button.innerText =
+"Queuing...";
+
+}
+
+
+try{
+
+
+const response =
+await fetch(
+
+SEND_CAMPAIGN_URL,
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+"Authorization":
+"Bearer "+adminSession
+
+},
+
+body:JSON.stringify({
+
+campaignId:id
+
+})
+
+}
+
+);
+
+
+const data =
+await response.json();
+
+
+if(response.status === 401){
+
+logout();
+
+return;
+
+}
+
+
+if(data.success){
+
+
+showToast(
+`Campaign queued (${data.recipients} recipients)`
+);
+
+
+await loadCampaigns();
+
+
+}
+else{
+
+
+showToast(
+data.error || "Queue failed"
+);
+
+
+await loadCampaigns();
+
+
+}
+
+
+}
+catch(error){
+
+
+console.error(
+"Queue campaign error:",
+error
+);
+
+
+showToast(
+"Queue request failed"
+);
+
+
+await loadCampaigns();
+
+
+}
+
+
+}
+
+
+
+
+
+
+// =====================
+// DELETE CAMPAIGN
+// =====================
 
 
 async function deleteCampaign(id){
@@ -1429,13 +1461,12 @@ id
 );
 
 
-
 const data =
 await response.json();
 
 
-
 if(data.success){
+
 
 showToast(
 "Campaign deleted"
@@ -1446,6 +1477,15 @@ loadCampaigns();
 
 
 }
+else{
+
+
+showToast(
+data.error || "Delete failed"
+);
+
+
+}
 
 
 }
@@ -1455,7 +1495,9 @@ loadCampaigns();
 
 
 
-
+// =====================
+// OPEN AUDIENCE
+// =====================
 
 
 function openAudience(id){
@@ -1467,9 +1509,6 @@ window.location.href =
 
 
 }
-
-
-
 
 
 
@@ -1488,7 +1527,6 @@ let toast =
 document.querySelector(
 ".toast"
 );
-
 
 
 if(!toast){
@@ -1512,16 +1550,13 @@ toast
 }
 
 
-
 toast.innerText =
 message;
-
 
 
 toast.classList.add(
 "show"
 );
-
 
 
 setTimeout(
@@ -1531,9 +1566,9 @@ toast.classList.remove(
 "show"
 );
 
-
 },
 2000
 );
+
 
 }
