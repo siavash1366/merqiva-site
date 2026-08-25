@@ -1724,7 +1724,6 @@ State unavailable
 // =====================
 // CAMPAIGN STATUS HTML
 // =====================
-
 function buildCampaignStatusHTML(
   campaign,
   queue,
@@ -1735,13 +1734,15 @@ function buildCampaignStatusHTML(
 
     return `
 
-<div>
-<strong>
+<div class="campaign-status-head">
+
+<span class="campaign-status-badge">
 ${escapeHTML(campaign.status)}
-</strong>
+</span>
+
 </div>
 
-<div>
+<div class="campaign-state-message">
 Queue unavailable
 </div>
 
@@ -1751,123 +1752,164 @@ Queue unavailable
 
 
   const total =
-    Number(
-      queue.total || 0
-    );
-
+    Number(queue.total || 0);
 
   const valid =
     Number(
       queue.validRecipients || 0
     );
 
-
   const sent =
-    Number(
-      queue.sent || 0
-    );
-
+    Number(queue.sent || 0);
 
   const delivered =
-    Number(
-      queue.delivered || 0
-    );
-
+    Number(queue.delivered || 0);
 
   const pending =
-    Number(
-      queue.pending || 0
-    );
-
-
-  const suppressed =
-    Number(
-      queue.suppressed || 0
-    );
-
-
-  const skipped =
-    Number(
-      queue.skipped || 0
-    );
-
-
-  const failed =
-    Number(
-      queue.failed || 0
-    );
-
-
-  const bounced =
-    Number(
-      queue.bounced || 0
-    );
-
-
-  const complained =
-    Number(
-      queue.complained || 0
-    );
-
+    Number(queue.pending || 0);
 
   const sending =
-    Number(
-      queue.sending || 0
+    Number(queue.sending || 0);
+
+  const suppressed =
+    Number(queue.suppressed || 0);
+
+  const skipped =
+    Number(queue.skipped || 0);
+
+  const failed =
+    Number(queue.failed || 0);
+
+  const bounced =
+    Number(queue.bounced || 0);
+
+  const complained =
+    Number(queue.complained || 0);
+
+
+  const status =
+    String(
+      queue.status ||
+      campaign.status ||
+      "Unknown"
     );
+
+
+  const statusKey =
+    status
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9]+/g,
+        "-"
+      );
 
 
   return `
 
-<div>
-<strong>
-${escapeHTML(queue.status || campaign.status)}
-</strong>
+<div class="campaign-status-head">
+
+<span
+class="
+campaign-status-badge
+campaign-status-${statusKey}
+"
+>
+${escapeHTML(status)}
+</span>
+
+
+<span
+class="
+campaign-prepared-badge
+${prepared
+  ? "is-prepared"
+  : "not-prepared"}
+"
+>
+${prepared
+  ? "Prepared"
+  : "Not Prepared"}
+</span>
+
 </div>
 
-<div>
-Prepared:
-<strong>
-${prepared ? "Yes" : "No"}
-</strong>
+
+<div class="campaign-metrics">
+
+<div class="campaign-metric">
+<span>Total</span>
+<strong>${total}</strong>
 </div>
 
-<div>
-Total: ${total}
-|
-Valid: ${valid}
+
+<div class="campaign-metric">
+<span>Valid</span>
+<strong>${valid}</strong>
 </div>
 
-<div>
-Sent: ${sent}
-|
-Delivered: ${delivered}
+
+<div class="campaign-metric">
+<span>Sent</span>
+<strong>${sent}</strong>
 </div>
 
-<div>
-Pending: ${pending}
-|
-Sending: ${sending}
+
+<div class="campaign-metric">
+<span>Delivered</span>
+<strong>${delivered}</strong>
 </div>
 
-<div>
-Suppressed: ${suppressed}
-|
-Skipped: ${skipped}
+
+<div class="campaign-metric">
+<span>Pending</span>
+<strong>${pending}</strong>
 </div>
 
-<div>
-Failed: ${failed}
-|
-Bounced: ${bounced}
+
+<div class="campaign-metric">
+<span>Sending</span>
+<strong>${sending}</strong>
 </div>
 
-<div>
-Complaints: ${complained}
+
+<div class="campaign-metric">
+<span>Suppressed</span>
+<strong>${suppressed}</strong>
+</div>
+
+
+<div class="campaign-metric">
+<span>Skipped</span>
+<strong>${skipped}</strong>
+</div>
+
+
+<div class="campaign-metric">
+<span>Failed</span>
+<strong>${failed}</strong>
+</div>
+
+
+<div class="campaign-metric">
+<span>Bounced</span>
+<strong>${bounced}</strong>
+</div>
+
+
+<div class="
+campaign-metric
+campaign-metric-wide
+">
+<span>Complaints</span>
+<strong>${complained}</strong>
+</div>
+
 </div>
 
 `;
 
 }
+
 
 
 
