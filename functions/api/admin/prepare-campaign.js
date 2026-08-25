@@ -103,6 +103,7 @@ function isValidEmail(email){
 
 
 
+
 // =======================
 // GET PREPARED CAMPAIGN
 // =======================
@@ -176,7 +177,8 @@ export async function onRequestGet(
 
       success:true,
 
-      prepared:!!prepared,
+      prepared:
+        !!prepared,
 
       data:
         prepared || null
@@ -207,6 +209,7 @@ export async function onRequestGet(
 
 
 }
+
 
 
 
@@ -362,6 +365,22 @@ export async function onRequestPost(
 
 
     // -----------------------
+    // INVALIDATE OLD SNAPSHOT
+    // -----------------------
+
+
+    await env.LEADS_KV.delete(
+
+      `campaign_prepared:${campaignId}`
+
+    );
+
+
+
+
+
+
+    // -----------------------
     // RESOLVE RECIPIENTS
     // -----------------------
 
@@ -464,27 +483,28 @@ export async function onRequestPost(
 
 
       // -----------------------
-      // CHECK SUPPRESSION
+      // CHECK D1 SUPPRESSION
       // -----------------------
 
+
       const suppression =
-  await env.SUPPRESSIONS_DB
-  .prepare(
-    `
-    SELECT
-      email,
-      reason,
-      source,
-      created_at AS createdAt
-    FROM suppressions
-    WHERE email = ?
-    LIMIT 1
-    `
-  )
-  .bind(
-    email
-  )
-  .first();
+        await env.SUPPRESSIONS_DB
+        .prepare(
+          `
+          SELECT
+            email,
+            reason,
+            source,
+            created_at AS createdAt
+          FROM suppressions
+          WHERE email = ?
+          LIMIT 1
+          `
+        )
+        .bind(
+          email
+        )
+        .first();
 
 
 
@@ -582,9 +602,57 @@ export async function onRequestPost(
 
 
 
+    const now =
+      new Date().toISOString();
+
+
+
+
+
 
     // -----------------------
-    // VALIDATE RESULT
+    // UPDATE QUEUE METADATA
+    // -----------------------
+
+
+    queue.lastPrepareAttemptAt =
+      now;
+
+
+    queue.validRecipients =
+      preparedRecipients.length;
+
+
+    queue.suppressedRecipients =
+      suppressedRecipients;
+
+
+    queue.skippedRecipients =
+      skippedRecipients.length;
+
+
+    queue.preparedAt =
+      preparedRecipients.length > 0
+        ? now
+        : null;
+
+
+
+    await env.LEADS_KV.put(
+
+      `email_queue:${queueId}`,
+
+      JSON.stringify(queue)
+
+    );
+
+
+
+
+
+
+    // -----------------------
+    // BLOCK EMPTY CAMPAIGN
     // -----------------------
 
 
@@ -599,6 +667,10 @@ export async function onRequestPost(
           error:
             "No valid recipients found",
 
+          campaignId,
+
+          queueId,
+
           queued:
             queue.recipients?.length || 0,
 
@@ -608,6 +680,8 @@ export async function onRequestPost(
 
           skippedRecipients:
             skippedRecipients.length,
+
+          prepared:false,
 
           skipped:
             skippedRecipients
@@ -623,13 +697,8 @@ export async function onRequestPost(
 
 
     // -----------------------
-    // CREATE PREPARED SNAPSHOT
+    // CREATE FRESH SNAPSHOT
     // -----------------------
-
-
-    const now =
-      new Date().toISOString();
-
 
 
     const preparedCampaign = {
@@ -675,7 +744,7 @@ export async function onRequestPost(
 
 
     // -----------------------
-    // SAVE PREPARED CAMPAIGN
+    // SAVE FRESH SNAPSHOT
     // -----------------------
 
 
@@ -686,41 +755,6 @@ export async function onRequestPost(
       JSON.stringify(
         preparedCampaign
       )
-
-    );
-
-
-
-
-
-
-    // -----------------------
-    // UPDATE QUEUE METADATA
-    // -----------------------
-
-
-    queue.preparedAt =
-      now;
-
-
-    queue.validRecipients =
-      preparedRecipients.length;
-
-
-    queue.suppressedRecipients =
-      suppressedRecipients;
-
-
-    queue.skippedRecipients =
-      skippedRecipients.length;
-
-
-
-    await env.LEADS_KV.put(
-
-      `email_queue:${queueId}`,
-
-      JSON.stringify(queue)
 
     );
 
@@ -749,7 +783,9 @@ export async function onRequestPost(
       suppressedRecipients,
 
       skippedRecipients:
-        skippedRecipients.length
+        skippedRecipients.length,
+
+      prepared:true
 
     });
 
