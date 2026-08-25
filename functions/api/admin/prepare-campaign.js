@@ -1,61 +1,35 @@
 const API_HEADERS = {
-
-  "Content-Type":
-    "application/json; charset=UTF-8",
-
-  "Cache-Control":
-    "no-store",
-
-  "X-Content-Type-Options":
-    "nosniff",
-
-  "X-Frame-Options":
-    "DENY"
-
+  "Content-Type": "application/json; charset=UTF-8",
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY"
 };
 
 
-
-function jsonResponse(
-  data,
-  status = 200
-){
+function jsonResponse(data, status = 200) {
 
   return new Response(
-
     JSON.stringify(data),
-
     {
       status,
-      headers:API_HEADERS
+      headers: API_HEADERS
     }
-
   );
 
 }
 
 
-
-
-
-async function checkSession(
-  request,
-  env
-){
+async function checkSession(request, env) {
 
   const authorization =
-    request.headers.get(
-      "Authorization"
-    );
+    request.headers.get("Authorization");
 
 
-  if(
+  if (
     !authorization ||
     !authorization.startsWith("Bearer ")
-  ){
-
+  ) {
     return false;
-
   }
 
 
@@ -74,33 +48,84 @@ async function checkSession(
 }
 
 
+function isValidEmail(email) {
 
-
-
-function isValidEmail(email){
-
-  if(
+  if (
     !email ||
     typeof email !== "string"
-  ){
-
+  ) {
     return false;
-
   }
 
 
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    .test(
-      email.trim()
-    );
+    .test(email.trim());
 
 }
 
 
+function markRecipient(
+  recipient,
+  status,
+  reason = null
+) {
+
+  recipient.status = status;
 
 
+  if (reason) {
+
+    recipient.error = reason;
+
+    recipient.statusReason = reason;
+
+  } else {
+
+    recipient.error = null;
+
+    delete recipient.statusReason;
+
+  }
+
+}
 
 
+function calculateQueueStats(queue) {
+
+  const recipients =
+    queue.recipients || [];
+
+
+  queue.sent =
+    recipients.filter(
+      item => item.status === "Sent"
+    ).length;
+
+
+  queue.failed =
+    recipients.filter(
+      item => item.status === "Failed"
+    ).length;
+
+
+  queue.suppressed =
+    recipients.filter(
+      item => item.status === "Suppressed"
+    ).length;
+
+
+  queue.skipped =
+    recipients.filter(
+      item => item.status === "Skipped"
+    ).length;
+
+
+  queue.pending =
+    recipients.filter(
+      item => item.status === "Pending"
+    ).length;
+
+}
 
 
 
@@ -108,10 +133,7 @@ function isValidEmail(email){
 // GET PREPARED CAMPAIGN
 // =======================
 
-
-export async function onRequestGet(
-  context
-){
+export async function onRequestGet(context) {
 
   const {
     request,
@@ -119,14 +141,14 @@ export async function onRequestGet(
   } = context;
 
 
-  if(
-    !(await checkSession(request,env))
-  ){
+  if (
+    !(await checkSession(request, env))
+  ) {
 
     return jsonResponse(
       {
-        success:false,
-        error:"Unauthorized"
+        success: false,
+        error: "Unauthorized"
       },
       401
     );
@@ -134,25 +156,22 @@ export async function onRequestGet(
   }
 
 
-  try{
-
+  try {
 
     const url =
       new URL(request.url);
 
 
     const campaignId =
-      url.searchParams.get(
-        "campaignId"
-      );
+      url.searchParams.get("campaignId");
 
 
-    if(!campaignId){
+    if (!campaignId) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Missing campaignId"
+          success: false,
+          error: "Missing campaignId"
         },
         400
       );
@@ -160,35 +179,23 @@ export async function onRequestGet(
     }
 
 
-
     const prepared =
       await env.LEADS_KV.get(
-
         `campaign_prepared:${campaignId}`,
-
         {
-          type:"json"
+          type: "json"
         }
-
       );
 
 
     return jsonResponse({
-
-      success:true,
-
-      prepared:
-        !!prepared,
-
-      data:
-        prepared || null
-
+      success: true,
+      prepared: !!prepared,
+      data: prepared || null
     });
 
-
   }
-  catch(error){
-
+  catch (error) {
 
     console.error(
       "Prepare GET error:",
@@ -198,23 +205,16 @@ export async function onRequestGet(
 
     return jsonResponse(
       {
-        success:false,
-        error:"Failed to load prepared campaign"
+        success: false,
+        error:
+          "Failed to load prepared campaign"
       },
       500
     );
 
-
   }
 
-
 }
-
-
-
-
-
-
 
 
 
@@ -222,10 +222,7 @@ export async function onRequestGet(
 // PREPARE CAMPAIGN
 // =======================
 
-
-export async function onRequestPost(
-  context
-){
+export async function onRequestPost(context) {
 
   const {
     request,
@@ -233,14 +230,14 @@ export async function onRequestPost(
   } = context;
 
 
-  if(
-    !(await checkSession(request,env))
-  ){
+  if (
+    !(await checkSession(request, env))
+  ) {
 
     return jsonResponse(
       {
-        success:false,
-        error:"Unauthorized"
+        success: false,
+        error: "Unauthorized"
       },
       401
     );
@@ -248,31 +245,43 @@ export async function onRequestPost(
   }
 
 
-  try{
+  if (!env.SUPPRESSIONS_DB) {
 
+    return jsonResponse(
+      {
+        success: false,
+        error:
+          "Suppression database unavailable"
+      },
+      500
+    );
+
+  }
+
+
+  try {
 
     const body =
       await request.json();
 
 
     const campaignId =
-      body.campaignId;
+      String(
+        body.campaignId || ""
+      ).trim();
 
 
-    if(!campaignId){
+    if (!campaignId) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Missing campaignId"
+          success: false,
+          error: "Missing campaignId"
         },
         400
       );
 
     }
-
-
-
 
 
 
@@ -280,33 +289,26 @@ export async function onRequestPost(
     // LOAD CAMPAIGN
     // -----------------------
 
-
     const campaign =
       await env.LEADS_KV.get(
-
         `campaign:${campaignId}`,
-
         {
-          type:"json"
+          type: "json"
         }
-
       );
 
 
-    if(!campaign){
+    if (!campaign) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Campaign not found"
+          success: false,
+          error: "Campaign not found"
         },
         404
       );
 
     }
-
-
-
 
 
 
@@ -314,19 +316,19 @@ export async function onRequestPost(
     // LOAD QUEUE
     // -----------------------
 
-
     const queueId =
       await env.LEADS_KV.get(
         `campaign_queue:${campaignId}`
       );
 
 
-    if(!queueId){
+    if (!queueId) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Campaign is not queued"
+          success: false,
+          error:
+            "Campaign is not queued"
         },
         400
       );
@@ -334,25 +336,21 @@ export async function onRequestPost(
     }
 
 
-
     const queue =
       await env.LEADS_KV.get(
-
         `email_queue:${queueId}`,
-
         {
-          type:"json"
+          type: "json"
         }
-
       );
 
 
-    if(!queue){
+    if (!queue) {
 
       return jsonResponse(
         {
-          success:false,
-          error:"Queue not found"
+          success: false,
+          error: "Queue not found"
         },
         404
       );
@@ -361,6 +359,66 @@ export async function onRequestPost(
 
 
 
+    // -----------------------
+    // DO NOT RE-PREPARE
+    // WHILE SENDING / SENT
+    // -----------------------
+
+    if (
+      campaign.status === "Sending" ||
+      queue.status === "Sending"
+    ) {
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Campaign is currently sending"
+        },
+        409
+      );
+
+    }
+
+
+    if (
+      campaign.status === "Sent" ||
+      queue.status === "Sent"
+    ) {
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Campaign has already been sent"
+        },
+        409
+      );
+
+    }
+
+
+    const sendingAlreadyStarted =
+      (queue.recipients || [])
+      .some(
+        recipient =>
+          recipient.status === "Sent" ||
+          recipient.status === "Sending"
+      );
+
+
+    if (sendingAlreadyStarted) {
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Campaign sending has already started"
+        },
+        409
+      );
+
+    }
 
 
 
@@ -368,22 +426,15 @@ export async function onRequestPost(
     // INVALIDATE OLD SNAPSHOT
     // -----------------------
 
-
     await env.LEADS_KV.delete(
-
       `campaign_prepared:${campaignId}`
-
     );
-
-
-
 
 
 
     // -----------------------
     // RESOLVE RECIPIENTS
     // -----------------------
-
 
     const preparedRecipients = [];
 
@@ -397,17 +448,29 @@ export async function onRequestPost(
 
 
 
-    for(
+    for (
       const recipient of
       queue.recipients || []
-    ){
-
+    ) {
 
       const leadId =
         recipient.leadId;
 
 
-      if(!leadId){
+      if (!leadId) {
+
+        markRecipient(
+          recipient,
+          "Skipped",
+          "Missing lead ID"
+        );
+
+
+        skippedRecipients.push({
+          leadId: null,
+          reason: "Missing lead ID"
+        });
+
 
         continue;
 
@@ -417,27 +480,25 @@ export async function onRequestPost(
 
       const lead =
         await env.LEADS_KV.get(
-
           `lead:${leadId}`,
-
           {
-            type:"json"
+            type: "json"
           }
-
         );
 
 
+      if (!lead) {
 
-      if(!lead){
+        markRecipient(
+          recipient,
+          "Skipped",
+          "Lead not found"
+        );
 
 
         skippedRecipients.push({
-
           leadId,
-
-          reason:
-            "Lead not found"
-
+          reason: "Lead not found"
         });
 
 
@@ -456,20 +517,23 @@ export async function onRequestPost(
 
 
 
-      if(
-        !isValidEmail(email)
-      ){
+      // -----------------------
+      // INVALID EMAIL
+      // -----------------------
+
+      if (!isValidEmail(email)) {
+
+        markRecipient(
+          recipient,
+          "Skipped",
+          "Invalid email"
+        );
 
 
         skippedRecipients.push({
-
           leadId,
-
           email,
-
-          reason:
-            "Invalid email"
-
+          reason: "Invalid email"
         });
 
 
@@ -479,13 +543,9 @@ export async function onRequestPost(
 
 
 
-
-
-
       // -----------------------
-      // CHECK D1 SUPPRESSION
+      // D1 SUPPRESSION CHECK
       // -----------------------
-
 
       const suppression =
         await env.SUPPRESSIONS_DB
@@ -501,31 +561,33 @@ export async function onRequestPost(
           LIMIT 1
           `
         )
-        .bind(
-          email
-        )
+        .bind(email)
         .first();
 
 
-
-      if(suppression){
-
+      if (suppression) {
 
         suppressedRecipients++;
 
 
+        const reason =
+          `Suppressed: ${
+            suppression.reason ||
+            "Do Not Send"
+          }`;
+
+
+        markRecipient(
+          recipient,
+          "Suppressed",
+          reason
+        );
+
+
         skippedRecipients.push({
-
           leadId,
-
           email,
-
-          reason:
-            `Suppressed: ${
-              suppression.reason ||
-              "Do Not Send"
-            }`
-
+          reason
         });
 
 
@@ -535,41 +597,32 @@ export async function onRequestPost(
 
 
 
-
-
-
       // -----------------------
-      // CHECK DUPLICATE EMAIL
+      // DUPLICATE EMAIL
       // -----------------------
 
+      if (seenEmails.has(email)) {
 
-      if(
-        seenEmails.has(email)
-      ){
+        markRecipient(
+          recipient,
+          "Skipped",
+          "Duplicate email"
+        );
 
 
         skippedRecipients.push({
-
           leadId,
-
           email,
-
-          reason:
-            "Duplicate email"
-
+          reason: "Duplicate email"
         });
 
 
         continue;
 
       }
-
 
 
       seenEmails.add(email);
-
-
-
 
 
 
@@ -577,9 +630,13 @@ export async function onRequestPost(
       // VALID RECIPIENT
       // -----------------------
 
+      markRecipient(
+        recipient,
+        "Pending"
+      );
+
 
       preparedRecipients.push({
-
         leadId,
 
         name:
@@ -592,13 +649,9 @@ export async function onRequestPost(
 
         country:
           lead.country || ""
-
       });
 
-
     }
-
-
 
 
 
@@ -607,13 +660,9 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // UPDATE QUEUE METADATA
     // -----------------------
-
 
     queue.lastPrepareAttemptAt =
       now;
@@ -637,17 +686,13 @@ export async function onRequestPost(
         : null;
 
 
+    calculateQueueStats(queue);
+
 
     await env.LEADS_KV.put(
-
       `email_queue:${queueId}`,
-
       JSON.stringify(queue)
-
     );
-
-
-
 
 
 
@@ -655,14 +700,13 @@ export async function onRequestPost(
     // BLOCK EMPTY CAMPAIGN
     // -----------------------
 
-
-    if(
+    if (
       preparedRecipients.length === 0
-    ){
+    ) {
 
       return jsonResponse(
         {
-          success:false,
+          success: false,
 
           error:
             "No valid recipients found",
@@ -674,14 +718,14 @@ export async function onRequestPost(
           queued:
             queue.recipients?.length || 0,
 
-          validRecipients:0,
+          validRecipients: 0,
 
           suppressedRecipients,
 
           skippedRecipients:
             skippedRecipients.length,
 
-          prepared:false,
+          prepared: false,
 
           skipped:
             skippedRecipients
@@ -693,13 +737,9 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // CREATE FRESH SNAPSHOT
     // -----------------------
-
 
     const preparedCampaign = {
 
@@ -740,32 +780,21 @@ export async function onRequestPost(
 
 
 
-
-
-
     // -----------------------
     // SAVE FRESH SNAPSHOT
     // -----------------------
 
-
     await env.LEADS_KV.put(
-
       `campaign_prepared:${campaignId}`,
-
       JSON.stringify(
         preparedCampaign
       )
-
     );
-
-
-
-
 
 
     return jsonResponse({
 
-      success:true,
+      success: true,
 
       message:
         "Campaign prepared",
@@ -785,14 +814,12 @@ export async function onRequestPost(
       skippedRecipients:
         skippedRecipients.length,
 
-      prepared:true
+      prepared: true
 
     });
 
-
   }
-  catch(error){
-
+  catch (error) {
 
     console.error(
       "Prepare campaign error:",
@@ -802,14 +829,13 @@ export async function onRequestPost(
 
     return jsonResponse(
       {
-        success:false,
-        error:"Failed to prepare campaign"
+        success: false,
+        error:
+          "Failed to prepare campaign"
       },
       500
     );
 
-
   }
-
 
 }
