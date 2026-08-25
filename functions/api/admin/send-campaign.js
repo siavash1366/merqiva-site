@@ -117,9 +117,7 @@ async function createToken(
     );
 
 
-  return bytesToHex(
-    signature
-  );
+  return bytesToHex(signature);
 
 }
 
@@ -178,9 +176,7 @@ function isTerminalRecipientStatus(
 }
 
 
-function calculateQueueStats(
-  queue
-) {
+function calculateQueueStats(queue) {
 
   const recipients =
     queue.recipients || [];
@@ -602,9 +598,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
     // LOAD CAMPAIGN
-    // -----------------------
 
     const campaign =
       await env.LEADS_KV.get(
@@ -629,9 +623,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
     // LOAD QUEUE
-    // -----------------------
 
     const queueId =
       await env.LEADS_KV.get(
@@ -676,9 +668,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // LOAD PREPARED SNAPSHOT
-    // -----------------------
+    // LOAD PREPARED
 
     const prepared =
       await env.LEADS_KV.get(
@@ -726,9 +716,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // BLOCK COMPLETED CAMPAIGN
-    // -----------------------
+    // BLOCK COMPLETED
 
     if (
       campaign.status === "Sent" ||
@@ -765,9 +753,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
     // FIND NEXT RECIPIENT
-    // -----------------------
 
     let recipient = null;
 
@@ -814,9 +800,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
     // NOTHING LEFT
-    // -----------------------
 
     if (
       !recipient ||
@@ -877,9 +861,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // LIVE D1 SUPPRESSION
-    // -----------------------
+    // LIVE SUPPRESSION
 
     const suppression =
       await env.SUPPRESSIONS_DB
@@ -998,9 +980,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // CREATE UNSUBSCRIBE URL
-    // -----------------------
+    // UNSUBSCRIBE URL
 
     const unsubscribeToken =
       await createToken(
@@ -1026,9 +1006,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
     // BUILD EMAIL
-    // -----------------------
 
     const subject =
       cleanSubject(
@@ -1067,9 +1045,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // MARK AS SENDING
-    // -----------------------
+    // MARK SENDING
 
     const attemptTime =
       new Date().toISOString();
@@ -1127,9 +1103,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // RESEND API
-    // -----------------------
+    // RESEND
 
     const idempotencyKey =
       `campaign/${campaignId}/lead/${recipient.leadId}`;
@@ -1248,10 +1222,6 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // HANDLE RESEND ERROR
-    // -----------------------
-
     if (!resendResponse.ok) {
 
       const errorText =
@@ -1322,9 +1292,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // RESEND SUCCESS
-    // -----------------------
+    // SUCCESS
 
     const resendData =
       await resendResponse.json();
@@ -1354,9 +1322,7 @@ export async function onRequestPost(
 
 
 
-    // -----------------------
-    // SAVE RESEND REVERSE INDEX
-    // -----------------------
+    // REVERSE INDEX FOR WEBHOOK
 
     if (resendData.id) {
 
@@ -1388,11 +1354,6 @@ export async function onRequestPost(
     );
 
 
-
-    // -----------------------
-    // CHECK REMAINING
-    // -----------------------
-
     const remaining =
       countPreparedRemaining(
         prepared,
@@ -1418,7 +1379,6 @@ export async function onRequestPost(
         "Queued";
 
     }
-
 
 
     await saveQueue(
