@@ -104,8 +104,6 @@ loadLeads();
 
 }
 );
-
-
 document
 .getElementById("nextPage")
 ?.addEventListener(
@@ -117,9 +115,9 @@ currentPage++;
 loadLeads();
 
 }
-
-}
 );
+
+
 
 
 document
