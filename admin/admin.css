@@ -584,3 +584,131 @@ width:100%;
 
 
 }
+/* =========================
+   CAMPAIGN FORM
+   ========================= */
+
+.campaign-form {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1fr)
+    minmax(220px, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 28px;
+}
+
+
+.campaign-form input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+}
+
+
+#campaignBody {
+  grid-column: 1 / -1;
+
+  width: 100%;
+  min-height: 180px;
+
+  box-sizing: border-box;
+
+  padding: 16px;
+
+  border: 1px solid #34495e;
+  border-radius: 10px;
+
+  background: #07101d;
+  color: #ffffff;
+
+  font-family:
+    Inter,
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 14px;
+  line-height: 1.6;
+
+  outline: none;
+
+  resize: vertical;
+}
+
+
+#campaignBody::placeholder {
+  color: #7f91a6;
+}
+
+
+#campaignBody:focus,
+.campaign-form input:focus {
+  border-color: #39d5d0;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(57, 213, 208, 0.12);
+}
+
+
+#createCampaignBtn {
+  grid-column: 1 / -1;
+
+  width: max-content;
+  min-width: 180px;
+
+  margin-top: 2px;
+}
+
+
+/* CAMPAIGN ACTION BUTTONS */
+
+.campaignActionCell {
+  min-width: 320px;
+}
+
+
+.campaignActionCell button {
+  margin:
+    3px 3px 3px 0;
+}
+
+
+.campaignStatusCell {
+  min-width: 180px;
+
+  line-height: 1.45;
+
+  color: #c7d3df;
+}
+
+
+.campaignStatusCell strong {
+  color: #39d5d0;
+}
+
+
+/* =========================
+   MOBILE CAMPAIGN FORM
+   ========================= */
+
+@media(max-width:768px) {
+
+  .campaign-form {
+    grid-template-columns: 1fr;
+  }
+
+
+  #campaignBody {
+    grid-column: 1;
+    min-height: 220px;
+  }
+
+
+  #createCampaignBtn {
+    grid-column: 1;
+    width: 100%;
+  }
+
+}
