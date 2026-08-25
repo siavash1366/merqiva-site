@@ -79,13 +79,11 @@ async function checkSession(
 
 function normalizeEmail(email){
 
-
   return String(
     email || ""
   )
   .trim()
   .toLowerCase();
-
 
 }
 
@@ -95,10 +93,8 @@ function normalizeEmail(email){
 
 function isValidEmail(email){
 
-
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     .test(email);
-
 
 }
 
@@ -169,21 +165,32 @@ export async function onRequestGet(
 
 
 
+
+
     // CHECK SINGLE EMAIL
 
     if(requestedEmail){
 
 
       const suppression =
-        await env.LEADS_KV.get(
+        await env.SUPPRESSIONS_DB
+        .prepare(
+          `
+          SELECT
+            email,
+            reason,
+            source,
+            created_at AS createdAt
+          FROM suppressions
+          WHERE email = ?
+          LIMIT 1
+          `
+        )
+        .bind(
+          requestedEmail
+        )
+        .first();
 
-          `suppression:${requestedEmail}`,
-
-          {
-            type:"json"
-          }
-
-        );
 
 
       return jsonResponse({
@@ -205,63 +212,27 @@ export async function onRequestGet(
 
 
 
-    // LOAD FULL INDEX
+    // LOAD ALL SUPPRESSIONS
 
-    const index =
-      JSON.parse(
-
-        await env.LEADS_KV.get(
-          "suppressions:index"
-        )
-
-        ||
-
-        "[]"
-
-      );
-
-
-
-    const suppressions = [];
+    const result =
+      await env.SUPPRESSIONS_DB
+      .prepare(
+        `
+        SELECT
+          email,
+          reason,
+          source,
+          created_at AS createdAt
+        FROM suppressions
+        ORDER BY created_at DESC
+        `
+      )
+      .all();
 
 
 
-    for(
-      const email of index
-    ){
-
-
-      const item =
-        await env.LEADS_KV.get(
-
-          `suppression:${email}`,
-
-          {
-            type:"json"
-          }
-
-        );
-
-
-      if(item){
-
-        suppressions.push(item);
-
-      }
-
-
-    }
-
-
-
-    suppressions.sort(
-
-      (a,b)=>
-
-        new Date(b.createdAt) -
-        new Date(a.createdAt)
-
-    );
+    const suppressions =
+      result.results || [];
 
 
 
@@ -402,15 +373,23 @@ export async function onRequestPost(
     // CHECK EXISTING
 
     const existing =
-      await env.LEADS_KV.get(
-
-        `suppression:${email}`,
-
-        {
-          type:"json"
-        }
-
-      );
+      await env.SUPPRESSIONS_DB
+      .prepare(
+        `
+        SELECT
+          email,
+          reason,
+          source,
+          created_at AS createdAt
+        FROM suppressions
+        WHERE email = ?
+        LIMIT 1
+        `
+      )
+      .bind(
+        email
+      )
+      .first();
 
 
 
@@ -435,6 +414,36 @@ export async function onRequestPost(
 
 
 
+    const createdAt =
+      new Date().toISOString();
+
+
+
+    await env.SUPPRESSIONS_DB
+    .prepare(
+      `
+      INSERT INTO suppressions
+      (
+        email,
+        reason,
+        source,
+        created_at
+      )
+      VALUES (?, ?, ?, ?)
+      `
+    )
+    .bind(
+      email,
+      reason,
+      source,
+      createdAt
+    )
+    .run();
+
+
+
+
+
     const suppression = {
 
       email,
@@ -443,61 +452,9 @@ export async function onRequestPost(
 
       source,
 
-      createdAt:
-        new Date().toISOString()
+      createdAt
 
     };
-
-
-
-
-
-    await env.LEADS_KV.put(
-
-      `suppression:${email}`,
-
-      JSON.stringify(
-        suppression
-      )
-
-    );
-
-
-
-
-
-    let index =
-      JSON.parse(
-
-        await env.LEADS_KV.get(
-          "suppressions:index"
-        )
-
-        ||
-
-        "[]"
-
-      );
-
-
-
-    if(
-      !index.includes(email)
-    ){
-
-      index.push(email);
-
-    }
-
-
-
-    await env.LEADS_KV.put(
-
-      "suppressions:index",
-
-      JSON.stringify(index)
-
-    );
 
 
 
@@ -606,16 +563,22 @@ export async function onRequestDelete(
 
 
 
+
+
     const existing =
-      await env.LEADS_KV.get(
-
-        `suppression:${email}`,
-
-        {
-          type:"json"
-        }
-
-      );
+      await env.SUPPRESSIONS_DB
+      .prepare(
+        `
+        SELECT email
+        FROM suppressions
+        WHERE email = ?
+        LIMIT 1
+        `
+      )
+      .bind(
+        email
+      )
+      .first();
 
 
 
@@ -635,48 +598,17 @@ export async function onRequestDelete(
 
 
 
-    await env.LEADS_KV.delete(
-
-      `suppression:${email}`
-
-    );
-
-
-
-
-
-    let index =
-      JSON.parse(
-
-        await env.LEADS_KV.get(
-          "suppressions:index"
-        )
-
-        ||
-
-        "[]"
-
-      );
-
-
-
-    index =
-      index.filter(
-
-        item =>
-          item !== email
-
-      );
-
-
-
-    await env.LEADS_KV.put(
-
-      "suppressions:index",
-
-      JSON.stringify(index)
-
-    );
+    await env.SUPPRESSIONS_DB
+    .prepare(
+      `
+      DELETE FROM suppressions
+      WHERE email = ?
+      `
+    )
+    .bind(
+      email
+    )
+    .run();
 
 
 
