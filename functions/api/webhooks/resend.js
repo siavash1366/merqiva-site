@@ -15,7 +15,6 @@ const API_HEADERS = {
 };
 
 
-
 function jsonResponse(
   data,
   status = 200
