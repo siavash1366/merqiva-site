@@ -467,17 +467,24 @@ export async function onRequestPost(
       // CHECK SUPPRESSION
       // -----------------------
 
-
       const suppression =
-        await env.LEADS_KV.get(
-
-          `suppression:${email}`,
-
-          {
-            type:"json"
-          }
-
-        );
+  await env.SUPPRESSIONS_DB
+  .prepare(
+    `
+    SELECT
+      email,
+      reason,
+      source,
+      created_at AS createdAt
+    FROM suppressions
+    WHERE email = ?
+    LIMIT 1
+    `
+  )
+  .bind(
+    email
+  )
+  .first();
 
 
 
