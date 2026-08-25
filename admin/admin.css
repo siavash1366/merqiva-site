@@ -712,3 +712,149 @@ width:100%;
   }
 
 }
+/* =========================
+   CAMPAIGN TABLE
+   ========================= */
+
+#campaignTable td {
+  vertical-align: top;
+}
+
+
+/* ID */
+
+#campaignTable td:nth-child(1) {
+  width: 135px;
+  min-width: 135px;
+
+  font-family: monospace;
+  font-size: 12px;
+
+  color: #aebed0;
+}
+
+
+/* NAME */
+
+#campaignTable td:nth-child(2) {
+  width: 150px;
+  min-width: 130px;
+}
+
+
+/* SUBJECT */
+
+#campaignTable td:nth-child(3) {
+  width: 190px;
+  min-width: 170px;
+}
+
+
+/* STATUS */
+
+#campaignTable .campaignStatusCell {
+  width: 245px;
+  min-width: 245px;
+
+  padding: 12px 14px;
+
+  font-size: 12px;
+  line-height: 1.65;
+
+  color: #b8c7d9;
+}
+
+
+#campaignTable
+.campaignStatusCell
+> div:first-child {
+  margin-bottom: 7px;
+}
+
+
+#campaignTable
+.campaignStatusCell
+> div:first-child
+strong {
+  display: inline-block;
+
+  padding: 4px 9px;
+
+  border: 1px solid
+    rgba(57, 213, 208, 0.35);
+
+  border-radius: 999px;
+
+  background:
+    rgba(57, 213, 208, 0.08);
+
+  color: #39d5d0;
+
+  font-size: 12px;
+}
+
+
+/* ACTION */
+
+#campaignTable .campaignActionCell {
+  width: 330px;
+  min-width: 330px;
+}
+
+
+#campaignTable
+.campaignActionCell
+button {
+  min-width: 96px;
+
+  margin:
+    3px 4px 5px 0;
+
+  padding:
+    9px 12px;
+
+  font-size: 12px;
+}
+
+
+#campaignTable
+.campaignActionCell
+button:disabled {
+  opacity: 0.48;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* ROW SPACING */
+
+#campaignTable tr {
+  transition:
+    background 0.15s ease;
+}
+
+
+#campaignTable td {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+
+/* CAMPAIGN TABLE ON SMALL SCREENS */
+
+@media(max-width:1000px) {
+
+  #campaignTable
+  .campaignStatusCell {
+    min-width: 220px;
+  }
+
+
+  #campaignTable
+  .campaignActionCell {
+    min-width: 280px;
+  }
+
+}
