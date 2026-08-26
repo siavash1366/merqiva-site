@@ -411,15 +411,4 @@ export async function onRequestPatch(context) {
     );
   }
 }
-این نسخه چه اصلاحی دارد؟
 
-مهم‌ترین اصلاح این است که ابتدای فایل اکنون کاملاً معتبر است:
-
-import {
-  normalizeOpportunityPayload,
-  OPPORTUNITY_STATUSES
-} from "../../lib/opportunity-core.js";
-
-const API_HEADERS = {
-  ...
-};
