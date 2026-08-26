@@ -38,7 +38,39 @@ if (!session) {
 }
 
 async function request(url, options = {}) {
-  const response = await fetch(url, { ...options, headers: authHeaders(options.headers) });
+  const response = await fetch(url, {
+    ...options,
+    cache: "no-store",
+    headers: authHeaders(options.headers)
+  });
+
+  if (response.status === 401) {
+    location.href = "/admin/";
+    throw new Error("Unauthorized");
+  }
+
+  if (response.status === 304) {
+    throw new Error("API returned 304 without a response body");
+  }
+
+  const contentType =
+    response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+    throw new Error(
+      `Expected JSON but received ${contentType || "unknown content type"}`
+    );
+  }
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "Request failed");
+  }
+
+  return data;
+}
   if (response.status === 401) {
     location.href = "/admin/";
     throw new Error("Unauthorized");
