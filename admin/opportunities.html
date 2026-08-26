@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merqiva Opportunity Intelligence</title>
+<link rel="stylesheet" href="/admin/admin.css">
+<link rel="stylesheet" href="/admin/opportunities.css">
+</head>
+<body>
+<div class="container">
+  <div id="loginBox" class="card">
+    <h1>Merqiva Opportunity Intelligence</h1>
+    <p>Use the same Admin session as the CRM.</p>
+    <button id="backToAdminBtn">Back to Admin</button>
+  </div>
+
+  <div id="panel" class="hidden">
+    <div class="card oi-header">
+      <div>
+        <div class="oi-eyebrow">MERQIVA</div>
+        <h1>Opportunity Intelligence</h1>
+        <p>Evidence-backed opportunities for GCC maritime sales.</p>
+      </div>
+      <div class="toolbar">
+        <button id="backBtn">Admin</button>
+        <button id="refreshBtn">Refresh</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Product / ICP Definition</h2>
+      <form id="configForm" class="oi-grid">
+        <input id="productName" placeholder="Product / Service">
+        <input id="minVesselLength" type="number" min="0" step="0.1" placeholder="Minimum vessel length (m)">
+        <textarea id="regions" placeholder="Regions — one per line"></textarea>
+        <textarea id="targetCompanyTypes" placeholder="Target company types — one per line"></textarea>
+        <textarea id="targetVesselTypes" placeholder="Target vessel types — one per line"></textarea>
+        <textarea id="targetSegments" placeholder="Target segments — one per line"></textarea>
+        <textarea id="relevantSignals" placeholder="Relevant signals — one per line"></textarea>
+        <textarea id="targetDecisionMakerRoles" placeholder="Decision-maker roles — one per line"></textarea>
+        <textarea id="configNotes" class="wide" placeholder="Notes / qualification rules"></textarea>
+        <div class="wide"><button type="submit">Save ICP</button></div>
+      </form>
+      <div id="configStatus" class="oi-muted"></div>
+    </div>
+
+    <div class="card">
+      <h2>Create Opportunity</h2>
+      <form id="opportunityForm" class="oi-grid">
+        <input id="companyName" placeholder="Company name" required>
+        <input id="companyId" placeholder="Company ID (optional)">
+        <input id="productNameOpportunity" placeholder="Product / service" required>
+        <input id="vesselIds" placeholder="Vessel IDs, comma-separated">
+
+        <label>Company / Segment Fit <input id="companyFit" type="number" min="0" max="100" value="0"></label>
+        <label>Product Fit <input id="productFit" type="number" min="0" max="100" value="0"></label>
+        <label>Fleet Fit <input id="fleetFit" type="number" min="0" max="100" value="0"></label>
+        <label>Buying Signal Strength <input id="buyingSignalStrength" type="number" min="0" max="100" value="0"></label>
+        <label>Signal Recency <input id="signalRecency" type="number" min="0" max="100" value="0"></label>
+        <label>Decision-maker Confidence <input id="decisionMakerConfidence" type="number" min="0" max="100" value="0"></label>
+        <label>Commercial Relevance <input id="commercialRelevance" type="number" min="0" max="100" value="0"></label>
+        <label>Timing / Urgency <input id="timingUrgency" type="number" min="0" max="100" value="0"></label>
+
+        <input id="decisionMakerName" placeholder="Decision-maker name (UNKNOWN allowed)">
+        <input id="decisionMakerRole" placeholder="Decision-maker role">
+        <input id="decisionMakerRelevance" type="number" min="0" max="100" value="0" placeholder="Role relevance">
+        <input id="decisionMakerInfluence" type="number" min="0" max="100" value="0" placeholder="Influence">
+
+        <textarea id="buyingSignals" placeholder="Buying signals — one per line"></textarea>
+        <textarea id="whyNow" placeholder="Why Now — evidence-backed rationale"></textarea>
+        <textarea id="recommendedAction" placeholder="Recommended next action"></textarea>
+        <textarea id="salesAngle" placeholder="Recommended sales angle"></textarea>
+        <textarea id="outreachDraft" class="wide" placeholder="Optional outreach draft — do not include unsupported facts"></textarea>
+
+        <div class="wide oi-evidence-box">
+          <h3>Evidence</h3>
+          <div class="oi-evidence-row">
+            <input id="evidenceTitle" placeholder="Evidence title">
+            <select id="evidenceLevel">
+              <option>VERIFIED FACT</option>
+              <option>INFERENCE</option>
+              <option>UNKNOWN</option>
+            </select>
+            <input id="evidenceObservedAt" type="datetime-local">
+            <input id="evidenceSourceName" placeholder="Source name">
+            <input id="evidenceSourceUrl" placeholder="Source URL">
+            <input id="evidenceSummary" placeholder="Evidence summary">
+          </div>
+        </div>
+
+        <div class="wide"><button type="submit">Create Opportunity</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="oi-list-head">
+        <div>
+          <h2>Opportunities</h2>
+          <div class="oi-muted">Score is a transparent initial heuristic, not a learned model.</div>
+        </div>
+        <div class="toolbar">
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option>New</option><option>Reviewed</option><option>Qualified</option><option>Outreach Ready</option>
+            <option>Contacted</option><option>Replied</option><option>Meeting</option><option>Opportunity</option>
+            <option>Won</option><option>Lost</option><option>Disqualified</option>
+          </select>
+          <input id="minScoreFilter" type="number" min="0" max="100" placeholder="Min score">
+          <button id="filterBtn">Filter</button>
+        </div>
+      </div>
+      <div class="oi-table-wrap">
+        <table>
+          <thead><tr><th>Score</th><th>Company</th><th>Product</th><th>Why Now</th><th>Decision Maker</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="opportunityTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="detailCard" class="card hidden"></div>
+  </div>
+</div>
+<script src="/admin/opportunities.js"></script>
+</body>
+</html>
