@@ -1,8 +1,7 @@
 import {
   normalizeOpportunityPayload,
   OPPORTUNITY_STATUSES
-} from "../../lib/opportunity-core.js";
-
+../../lib/opportunity-core.js
 const API_HEADERS = {
   "Content-Type": "application/json; charset=UTF-8",
   "Cache-Control": "no-store",
