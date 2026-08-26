@@ -1,268 +1,139 @@
-const OPPORTUNITIES_URL = "/api/admin/opportunities";
-const CONFIG_URL = "/api/admin/opportunity-config";
-const session = localStorage.getItem("admin_session");
+import {
+  normalizeOpportunityPayload,
+  OPPORTUNITY_STATUSES
+} from "../../lib/opportunity-core.js";
 
-function authHeaders(extra = {}) {
-  return { ...extra, Authorization: `Bearer ${session}` };
+const API_HEADERS = {
+  "Content-Type": "application/json; charset=UTF-8",
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY"
+};
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: API_HEADERS });
 }
 
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+async function checkSession(request, env) {
+  const authorization = request.headers.get("Authorization");
+  if (!authorization?.startsWith("Bearer ")) return false;
+  const sessionId = authorization.substring(7);
+  return !!(await env.ADMIN_SESSIONS_KV.get(`session:${sessionId}`));
 }
 
-function lines(id) {
-  return document.getElementById(id).value.split(/\n+/).map((v) => v.trim()).filter(Boolean);
+async function getIndex(env) {
+  return JSON.parse(await env.LEADS_KV.get("opportunities:index") || "[]");
 }
 
-function numberValue(id) {
-  const value = Number(document.getElementById(id).value);
-  return Number.isFinite(value) ? value : 0;
+async function saveIndex(env, index) {
+  await env.LEADS_KV.put("opportunities:index", JSON.stringify(index));
 }
 
-if (!session) {
-  document.getElementById("loginBox").innerHTML = `<h1>Admin session required</h1><p>Log in through the main Admin page first.</p><button id="loginBackBtn">Back to Admin</button>`;
-  document.getElementById("loginBackBtn").onclick = () => { location.href = "/admin/"; };
-} else {
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("panel").classList.remove("hidden");
-  document.getElementById("backBtn").onclick = () => { location.href = "/admin/"; };
-  document.getElementById("backToAdminBtn").onclick = () => { location.href = "/admin/"; };
-  document.getElementById("refreshBtn").onclick = loadAll;
-  document.getElementById("filterBtn").onclick = loadOpportunities;
-  document.getElementById("configForm").addEventListener("submit", saveConfig);
-  document.getElementById("opportunityForm").addEventListener("submit", createOpportunity);
-  loadAll();
-}
-
-async function request(url, options = {}) {
-  const response = await fetch(url, {
-    ...options,
-    cache: "no-store",
-    headers: authHeaders(options.headers)
-  });
-
-  if (response.status === 401) {
-    location.href = "/admin/";
-    throw new Error("Unauthorized");
+export async function onRequestGet(context) {
+  const { request, env } = context;
+  if (!(await checkSession(request, env))) {
+    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
   }
-
-  if (response.status === 304) {
-    throw new Error("API returned 304 without a response body");
-  }
-
-  const contentType =
-    response.headers.get("content-type") || "";
-
-  if (!contentType.includes("application/json")) {
-    const text = await response.text();
-    throw new Error(
-      `Expected JSON but received ${contentType || "unknown content type"}`
-    );
-  }
-
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || "Request failed");
-  }
-
-  return data;
-}
-  if (response.status === 401) {
-    location.href = "/admin/";
-    throw new Error("Unauthorized");
-  }
-  const data = await response.json();
-  if (!response.ok || !data.success) throw new Error(data.error || "Request failed");
-  return data;
-}
-
-async function loadAll() {
-  await Promise.all([loadConfig(), loadOpportunities()]);
-}
-
-async function loadConfig() {
-  try {
-    const data = await request(CONFIG_URL);
-    const config = data.config || {};
-    document.getElementById("productName").value = config.productName || "";
-    document.getElementById("regions").value = (config.regions || []).join("\n");
-    document.getElementById("targetCompanyTypes").value = (config.targetCompanyTypes || []).join("\n");
-    document.getElementById("targetVesselTypes").value = (config.targetVesselTypes || []).join("\n");
-    document.getElementById("targetSegments").value = (config.targetSegments || []).join("\n");
-    document.getElementById("relevantSignals").value = (config.relevantSignals || []).join("\n");
-    document.getElementById("targetDecisionMakerRoles").value = (config.targetDecisionMakerRoles || []).join("\n");
-    document.getElementById("minVesselLength").value = config.minVesselLength ?? "";
-    document.getElementById("configNotes").value = config.notes || "";
-  } catch (error) {
-    document.getElementById("configStatus").textContent = error.message;
-  }
-}
-
-async function saveConfig(event) {
-  event.preventDefault();
-  try {
-    await request(CONFIG_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        productName: document.getElementById("productName").value,
-        regions: lines("regions"),
-        targetCompanyTypes: lines("targetCompanyTypes"),
-        targetVesselTypes: lines("targetVesselTypes"),
-        minVesselLength: document.getElementById("minVesselLength").value,
-        targetSegments: lines("targetSegments"),
-        relevantSignals: lines("relevantSignals"),
-        targetDecisionMakerRoles: lines("targetDecisionMakerRoles"),
-        notes: document.getElementById("configNotes").value
-      })
-    });
-    document.getElementById("configStatus").textContent = "ICP saved.";
-  } catch (error) {
-    document.getElementById("configStatus").textContent = error.message;
-  }
-}
-
-async function createOpportunity(event) {
-  event.preventDefault();
-
-  const observedAt = document.getElementById("evidenceObservedAt").value
-    ? new Date(document.getElementById("evidenceObservedAt").value).toISOString()
-    : "";
-
-  const evidenceTitle = document.getElementById("evidenceTitle").value.trim();
-  const evidenceSummary = document.getElementById("evidenceSummary").value.trim();
-  const evidence = evidenceTitle || evidenceSummary
-    ? [{
-        title: evidenceTitle,
-        summary: evidenceSummary,
-        sourceName: document.getElementById("evidenceSourceName").value.trim(),
-        sourceUrl: document.getElementById("evidenceSourceUrl").value.trim(),
-        observedAt,
-        evidenceLevel: document.getElementById("evidenceLevel").value
-      }]
-    : [];
 
   try {
-    const data = await request(OPPORTUNITIES_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        companyName: document.getElementById("companyName").value,
-        companyId: document.getElementById("companyId").value,
-        productName: document.getElementById("productNameOpportunity").value,
-        vesselIds: document.getElementById("vesselIds").value.split(",").map((v) => v.trim()).filter(Boolean),
-        companyFit: numberValue("companyFit"),
-        productFit: numberValue("productFit"),
-        fleetFit: numberValue("fleetFit"),
-        buyingSignalStrength: numberValue("buyingSignalStrength"),
-        signalRecency: numberValue("signalRecency"),
-        decisionMakerConfidence: numberValue("decisionMakerConfidence"),
-        commercialRelevance: numberValue("commercialRelevance"),
-        timingUrgency: numberValue("timingUrgency"),
-        buyingSignals: lines("buyingSignals"),
-        decisionMaker: {
-          name: document.getElementById("decisionMakerName").value,
-          role: document.getElementById("decisionMakerRole").value || "UNKNOWN",
-          relevance: numberValue("decisionMakerRelevance"),
-          confidence: numberValue("decisionMakerConfidence"),
-          influence: numberValue("decisionMakerInfluence")
-        },
-        whyNow: document.getElementById("whyNow").value,
-        recommendedAction: document.getElementById("recommendedAction").value,
-        salesAngle: document.getElementById("salesAngle").value,
-        outreachDraft: document.getElementById("outreachDraft").value,
-        evidence
-      })
+    const url = new URL(request.url);
+    const requestedStatus = String(url.searchParams.get("status") || "").trim();
+    const minScore = Number(url.searchParams.get("minScore"));
+    const index = await getIndex(env);
+    const opportunities = [];
+
+    for (const id of index) {
+      const opportunity = await env.LEADS_KV.get(`opportunity:${id}`, { type: "json" });
+      if (opportunity) opportunities.push(opportunity);
+    }
+
+    opportunities.sort((a, b) => Number(b.opportunityScore || 0) - Number(a.opportunityScore || 0));
+
+    const filtered = opportunities.filter((item) => {
+      if (requestedStatus && item.status !== requestedStatus) return false;
+      if (Number.isFinite(minScore) && Number(item.opportunityScore || 0) < minScore) return false;
+      return true;
     });
 
-    event.target.reset();
-    ["companyFit","productFit","fleetFit","buyingSignalStrength","signalRecency","decisionMakerConfidence","commercialRelevance","timingUrgency","decisionMakerRelevance","decisionMakerInfluence"].forEach((id) => document.getElementById(id).value = 0);
-    alert(`Opportunity created: ${data.opportunity.id} — Score ${data.opportunity.opportunityScore}/100`);
-    await loadOpportunities();
+    return jsonResponse({
+      success: true,
+      count: filtered.length,
+      statuses: OPPORTUNITY_STATUSES,
+      opportunities: filtered
+    });
   } catch (error) {
-    alert(error.message);
+    console.error("Opportunity GET error:", error);
+    return jsonResponse({ success: false, error: "Failed to load opportunities" }, 500);
   }
 }
 
-async function loadOpportunities() {
+export async function onRequestPost(context) {
+  const { request, env } = context;
+  if (!(await checkSession(request, env))) {
+    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+  }
+
   try {
-    const params = new URLSearchParams();
-    const status = document.getElementById("statusFilter")?.value || "";
-    const minScore = document.getElementById("minScoreFilter")?.value || "";
-    if (status) params.set("status", status);
-    if (minScore) params.set("minScore", minScore);
+    const body = await request.json();
+    const normalized = normalizeOpportunityPayload(body);
 
-    const data = await request(`${OPPORTUNITIES_URL}?${params.toString()}`);
-    renderOpportunities(data.opportunities || []);
+    if (!normalized.companyName) {
+      return jsonResponse({ success: false, error: "Company name is required" }, 400);
+    }
+
+    if (!normalized.productName) {
+      return jsonResponse({ success: false, error: "Product name is required" }, 400);
+    }
+
+    const id = `OPP${Date.now()}`;
+    const now = new Date().toISOString();
+    const opportunity = {
+      id,
+      ...normalized,
+      createdAt: now,
+      updatedAt: now,
+      outcome: null
+    };
+
+    await env.LEADS_KV.put(`opportunity:${id}`, JSON.stringify(opportunity));
+    const index = await getIndex(env);
+    index.push(id);
+    await saveIndex(env, index);
+
+    return jsonResponse({ success: true, opportunity }, 201);
   } catch (error) {
-    document.getElementById("opportunityTable").innerHTML = `<tr><td colspan="7">${escapeHTML(error.message)}</td></tr>`;
+    console.error("Opportunity CREATE error:", error);
+    return jsonResponse({ success: false, error: "Failed to create opportunity" }, 500);
   }
 }
 
-function scoreClass(score) {
-  if (score >= 80) return "oi-good";
-  if (score >= 60) return "oi-warn";
-  return "oi-low";
-}
-
-function renderOpportunities(items) {
-  const table = document.getElementById("opportunityTable");
-  table.innerHTML = "";
-
-  if (!items.length) {
-    table.innerHTML = `<tr><td colspan="7" class="oi-muted">No opportunities yet.</td></tr>`;
-    return;
+export async function onRequestPatch(context) {
+  const { request, env } = context;
+  if (!(await checkSession(request, env))) {
+    return jsonResponse({ success: false, error: "Unauthorized" }, 401);
   }
 
-  for (const item of items) {
-    const row = document.createElement("tr");
-    const dm = item.decisionMaker || {};
-    row.innerHTML = `
-      <td><span class="oi-score">${escapeHTML(item.opportunityScore)}</span></td>
-      <td>${escapeHTML(item.companyName)}</td>
-      <td>${escapeHTML(item.productName)}</td>
-      <td>${escapeHTML(item.whyNow || "UNKNOWN")}</td>
-      <td>${escapeHTML(dm.name || "UNKNOWN")}<br><span class="oi-muted">${escapeHTML(dm.role || "UNKNOWN")}</span></td>
-      <td><span class="oi-chip">${escapeHTML(item.status)}</span></td>
-      <td class="oi-row-action"><button data-id="${escapeHTML(item.id)}">View</button></td>
-    `;
-    row.querySelector("button").onclick = () => showDetail(item);
-    table.appendChild(row);
+  try {
+    const body = await request.json();
+    const id = String(body.id || "").trim();
+    if (!id) return jsonResponse({ success: false, error: "Missing opportunity id" }, 400);
+
+    const existing = await env.LEADS_KV.get(`opportunity:${id}`, { type: "json" });
+    if (!existing) return jsonResponse({ success: false, error: "Opportunity not found" }, 404);
+
+    const merged = normalizeOpportunityPayload({ ...existing, ...body });
+    const updated = {
+      ...existing,
+      ...merged,
+      id,
+      outcome: body.outcome !== undefined ? body.outcome : (existing.outcome || null),
+      updatedAt: new Date().toISOString()
+    };
+
+    await env.LEADS_KV.put(`opportunity:${id}`, JSON.stringify(updated));
+    return jsonResponse({ success: true, opportunity: updated });
+  } catch (error) {
+    console.error("Opportunity UPDATE error:", error);
+    return jsonResponse({ success: false, error: "Failed to update opportunity" }, 500);
   }
-}
-
-function showDetail(item) {
-  const box = document.getElementById("detailCard");
-  const dm = item.decisionMaker || {};
-  const components = item.scoringComponents || {};
-  const evidence = item.evidence || [];
-
-  box.classList.remove("hidden");
-  box.innerHTML = `
-    <div class="oi-list-head">
-      <div><h2>${escapeHTML(item.companyName)}</h2><div class="oi-muted">${escapeHTML(item.id)}</div></div>
-      <div class="oi-score">${escapeHTML(item.opportunityScore)}/100</div>
-    </div>
-    <div class="oi-detail-grid">
-      <div><strong>Product</strong><p>${escapeHTML(item.productName)}</p></div>
-      <div><strong>Status</strong><p>${escapeHTML(item.status)}</p></div>
-      <div><strong>Why Now</strong><p>${escapeHTML(item.whyNow || "UNKNOWN")}</p><span class="oi-chip ${item.whyNowConfidence === "HIGH" ? "oi-good" : item.whyNowConfidence === "MEDIUM" ? "oi-warn" : "oi-low"}">${escapeHTML(item.whyNowConfidence)} confidence</span></div>
-      <div><strong>Decision Maker</strong><p>${escapeHTML(dm.name || "UNKNOWN")} — ${escapeHTML(dm.role || "UNKNOWN")}</p><span class="oi-muted">Confidence: ${escapeHTML(dm.confidence ?? 0)} / 100</span></div>
-      <div><strong>Recommended Action</strong><p>${escapeHTML(item.recommendedAction || "UNKNOWN")}</p></div>
-      <div><strong>Sales Angle</strong><p>${escapeHTML(item.salesAngle || "UNKNOWN")}</p></div>
-      <div class="oi-detail-wide"><strong>Score Breakdown</strong><pre>${escapeHTML(JSON.stringify(components, null, 2))}</pre></div>
-      <div class="oi-detail-wide"><strong>Evidence</strong>${evidence.length ? evidence.map((e) => `
-        <div class="oi-evidence">
-          <strong>${escapeHTML(e.title || "Untitled evidence")}</strong>
-          <div>${escapeHTML(e.summary || "")}</div>
-          <div class="oi-muted">${escapeHTML(e.evidenceLevel)} — ${escapeHTML(e.observedAt || "UNKNOWN")}</div>
-          <div class="oi-link">${escapeHTML(e.sourceUrl || e.sourceName || "Source UNKNOWN")}</div>
-        </div>`).join("") : `<div class="oi-muted">No evidence recorded.</div>`}</div>
-    </div>
-  `;
-  box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
