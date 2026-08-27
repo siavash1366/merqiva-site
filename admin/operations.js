@@ -1,4 +1,5 @@
 const MONITORING_URL = "/api/admin/monitoring";
+const RESEARCH_URL = "/api/admin/research";
 const GUARANTEE_URL = "/api/admin/guarantee";
 let session = localStorage.getItem("admin_session");
 
@@ -31,6 +32,34 @@ function formatDate(value) {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date.toLocaleString() : "—";
+}
+
+async function loadResearchJobs() {
+  try {
+    const data = await request(RESEARCH_URL);
+    const box = document.getElementById("researchJobs");
+    const badge = document.getElementById("researchBadge");
+    const jobs = data.jobs || [];
+    const active = jobs.filter((job) => ["QUEUED","RUNNING"].includes(job.status)).length;
+    if (badge) badge.textContent = active ? active + " ACTIVE" : "READY";
+    if (!box) return;
+    box.innerHTML = jobs.length
+      ? jobs.map((job) => {
+          const statusClass = job.status === "COMPLETED" ? "job-completed" : (job.status === "FAILED" || job.status === "DISPATCH_FAILED" ? "job-failed" : "job-running");
+          return '<div class="research-job"><strong>' +
+            escapeHTML(job.productName) +
+            '</strong><div class="job-actions"><span class="job-status ' + statusClass + '">' +
+            escapeHTML(job.status) +
+            '</span><span>' + escapeHTML(job.resultCount || 0) + ' opps</span></div><small>' +
+            escapeHTML(job.id) + ' · ' + escapeHTML(job.targetMarket || "GCC") + ' · ' + escapeHTML(new Date(job.createdAt).toLocaleString()) +
+            (job.dispatch?.provider ? ' · ' + escapeHTML(job.dispatch.provider) : '') +
+            '</small></div>';
+        }).join("")
+      : "<p class='small-note'>No research jobs yet.</p>";
+  } catch (error) {
+    const box = document.getElementById("researchJobs");
+    if (box) box.textContent = error.message;
+  }
 }
 
 async function loadAll() {
@@ -91,6 +120,7 @@ document.getElementById("monitorForm").addEventListener("submit", async (event) 
     });
     setStatus("Monitoring settings saved.");
     loadAll();
+    loadResearchJobs();
   } catch (error) { setStatus(error.message, true); }
 });
 
@@ -120,3 +150,41 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 });
 
 loadAll();
+
+
+const researchForm = document.getElementById("researchForm");
+if (researchForm) {
+  researchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = researchForm.querySelector("button[type=submit]");
+    if (button) button.disabled = true;
+    try {
+      const payload = {
+        productName: document.getElementById("researchProduct").value,
+        targetMarket: document.getElementById("researchMarket").value,
+        researchQuestion: document.getElementById("researchQuestion").value,
+        targetCompanyTypes: document.getElementById("researchCompanyTypes").value.split("\n").map((v) => v.trim()).filter(Boolean),
+        targetVesselTypes: document.getElementById("researchVesselTypes").value.split("\n").map((v) => v.trim()).filter(Boolean),
+        relevantSignals: document.getElementById("researchSignals").value.split("\n").map((v) => v.trim()).filter(Boolean),
+        targetDecisionMakerRoles: document.getElementById("researchRoles").value.split("\n").map((v) => v.trim()).filter(Boolean),
+        maxOpportunities: Number(document.getElementById("researchMax").value),
+        language: document.getElementById("researchLanguage").value
+      };
+      const data = await request(RESEARCH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      setStatus(data.job?.status === "RUNNING" ? "Research job dispatched." : "Research job queued. Connect n8n to run it.");
+      researchForm.reset();
+      document.getElementById("researchMax").value = 10;
+      await loadResearchJobs();
+    } catch (error) {
+      setStatus(error.message, true);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+}
+
+loadResearchJobs();
