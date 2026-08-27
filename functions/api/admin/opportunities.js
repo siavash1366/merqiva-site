@@ -354,14 +354,30 @@ export async function onRequestPatch(context) {
         404
       );
     }
+    
+const normalizationInput = {
+  ...existing,
+  ...body,
 
-    const merged =
-      normalizeOpportunityPayload(
-        {
-          ...existing,
-          ...body
+  decisionMaker: {
+    ...(existing.decisionMaker || {}),
+    ...(body.decisionMaker || {})
+  },
+
+  outcome:
+    body.outcome !== undefined
+      ? {
+          ...(existing.outcome || {}),
+          ...(body.outcome || {})
         }
-      );
+      : existing.outcome
+};
+
+const merged =
+  normalizeOpportunityPayload(
+    normalizationInput
+  );
+   
 
    const updated = {
   ...existing,
