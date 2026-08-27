@@ -99,16 +99,51 @@
           <h2>Opportunities</h2>
           <div class="oi-muted">Score is a transparent initial heuristic, not a learned model.</div>
         </div>
-        <div class="toolbar">
-          <select id="statusFilter">
-            <option value="">All statuses</option>
-            <option>New</option><option>Reviewed</option><option>Qualified</option><option>Outreach Ready</option>
-            <option>Contacted</option><option>Replied</option><option>Meeting</option><option>Opportunity</option>
-            <option>Won</option><option>Lost</option><option>Disqualified</option>
-          </select>
-          <input id="minScoreFilter" type="number" min="0" max="100" placeholder="Min score">
-          <button id="filterBtn">Filter</button>
-        </div>
+<div class="toolbar">
+  <select id="statusFilter">
+    <option value="">All statuses</option>
+    <option>New</option>
+    <option>Reviewed</option>
+    <option>Qualified</option>
+    <option>Outreach Ready</option>
+    <option>Contacted</option>
+    <option>Replied</option>
+    <option>Meeting</option>
+    <option>Opportunity</option>
+    <option>Won</option>
+    <option>Lost</option>
+    <option>Disqualified</option>
+  </select>
+
+  <input
+    id="minScoreFilter"
+    type="number"
+    min="0"
+    max="100"
+    placeholder="Min score"
+  >
+
+  <button
+    type="button"
+    id="filterBtn"
+  >
+    Filter
+  </button>
+
+  <button
+    type="button"
+    id="exportCsvBtn"
+  >
+    Export CSV
+  </button>
+
+  <button
+    type="button"
+    id="exportJsonBtn"
+  >
+    Export JSON
+  </button>
+</div> 
       </div>
       <div class="oi-table-wrap">
         <table>
