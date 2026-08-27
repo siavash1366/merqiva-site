@@ -28,9 +28,6 @@ if (!session) {
 } else {
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("panel").classList.remove("hidden");
-  document.getElementById("backBtn").onclick = () => { location.href = "/admin/"; };
-  document.getElementById("backToAdminBtn").onclick = () => { location.href = "/admin/"; };
-  document.getElementById("refreshBtn").onclick = loadAll;
   document.getElementById("filterBtn").onclick = loadOpportunities;
   document.getElementById("configForm").addEventListener("submit", saveConfig);
   document.getElementById("opportunityForm").addEventListener("submit", createOpportunity);
