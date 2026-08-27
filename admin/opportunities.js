@@ -88,7 +88,283 @@ function toISOStringOrEmpty(value) {
 
   return date.toISOString();
 }
+// =======================
+// OPPORTUNITY EXPORT
+// =======================
 
+function downloadTextFile(
+  filename,
+  content,
+  mimeType
+) {
+  const blob =
+    new Blob(
+      [content],
+      {
+        type:
+          `${mimeType};charset=utf-8`
+      }
+    );
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href =
+    url;
+
+  link.download =
+    filename;
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  link.remove();
+
+  URL.revokeObjectURL(
+    url
+  );
+}
+
+
+function csvCell(value) {
+  const text =
+    String(
+      value ?? ""
+    );
+
+  return `"${text.replace(
+    /"/g,
+    '""'
+  )}"`;
+}
+
+
+function exportOpportunitiesJson() {
+  if (
+    !currentOpportunityItems.length
+  ) {
+    alert(
+      "No opportunities to export."
+    );
+
+    return;
+  }
+
+  const exportedAt =
+    new Date()
+      .toISOString();
+
+  const payload = {
+    exportedAt,
+
+    count:
+      currentOpportunityItems.length,
+
+    opportunities:
+      currentOpportunityItems
+  };
+
+  const content =
+    JSON.stringify(
+      payload,
+      null,
+      2
+    );
+
+  const date =
+    exportedAt
+      .slice(0, 10);
+
+  downloadTextFile(
+    `merqiva-opportunities-${date}.json`,
+    content,
+    "application/json"
+  );
+}
+
+
+function exportOpportunitiesCsv() {
+  if (
+    !currentOpportunityItems.length
+  ) {
+    alert(
+      "No opportunities to export."
+    );
+
+    return;
+  }
+
+  const headers = [
+    "Opportunity ID",
+    "Company",
+    "Product",
+    "Score",
+    "Status",
+    "Why Now",
+    "Why Now Confidence",
+
+    "Decision Maker Name",
+    "Decision Maker Role",
+    "DM Confidence",
+    "DM Relevance",
+    "DM Influence",
+    "DM Verification Status",
+    "DM Verification Source",
+    "DM Verification URL",
+    "DM Verified At",
+    "DM Contact Priority",
+    "DM Priority Score",
+
+    "Recommended Action",
+    "Recommended Action Source",
+
+    "Sales Angle",
+    "Sales Angle Source",
+
+    "Outcome Type",
+    "Outcome Reason",
+    "Outcome Notes",
+    "Outcome Recorded At",
+
+    "Evidence Count",
+    "Evidence Summary",
+
+    "Created At",
+    "Updated At"
+  ];
+
+  const rows =
+    currentOpportunityItems.map(
+      (item) => {
+        const dm =
+          item.decisionMaker ||
+          {};
+
+        const verificationEvidence =
+          dm.verificationEvidence ||
+          {};
+
+        const outcome =
+          item.outcome ||
+          {};
+
+        const evidence =
+          Array.isArray(
+            item.evidence
+          )
+            ? item.evidence
+            : [];
+
+        const evidenceSummary =
+          evidence
+            .map(
+              (entry) => {
+                const parts = [
+                  entry.evidenceLevel,
+                  entry.title,
+                  entry.summary,
+                  entry.sourceName,
+                  entry.sourceUrl,
+                  entry.observedAt
+                ]
+                  .filter(Boolean);
+
+                return parts.join(
+                  " | "
+                );
+              }
+            )
+            .join(
+              " || "
+            );
+
+        return [
+          item.id,
+          item.companyName,
+          item.productName,
+          item.opportunityScore,
+          item.status,
+          item.whyNow,
+          item.whyNowConfidence,
+
+          dm.name,
+          dm.role,
+          dm.confidence,
+          dm.relevance,
+          dm.influence,
+          dm.verificationStatus,
+
+          verificationEvidence
+            .sourceName,
+
+          verificationEvidence
+            .sourceUrl,
+
+          verificationEvidence
+            .verifiedAt,
+
+          dm.contactPriority,
+          dm.priorityScore,
+
+          item.recommendedAction,
+          item.recommendedActionSource,
+
+          item.salesAngle,
+          item.salesAngleSource,
+
+          outcome.type,
+          outcome.reason,
+          outcome.notes,
+          outcome.recordedAt,
+
+          evidence.length,
+          evidenceSummary,
+
+          item.createdAt,
+          item.updatedAt
+        ]
+          .map(
+            csvCell
+          )
+          .join(",");
+      }
+    );
+
+  /*
+   * UTF-8 BOM improves compatibility
+   * when CSV is opened in Excel.
+   */
+  const content =
+    "\uFEFF" +
+    [
+      headers
+        .map(csvCell)
+        .join(","),
+
+      ...rows
+    ].join("\r\n");
+
+  const date =
+    new Date()
+      .toISOString()
+      .slice(0, 10);
+
+  downloadTextFile(
+    `merqiva-opportunities-${date}.csv`,
+    content,
+    "text/csv"
+  );
+}
 // =======================
 // SESSION
 // =======================
@@ -123,7 +399,19 @@ if (!session) {
   document.getElementById(
     "filterBtn"
   ).onclick = loadOpportunities;
+document.getElementById(
+  "exportCsvBtn"
+)?.addEventListener(
+  "click",
+  exportOpportunitiesCsv
+);
 
+document.getElementById(
+  "exportJsonBtn"
+)?.addEventListener(
+  "click",
+  exportOpportunitiesJson
+);
   document.getElementById(
     "configForm"
   ).addEventListener(
