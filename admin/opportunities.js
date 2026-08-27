@@ -795,7 +795,155 @@ async function updateOpportunityOutcome(
     );
   }
 }
+// =======================
+// UPDATE DM VERIFICATION
+// =======================
 
+async function updateDecisionMakerVerification(
+  id
+) {
+  const verificationStatus =
+    document.getElementById(
+      "dmVerificationStatus"
+    )?.value || "UNVERIFIED";
+
+  const sourceName =
+    document.getElementById(
+      "dmVerificationSourceName"
+    )?.value.trim() || "";
+
+  const sourceUrl =
+    document.getElementById(
+      "dmVerificationSourceUrl"
+    )?.value.trim() || "";
+
+  const notes =
+    document.getElementById(
+      "dmVerificationNotes"
+    )?.value.trim() || "";
+
+  const verifiedAtInput =
+    document.getElementById(
+      "dmVerifiedAt"
+    )?.value || "";
+
+  const verifiedAt =
+    toISOStringOrEmpty(
+      verifiedAtInput
+    );
+
+  const hasSource =
+    Boolean(
+      sourceName ||
+      sourceUrl
+    );
+
+  /*
+   * Evidence-first client validation.
+   * Backend rules remain authoritative.
+   */
+  if (
+    verificationStatus ===
+      "VERIFIED" &&
+    (
+      !hasSource ||
+      !verifiedAt
+    )
+  ) {
+    alert(
+      "VERIFIED requires a verification source and verification time."
+    );
+
+    return;
+  }
+
+  if (
+    verificationStatus ===
+      "PARTIAL" &&
+    (
+      !hasSource &&
+      !verifiedAt
+    )
+  ) {
+    alert(
+      "PARTIAL requires at least a verification source or verification time."
+    );
+
+    return;
+  }
+
+  const hasEvidence =
+    Boolean(
+      sourceName ||
+      sourceUrl ||
+      notes ||
+      verifiedAt
+    );
+
+  try {
+    const data =
+      await request(
+        OPPORTUNITIES_URL,
+        {
+          method: "PATCH",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              id,
+
+              decisionMaker: {
+                verificationStatus,
+
+                verificationEvidence:
+                  hasEvidence
+                    ? {
+                        sourceName,
+                        sourceUrl,
+                        notes,
+                        verifiedAt
+                      }
+                    : null
+              }
+            })
+        }
+      );
+
+    await loadOpportunities();
+
+    showDetail(
+      data.opportunity
+    );
+
+    const resolvedStatus =
+      data.opportunity
+        ?.decisionMaker
+        ?.verificationStatus ||
+      "UNKNOWN";
+
+    if (
+      resolvedStatus !==
+      verificationStatus
+    ) {
+      alert(
+        `Verification saved, but the evidence rules resolved the status to ${resolvedStatus}.`
+      );
+    } else {
+      alert(
+        `Decision maker verification saved as ${resolvedStatus}.`
+      );
+    }
+
+  } catch (error) {
+    alert(
+      error.message
+    );
+  }
+}
 
 // =======================
 // OPPORTUNITY TABLE
