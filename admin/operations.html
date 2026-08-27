@@ -10,9 +10,15 @@
 <body>
 <div class="container">
 <header class="ops-header card">
-  <div><div class="eyebrow">MERQIVA V2</div><h1>Operations & Quality</h1><p>Monitor signal ingestion and verify that delivered opportunities meet the published quality promise.</p></div>
+  <div><div class="eyebrow">MERQIVA V2</div><h1>Operations & Quality</h1><p>Monitor signal ingestion, research orchestration and the published quality promise.</p></div>
   <div class="toolbar"><button onclick="location.href='/admin/index.html'">CRM</button><button onclick="location.href='/admin/opportunities.html'">Opportunities</button><button id="logoutBtn">Logout</button></div>
 </header>
+
+<section class="card system-check-panel">
+  <div class="card-title"><div><span class="eyebrow">STAGING / PRODUCTION READINESS</span><h2>System Check</h2><p class="ops-subtitle">Runs deterministic synthetic checks against scoring, evidence, decision-maker rules, recommended action and environment configuration. It never creates a customer opportunity.</p></div><span id="systemCheckBadge" class="badge">NOT RUN</span></div>
+  <div class="system-check-actions"><button id="runSystemCheck" class="primary">Run System Check</button><div id="systemCheckSummary" class="small-note">No check has been run yet.</div></div>
+  <div id="systemCheckResults" class="system-check-results"></div>
+</section>
 
 <section class="card research-panel">
   <div class="card-title"><div><span class="eyebrow">AI RESEARCH</span><h2>Research Agent</h2><p class="ops-subtitle">Create a research job and optionally dispatch it to an authorized n8n workflow. Results return through the secure callback and become evidence-backed opportunities.</p></div><span id="researchBadge" class="badge">READY</span></div>
