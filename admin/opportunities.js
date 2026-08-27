@@ -203,7 +203,7 @@ function renderOpportunities(items) {
 function showDetail(item) {
   const box = document.getElementById("detailCard");
   const dm = item.decisionMaker || {};
-  const components = item.scoringComponents || {};
+  const components = item.scoreBreakdown || {};
   const evidence = item.evidence || [];
 
   box.classList.remove("hidden");
