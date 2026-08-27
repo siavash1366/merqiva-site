@@ -1,0 +1,33 @@
+name: Validate Merqiva
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -e
+          find . -type f -name '*.js' -not -path './node_modules/*' -print0 | while IFS= read -r -d '' file; do
+            node --check "$file"
+          done
+      - name: Check required public pages
+        shell: bash
+        run: |
+          test -f index.html
+          test -f privacy.html
+          test -f terms.html
+          test -f admin/operations.html
+          test -f functions/api/signals/ingest.js
+          test -f functions/api/admin/monitoring.js
+          test -f functions/api/admin/guarantee.js
