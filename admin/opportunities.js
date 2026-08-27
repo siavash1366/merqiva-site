@@ -1134,6 +1134,10 @@ function showDetail(item) {
     item.outcome ||
     null;
 
+  const verificationEvidence =
+    dm.verificationEvidence ||
+    {};
+
 
   const verificationClass =
     dm.verificationStatus ===
@@ -1347,6 +1351,211 @@ function showDetail(item) {
             "Decision-maker relevance has not been established."
           )}
         </p>
+
+      </div>
+
+
+      <!-- =====================
+           DM VERIFICATION
+           ===================== -->
+
+      <div class="oi-detail-wide">
+
+        <strong>
+          Decision-Maker Verification
+        </strong>
+
+        <p class="oi-muted">
+          Verification is evidence-based.
+          VERIFIED requires a recorded source
+          and verification time.
+        </p>
+
+
+        <div class="oi-grid">
+
+
+          <label>
+
+            Verification Status
+
+            <select
+              id="dmVerificationStatus"
+            >
+
+              ${[
+                "UNKNOWN",
+                "UNVERIFIED",
+                "PARTIAL",
+                "VERIFIED"
+              ].map(
+                (status) => `
+                  <option
+                    value="${status}"
+                    ${
+                      dm.verificationStatus ===
+                      status
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    ${status}
+                  </option>
+                `
+              ).join("")}
+
+            </select>
+
+          </label>
+
+
+          <label>
+
+            Source Name
+
+            <input
+              id="dmVerificationSourceName"
+              value="${escapeHTML(
+                verificationEvidence
+                  .sourceName || ""
+              )}"
+              placeholder="Company website, LinkedIn, registry, etc."
+            >
+
+          </label>
+
+
+          <label class="wide">
+
+            Source URL
+
+            <input
+              id="dmVerificationSourceUrl"
+              value="${escapeHTML(
+                verificationEvidence
+                  .sourceUrl || ""
+              )}"
+              placeholder="https://..."
+            >
+
+          </label>
+
+
+          <label>
+
+            Verified At
+
+            <input
+              id="dmVerifiedAt"
+              type="datetime-local"
+              value="${escapeHTML(
+                toDateTimeLocalValue(
+                  verificationEvidence
+                    .verifiedAt || ""
+                )
+              )}"
+            >
+
+          </label>
+
+
+          <label class="wide">
+
+            Verification Notes
+
+            <textarea
+              id="dmVerificationNotes"
+              placeholder="What was verified, from which source, and any remaining uncertainty."
+            >${escapeHTML(
+              verificationEvidence
+                .notes || ""
+            )}</textarea>
+
+          </label>
+
+
+          <div class="wide">
+
+            <button
+              type="button"
+              id="saveDmVerificationBtn"
+            >
+              Save Verification
+            </button>
+
+          </div>
+
+        </div>
+
+
+        ${
+          verificationEvidence &&
+          (
+            verificationEvidence.sourceName ||
+            verificationEvidence.sourceUrl ||
+            verificationEvidence.notes ||
+            verificationEvidence.verifiedAt
+          )
+            ? `
+              <div class="oi-evidence">
+
+                <strong>
+                  Recorded Verification Evidence
+                </strong>
+
+                <div>
+                  Source:
+                  ${escapeHTML(
+                    verificationEvidence
+                      .sourceName ||
+                    "UNKNOWN"
+                  )}
+                </div>
+
+                ${
+                  verificationEvidence.sourceUrl
+                    ? `
+                      <div class="oi-link">
+                        ${escapeHTML(
+                          verificationEvidence
+                            .sourceUrl
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+
+                ${
+                  verificationEvidence.notes
+                    ? `
+                      <div>
+                        ${escapeHTML(
+                          verificationEvidence
+                            .notes
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+
+                <div class="oi-muted">
+                  Verified At:
+                  ${escapeHTML(
+                    verificationEvidence
+                      .verifiedAt ||
+                    "UNKNOWN"
+                  )}
+                </div>
+
+              </div>
+            `
+            : `
+              <div class="oi-muted">
+                No decision-maker verification
+                evidence recorded.
+              </div>
+            `
+        }
 
       </div>
 
@@ -1680,6 +1889,23 @@ function showDetail(item) {
       async () => {
 
         await updateOpportunityOutcome(
+          item.id
+        );
+      };
+  }
+
+
+  const saveDmVerificationBtn =
+    document.getElementById(
+      "saveDmVerificationBtn"
+    );
+
+  if (saveDmVerificationBtn) {
+
+    saveDmVerificationBtn.onclick =
+      async () => {
+
+        await updateDecisionMakerVerification(
           item.id
         );
       };
