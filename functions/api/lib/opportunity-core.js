@@ -115,7 +115,52 @@ export function calculateOpportunityScore(input = {}) {
 
 export function normalizeOpportunityPayload(input = {}) {
   const evidence = normalizeEvidence(input.evidence);
-  const scoring = calculateOpportunityScore({ ...input, evidence });
+  const scoring = calculateOpportunityScore({
+  ...input,
+  companyFit:
+    input.companyFit ??
+    input.segmentFit ??
+    input.scoringComponents?.companyFit ??
+    0,
+
+  productFit:
+    input.productFit ??
+    input.scoringComponents?.productFit ??
+    0,
+
+  fleetFit:
+    input.fleetFit ??
+    input.scoringComponents?.fleetFit ??
+    0,
+
+  buyingSignalStrength:
+    input.buyingSignalStrength ??
+    input.scoringComponents?.buyingSignalStrength ??
+    0,
+
+  signalRecency:
+    input.signalRecency ??
+    input.scoringComponents?.signalRecency ??
+    0,
+
+  decisionMakerConfidence:
+    input.decisionMakerConfidence ??
+    input.decisionMaker?.confidence ??
+    input.scoringComponents?.decisionMakerConfidence ??
+    0,
+
+  commercialRelevance:
+    input.commercialRelevance ??
+    input.scoringComponents?.commercialRelevance ??
+    0,
+
+  timingUrgency:
+    input.timingUrgency ??
+    input.scoringComponents?.timingUrgency ??
+    0,
+
+  evidence
+});
   const whyNow = String(input.whyNow || "").trim().slice(0, 2000);
 
   return {
