@@ -11,6 +11,8 @@ export const OPPORTUNITY_STATUSES = [
   "Lost",
   "Disqualified"
 ];
+
+
 export const OPPORTUNITY_OUTCOME_TYPES = [
   "Positive Reply",
   "Negative Reply",
@@ -20,12 +22,15 @@ export const OPPORTUNITY_OUTCOME_TYPES = [
   "Lost",
   "Disqualified"
 ];
+
+
 export const DECISION_MAKER_VERIFICATION_STATUSES = [
   "VERIFIED",
   "PARTIAL",
   "UNVERIFIED",
   "UNKNOWN"
 ];
+
 
 export const SCORE_WEIGHTS = Object.freeze({
   companyFit: 15,
@@ -39,6 +44,10 @@ export const SCORE_WEIGHTS = Object.freeze({
   timingUrgency: 5
 });
 
+
+// =======================
+// HELPERS
+// =======================
 
 function clampScore(value) {
   const number = Number(value);
@@ -66,50 +75,60 @@ export function normalizeEvidence(evidence) {
   return evidence
     .slice(0, 20)
     .map((item) => ({
-      title: String(
-        item?.title || ""
-      )
-        .trim()
-        .slice(0, 240),
+      title:
+        String(
+          item?.title || ""
+        )
+          .trim()
+          .slice(0, 240),
 
-      summary: String(
-        item?.summary || ""
-      )
-        .trim()
-        .slice(0, 1000),
+      summary:
+        String(
+          item?.summary || ""
+        )
+          .trim()
+          .slice(0, 1000),
 
-      sourceName: String(
-        item?.sourceName || ""
-      )
-        .trim()
-        .slice(0, 160),
+      sourceName:
+        String(
+          item?.sourceName || ""
+        )
+          .trim()
+          .slice(0, 160),
 
-      sourceUrl: String(
-        item?.sourceUrl || ""
-      )
-        .trim()
-        .slice(0, 1000),
+      sourceUrl:
+        String(
+          item?.sourceUrl || ""
+        )
+          .trim()
+          .slice(0, 1000),
 
-      observedAt: String(
-        item?.observedAt || ""
-      )
-        .trim()
-        .slice(0, 64),
+      observedAt:
+        String(
+          item?.observedAt || ""
+        )
+          .trim()
+          .slice(0, 64),
 
-      evidenceLevel: [
-        "VERIFIED FACT",
-        "INFERENCE",
-        "UNKNOWN"
-      ].includes(item?.evidenceLevel)
-        ? item.evidenceLevel
-        : "UNKNOWN"
+      evidenceLevel:
+        [
+          "VERIFIED FACT",
+          "INFERENCE",
+          "UNKNOWN"
+        ].includes(
+          item?.evidenceLevel
+        )
+          ? item.evidenceLevel
+          : "UNKNOWN"
     }));
 }
 
 
 export function deriveEvidenceQuality(evidence) {
   const items =
-    normalizeEvidence(evidence);
+    normalizeEvidence(
+      evidence
+    );
 
   if (!items.length) {
     return 0;
@@ -149,6 +168,8 @@ export function deriveEvidenceQuality(evidence) {
 
   return 0;
 }
+
+
 // =======================
 // OUTCOME
 // =======================
@@ -160,12 +181,17 @@ export function normalizeOutcome(outcome) {
 
   /*
    * Backward compatibility:
-   * accept an older string outcome if it matches
-   * one of the supported outcome types.
+   * older string outcomes are accepted
+   * only when they match supported types.
    */
-  if (typeof outcome === "string") {
+  if (
+    typeof outcome ===
+    "string"
+  ) {
     const legacyType =
-      String(outcome).trim();
+      String(
+        outcome
+      ).trim();
 
     if (
       !OPPORTUNITY_OUTCOME_TYPES.includes(
@@ -176,11 +202,20 @@ export function normalizeOutcome(outcome) {
     }
 
     return {
-      type: legacyType,
-      reason: "",
-      notes: "",
-      recordedAt: "",
-      source: "LEGACY"
+      type:
+        legacyType,
+
+      reason:
+        "",
+
+      notes:
+        "",
+
+      recordedAt:
+        "",
+
+      source:
+        "LEGACY"
     };
   }
 
@@ -221,7 +256,8 @@ export function normalizeOutcome(outcome) {
       ? new Date(
           parsedRecordedAt
         ).toISOString()
-      : new Date().toISOString();
+      : new Date()
+          .toISOString();
 
   return {
     type,
@@ -252,6 +288,7 @@ export function normalizeOutcome(outcome) {
   };
 }
 
+
 // =======================
 // WHY NOW
 // =======================
@@ -270,45 +307,52 @@ export function deriveWhyNowConfidence(
   }
 
   const verified =
-    normalizeEvidence(evidence)
-      .filter(
-        (item) =>
-          item.evidenceLevel ===
-          "VERIFIED FACT"
-      );
+    normalizeEvidence(
+      evidence
+    ).filter(
+      (item) =>
+        item.evidenceLevel ===
+        "VERIFIED FACT"
+    );
 
   if (!verified.length) {
     return "LOW";
   }
 
-  const now = Date.now();
+  const now =
+    Date.now();
 
   const hasRecent =
-    verified.some((item) => {
-      const timestamp =
-        Date.parse(
-          item.observedAt
+    verified.some(
+      (item) => {
+        const timestamp =
+          Date.parse(
+            item.observedAt
+          );
+
+        if (
+          !Number.isFinite(
+            timestamp
+          )
+        ) {
+          return false;
+        }
+
+        const age =
+          now -
+          timestamp;
+
+        return (
+          age >= 0 &&
+          age <=
+            1000 *
+            60 *
+            60 *
+            24 *
+            30
         );
-
-      if (
-        !Number.isFinite(timestamp)
-      ) {
-        return false;
       }
-
-      const age =
-        now - timestamp;
-
-      return (
-        age >= 0 &&
-        age <=
-          1000 *
-          60 *
-          60 *
-          24 *
-          30
-      );
-    });
+    );
 
   if (hasRecent) {
     return "HIGH";
@@ -322,7 +366,85 @@ export function deriveWhyNowConfidence(
 // DECISION MAKER
 // =======================
 
-function deriveDecisionMakerRoleReason(role) {
+export function normalizeDecisionMakerVerificationEvidence(
+  evidence
+) {
+  if (
+    !evidence ||
+    typeof evidence !==
+      "object" ||
+    Array.isArray(
+      evidence
+    )
+  ) {
+    return null;
+  }
+
+  const sourceName =
+    String(
+      evidence.sourceName ||
+      ""
+    )
+      .trim()
+      .slice(0, 200);
+
+  const sourceUrl =
+    String(
+      evidence.sourceUrl ||
+      ""
+    )
+      .trim()
+      .slice(0, 1000);
+
+  const notes =
+    String(
+      evidence.notes ||
+      ""
+    )
+      .trim()
+      .slice(0, 2000);
+
+  const suppliedVerifiedAt =
+    String(
+      evidence.verifiedAt ||
+      ""
+    ).trim();
+
+  const parsedVerifiedAt =
+    Date.parse(
+      suppliedVerifiedAt
+    );
+
+  const verifiedAt =
+    Number.isFinite(
+      parsedVerifiedAt
+    )
+      ? new Date(
+          parsedVerifiedAt
+        ).toISOString()
+      : "";
+
+  if (
+    !sourceName &&
+    !sourceUrl &&
+    !notes &&
+    !verifiedAt
+  ) {
+    return null;
+  }
+
+  return {
+    sourceName,
+    sourceUrl,
+    notes,
+    verifiedAt
+  };
+}
+
+
+function deriveDecisionMakerRoleReason(
+  role
+) {
   const value =
     String(
       role || ""
@@ -331,10 +453,18 @@ function deriveDecisionMakerRoleReason(role) {
       .toLowerCase();
 
   if (
-    value.includes("technical") ||
-    value.includes("engineer") ||
-    value.includes("engineering") ||
-    value.includes("superintendent")
+    value.includes(
+      "technical"
+    ) ||
+    value.includes(
+      "engineer"
+    ) ||
+    value.includes(
+      "engineering"
+    ) ||
+    value.includes(
+      "superintendent"
+    )
   ) {
     return (
       "The stated role suggests possible involvement in technical evaluation, " +
@@ -343,9 +473,15 @@ function deriveDecisionMakerRoleReason(role) {
   }
 
   if (
-    value.includes("procurement") ||
-    value.includes("purchasing") ||
-    value.includes("buyer")
+    value.includes(
+      "procurement"
+    ) ||
+    value.includes(
+      "purchasing"
+    ) ||
+    value.includes(
+      "buyer"
+    )
   ) {
     return (
       "The stated role suggests possible involvement in supplier evaluation, " +
@@ -354,9 +490,15 @@ function deriveDecisionMakerRoleReason(role) {
   }
 
   if (
-    value.includes("fleet") ||
-    value.includes("operations") ||
-    value.includes("operation")
+    value.includes(
+      "fleet"
+    ) ||
+    value.includes(
+      "operations"
+    ) ||
+    value.includes(
+      "operation"
+    )
   ) {
     return (
       "The stated role suggests possible involvement in fleet requirements, " +
@@ -365,8 +507,12 @@ function deriveDecisionMakerRoleReason(role) {
   }
 
   if (
-    value.includes("commercial") ||
-    value.includes("business development")
+    value.includes(
+      "commercial"
+    ) ||
+    value.includes(
+      "business development"
+    )
   ) {
     return (
       "The stated role suggests possible involvement in commercial evaluation, " +
@@ -375,11 +521,21 @@ function deriveDecisionMakerRoleReason(role) {
   }
 
   if (
-    value.includes("owner") ||
-    value.includes("chief") ||
-    value.includes("ceo") ||
-    value.includes("director") ||
-    value.includes("general manager")
+    value.includes(
+      "owner"
+    ) ||
+    value.includes(
+      "chief"
+    ) ||
+    value.includes(
+      "ceo"
+    ) ||
+    value.includes(
+      "director"
+    ) ||
+    value.includes(
+      "general manager"
+    )
   ) {
     return (
       "The stated role suggests possible senior influence over priorities, " +
@@ -389,7 +545,8 @@ function deriveDecisionMakerRoleReason(role) {
 
   if (
     !value ||
-    value === "unknown"
+    value ===
+      "unknown"
   ) {
     return (
       "The person's role is not sufficiently known to infer decision relevance."
@@ -409,8 +566,10 @@ export function deriveDecisionMakerIntelligence({
   relevance = 0,
   influence = 0,
   confidence = 0,
-  verificationStatus = ""
+  verificationStatus = "",
+  verificationEvidence = null
 } = {}) {
+
   const normalizedName =
     String(
       name || ""
@@ -418,101 +577,264 @@ export function deriveDecisionMakerIntelligence({
 
   const normalizedRole =
     String(
-      role || "UNKNOWN"
-    ).trim() || "UNKNOWN";
+      role ||
+      "UNKNOWN"
+    ).trim() ||
+    "UNKNOWN";
 
   const relevanceScore =
-    clampScore(relevance);
+    clampScore(
+      relevance
+    );
 
   const influenceScore =
-    clampScore(influence);
+    clampScore(
+      influence
+    );
 
   const confidenceScore =
-    clampScore(confidence);
+    clampScore(
+      confidence
+    );
+
+  const normalizedVerificationEvidence =
+    normalizeDecisionMakerVerificationEvidence(
+      verificationEvidence
+    );
 
   const suppliedVerificationStatus =
     String(
-      verificationStatus || ""
+      verificationStatus ||
+      ""
     )
       .trim()
       .toUpperCase();
 
-  const resolvedVerificationStatus =
-    DECISION_MAKER_VERIFICATION_STATUSES.includes(
-      suppliedVerificationStatus
-    )
-      ? suppliedVerificationStatus
-      : normalizedName
+  const hasName =
+    Boolean(
+      normalizedName
+    );
+
+  const hasKnownRole =
+    normalizedRole
+      .toUpperCase() !==
+      "UNKNOWN";
+
+  const hasVerificationSource =
+    Boolean(
+      normalizedVerificationEvidence
+        ?.sourceName ||
+      normalizedVerificationEvidence
+        ?.sourceUrl
+    );
+
+  const hasVerificationTime =
+    Boolean(
+      normalizedVerificationEvidence
+        ?.verifiedAt
+    );
+
+  let resolvedVerificationStatus =
+    hasName
+      ? "UNVERIFIED"
+      : "UNKNOWN";
+
+
+  /*
+   * Evidence-first verification rules:
+   *
+   * VERIFIED requires:
+   * - person name
+   * - known role
+   * - verification source
+   * - verification timestamp
+   *
+   * PARTIAL requires:
+   * - person name
+   * - at least some recorded verification evidence
+   */
+
+  if (
+    suppliedVerificationStatus ===
+    "UNKNOWN"
+  ) {
+
+    resolvedVerificationStatus =
+      "UNKNOWN";
+
+  } else if (
+    suppliedVerificationStatus ===
+    "UNVERIFIED"
+  ) {
+
+    resolvedVerificationStatus =
+      hasName
         ? "UNVERIFIED"
         : "UNKNOWN";
 
-  const priorityScore =
-    Math.round(
-      relevanceScore * 0.4 +
-      influenceScore * 0.35 +
-      confidenceScore * 0.25
-    );
-
-  let contactPriority = "LOW";
-
-  if (
-    normalizedName &&
-    normalizedRole !== "UNKNOWN"
+  } else if (
+    suppliedVerificationStatus ===
+    "PARTIAL"
   ) {
-    if (priorityScore >= 70) {
-      contactPriority = "HIGH";
-    } else if (priorityScore >= 45) {
-      contactPriority = "MEDIUM";
+
+    resolvedVerificationStatus =
+      hasName &&
+      (
+        hasVerificationSource ||
+        hasVerificationTime
+      )
+        ? "PARTIAL"
+        : hasName
+          ? "UNVERIFIED"
+          : "UNKNOWN";
+
+  } else if (
+    suppliedVerificationStatus ===
+    "VERIFIED"
+  ) {
+
+    if (
+      hasName &&
+      hasKnownRole &&
+      hasVerificationSource &&
+      hasVerificationTime
+    ) {
+
+      resolvedVerificationStatus =
+        "VERIFIED";
+
+    } else if (
+      hasName &&
+      (
+        hasVerificationSource ||
+        hasVerificationTime
+      )
+    ) {
+
+      resolvedVerificationStatus =
+        "PARTIAL";
+
+    } else {
+
+      resolvedVerificationStatus =
+        hasName
+          ? "UNVERIFIED"
+          : "UNKNOWN";
     }
   }
 
-  /*
-   * Do not treat an unverified identity as
-   * immediately ready for high-priority outreach.
-   */
-  if (
-    resolvedVerificationStatus === "UNVERIFIED" &&
-    contactPriority === "HIGH"
-  ) {
-    contactPriority = "MEDIUM";
-  }
+
+  const priorityScore =
+    Math.round(
+      relevanceScore *
+        0.4 +
+      influenceScore *
+        0.35 +
+      confidenceScore *
+        0.25
+    );
+
+
+  let contactPriority =
+    "LOW";
+
 
   if (
-    resolvedVerificationStatus === "UNKNOWN"
+    normalizedName &&
+    hasKnownRole
   ) {
-    contactPriority = "LOW";
+
+    if (
+      priorityScore >=
+      70
+    ) {
+      contactPriority =
+        "HIGH";
+
+    } else if (
+      priorityScore >=
+      45
+    ) {
+      contactPriority =
+        "MEDIUM";
+    }
   }
+
+
+  /*
+   * An unverified identity must not
+   * become HIGH-priority outreach.
+   */
+
+  if (
+    resolvedVerificationStatus ===
+      "UNVERIFIED" &&
+    contactPriority ===
+      "HIGH"
+  ) {
+
+    contactPriority =
+      "MEDIUM";
+  }
+
+
+  if (
+    resolvedVerificationStatus ===
+    "UNKNOWN"
+  ) {
+
+    contactPriority =
+      "LOW";
+  }
+
 
   const roleReason =
     deriveDecisionMakerRoleReason(
       normalizedRole
     );
 
-  let verificationNote = "";
+
+  let verificationNote =
+    "";
+
 
   if (
-    resolvedVerificationStatus === "VERIFIED"
+    resolvedVerificationStatus ===
+    "VERIFIED"
   ) {
+
     verificationNote =
-      " Identity and role are marked as verified.";
+      " Identity and role are backed by recorded verification evidence.";
+
   } else if (
-    resolvedVerificationStatus === "PARTIAL"
+    resolvedVerificationStatus ===
+    "PARTIAL"
   ) {
+
     verificationNote =
-      " Identity or role is only partially verified; confirm remaining details before relying on it.";
+      " Verification evidence exists, but identity or role verification is incomplete.";
+
   } else if (
-    resolvedVerificationStatus === "UNVERIFIED"
+    resolvedVerificationStatus ===
+    "UNVERIFIED"
   ) {
+
     verificationNote =
-      " Identity and role have not yet been independently verified.";
+      " Identity and role do not yet have sufficient recorded verification evidence.";
+
   } else {
+
     verificationNote =
       " Decision-maker identity is currently unknown.";
   }
 
+
   return {
     verificationStatus:
       resolvedVerificationStatus,
+
+    verificationEvidence:
+      normalizedVerificationEvidence,
 
     contactPriority,
 
@@ -543,6 +865,7 @@ export function deriveRecommendedAction({
   decisionMakerVerificationStatus = "UNKNOWN",
   evidence = []
 } = {}) {
+
   const score =
     clampScore(
       opportunityScore
@@ -554,47 +877,60 @@ export function deriveRecommendedAction({
     );
 
   const verifiedEvidence =
-    normalizeEvidence(evidence)
-      .filter(
-        (item) =>
-          item.evidenceLevel ===
-          "VERIFIED FACT"
-      );
+    normalizeEvidence(
+      evidence
+    ).filter(
+      (item) =>
+        item.evidenceLevel ===
+        "VERIFIED FACT"
+    );
 
-  if (!verifiedEvidence.length) {
+
+  if (
+    !verifiedEvidence.length
+  ) {
     return (
       "Verify the buying signal and source evidence before outreach."
     );
   }
 
+
   if (
-    whyNowConfidence === "LOW"
+    whyNowConfidence ===
+    "LOW"
   ) {
     return (
       "Validate the timing and strengthen the Why Now case before outreach."
     );
   }
 
+
   if (
-    decisionMakerVerificationStatus === "UNKNOWN" ||
-    decisionMakerVerificationStatus === "UNVERIFIED"
+    decisionMakerVerificationStatus ===
+      "UNKNOWN" ||
+    decisionMakerVerificationStatus ===
+      "UNVERIFIED"
   ) {
     return (
       "Verify the decision maker's identity and role before tailored outreach."
     );
   }
 
+
   if (
-    dmConfidence < 50
+    dmConfidence <
+    50
   ) {
     return (
       "Strengthen decision-maker confidence before direct outreach."
     );
   }
 
+
   if (
     score >= 75 &&
-    whyNowConfidence === "HIGH" &&
+    whyNowConfidence ===
+      "HIGH" &&
     dmConfidence >= 70
   ) {
     return (
@@ -603,12 +939,17 @@ export function deriveRecommendedAction({
     );
   }
 
-  if (score >= 60) {
+
+  if (
+    score >=
+    60
+  ) {
     return (
       "Review the verified signal with the identified decision maker " +
       "and prepare a targeted discovery message."
     );
   }
+
 
   return (
     "Keep this opportunity under review and gather stronger commercial evidence before outreach."
@@ -623,18 +964,29 @@ export function deriveRecommendedAction({
 function deriveRoleFocus(
   decisionMakerRole
 ) {
+
   const role =
     String(
-      decisionMakerRole || ""
+      decisionMakerRole ||
+      ""
     )
       .trim()
       .toLowerCase();
 
+
   if (
-    role.includes("technical") ||
-    role.includes("engineer") ||
-    role.includes("engineering") ||
-    role.includes("superintendent")
+    role.includes(
+      "technical"
+    ) ||
+    role.includes(
+      "engineer"
+    ) ||
+    role.includes(
+      "engineering"
+    ) ||
+    role.includes(
+      "superintendent"
+    )
   ) {
     return (
       "technical fit, operational requirements, integration constraints, " +
@@ -642,11 +994,20 @@ function deriveRoleFocus(
     );
   }
 
+
   if (
-    role.includes("procurement") ||
-    role.includes("purchasing") ||
-    role.includes("buyer") ||
-    role.includes("commercial")
+    role.includes(
+      "procurement"
+    ) ||
+    role.includes(
+      "purchasing"
+    ) ||
+    role.includes(
+      "buyer"
+    ) ||
+    role.includes(
+      "commercial"
+    )
   ) {
     return (
       "specification fit, supplier qualification, commercial requirements, " +
@@ -654,10 +1015,17 @@ function deriveRoleFocus(
     );
   }
 
+
   if (
-    role.includes("fleet") ||
-    role.includes("operations") ||
-    role.includes("operation")
+    role.includes(
+      "fleet"
+    ) ||
+    role.includes(
+      "operations"
+    ) ||
+    role.includes(
+      "operation"
+    )
   ) {
     return (
       "operational fit, fleet requirements, deployment constraints, " +
@@ -665,18 +1033,30 @@ function deriveRoleFocus(
     );
   }
 
+
   if (
-    role.includes("owner") ||
-    role.includes("chief") ||
-    role.includes("ceo") ||
-    role.includes("director") ||
-    role.includes("general manager")
+    role.includes(
+      "owner"
+    ) ||
+    role.includes(
+      "chief"
+    ) ||
+    role.includes(
+      "ceo"
+    ) ||
+    role.includes(
+      "director"
+    ) ||
+    role.includes(
+      "general manager"
+    )
   ) {
     return (
       "business relevance, operational priority, evaluation criteria, " +
       "and decision timing"
     );
   }
+
 
   return (
     "current requirements, operational fit, evaluation criteria, " +
@@ -693,15 +1073,20 @@ export function deriveSalesAngle({
   whyNowConfidence = "LOW",
   evidence = []
 } = {}) {
+
   const product =
     String(
-      productName || ""
-    ).trim() || "the offering";
+      productName ||
+      ""
+    ).trim() ||
+    "the offering";
 
   const role =
     String(
-      decisionMakerRole || ""
-    ).trim() || "the identified decision maker";
+      decisionMakerRole ||
+      ""
+    ).trim() ||
+    "the identified decision maker";
 
   const score =
     clampScore(
@@ -709,28 +1094,35 @@ export function deriveSalesAngle({
     );
 
   const verifiedEvidence =
-    normalizeEvidence(evidence)
-      .filter(
-        (item) =>
-          item.evidenceLevel ===
-          "VERIFIED FACT"
-      );
+    normalizeEvidence(
+      evidence
+    ).filter(
+      (item) =>
+        item.evidenceLevel ===
+        "VERIFIED FACT"
+    );
 
   const roleFocus =
     deriveRoleFocus(
       role
     );
 
-  if (!verifiedEvidence.length) {
+
+  if (
+    !verifiedEvidence.length
+  ) {
     return (
       `Do not make a direct sales claim for ${product} yet. ` +
       `Verify the buying signal and current need before commercial outreach.`
     );
   }
 
+
   if (
-    decisionMakerVerificationStatus === "UNKNOWN" ||
-    decisionMakerVerificationStatus === "UNVERIFIED"
+    decisionMakerVerificationStatus ===
+      "UNKNOWN" ||
+    decisionMakerVerificationStatus ===
+      "UNVERIFIED"
   ) {
     return (
       `Use the verified opportunity evidence to guide research for ${product}, ` +
@@ -738,8 +1130,10 @@ export function deriveSalesAngle({
     );
   }
 
+
   if (
-    whyNowConfidence === "LOW"
+    whyNowConfidence ===
+    "LOW"
   ) {
     return (
       `Position ${product} around the verified evidence, but treat timing as unconfirmed. ` +
@@ -747,9 +1141,11 @@ export function deriveSalesAngle({
     );
   }
 
+
   if (
     score >= 75 &&
-    whyNowConfidence === "HIGH"
+    whyNowConfidence ===
+      "HIGH"
   ) {
     return (
       `Position ${product} around the verified recent trigger. ` +
@@ -758,12 +1154,17 @@ export function deriveSalesAngle({
     );
   }
 
-  if (score >= 60) {
+
+  if (
+    score >=
+    60
+  ) {
     return (
       `Use the verified signal to open a discovery conversation about ${product}. ` +
       `With the ${role}, validate ${roleFocus} before making a stronger commercial proposition.`
     );
   }
+
 
   return (
     `Use a low-pressure discovery angle for ${product}. ` +
@@ -780,6 +1181,7 @@ export function deriveSalesAngle({
 export function calculateOpportunityScore(
   input = {}
 ) {
+
   const evidence =
     normalizeEvidence(
       input.evidence
@@ -834,31 +1236,45 @@ export function calculateOpportunityScore(
       )
   };
 
+
   const breakdown =
     Object.fromEntries(
       Object.entries(
         SCORE_WEIGHTS
       ).map(
-        ([key, weight]) => [
+        (
+          [
+            key,
+            weight
+          ]
+        ) => [
           key,
+
           Math.round(
             (
               components[key] *
               weight
-            ) / 100
+            ) /
+            100
           )
         ]
       )
     );
 
+
   const score =
     Object.values(
       breakdown
     ).reduce(
-      (sum, value) =>
-        sum + value,
+      (
+        sum,
+        value
+      ) =>
+        sum +
+        value,
       0
     );
+
 
   return {
     score,
@@ -876,14 +1292,18 @@ export function calculateOpportunityScore(
 export function normalizeOpportunityPayload(
   input = {}
 ) {
+
   const evidence =
     normalizeEvidence(
       input.evidence
     );
 
+
   /*
-   * Preserve scoring inputs during PATCH.
+   * Preserve scoring inputs
+   * during PATCH.
    */
+
   const scoring =
     calculateOpportunityScore({
       ...input,
@@ -941,16 +1361,22 @@ export function normalizeOpportunityPayload(
 
       evidence
     });
-const outcome =
-  normalizeOutcome(
-    input.outcome
-  );
+
+
+  const outcome =
+    normalizeOutcome(
+      input.outcome
+    );
+
+
   const whyNow =
     String(
-      input.whyNow || ""
+      input.whyNow ||
+      ""
     )
       .trim()
       .slice(0, 2000);
+
 
   const whyNowConfidence =
     deriveWhyNowConfidence(
@@ -958,13 +1384,16 @@ const outcome =
       whyNow
     );
 
+
   const decisionMakerName =
     String(
       input.decisionMaker
-        ?.name || ""
+        ?.name ||
+      ""
     )
       .trim()
       .slice(0, 200);
+
 
   const decisionMakerRole =
     String(
@@ -975,11 +1404,13 @@ const outcome =
       .trim()
       .slice(0, 200);
 
+
   const decisionMakerRelevance =
     clampScore(
       input.decisionMaker
         ?.relevance
     );
+
 
   const decisionMakerInfluence =
     clampScore(
@@ -987,9 +1418,11 @@ const outcome =
         ?.influence
     );
 
+
   const decisionMakerConfidence =
     scoring.components
       .decisionMakerConfidence;
+
 
   const decisionMakerIntelligence =
     deriveDecisionMakerIntelligence({
@@ -1010,14 +1443,21 @@ const outcome =
 
       verificationStatus:
         input.decisionMaker
-          ?.verificationStatus
+          ?.verificationStatus,
+
+      verificationEvidence:
+        input.decisionMaker
+          ?.verificationEvidence
     });
+
 
   /*
    * Recommended Action:
    * manual values stay manual.
-   * SYSTEM_RULES values are recalculated.
+   * SYSTEM_RULES values
+   * are recalculated.
    */
+
   const suppliedRecommendedAction =
     String(
       input.recommendedAction ||
@@ -1026,12 +1466,14 @@ const outcome =
       .trim()
       .slice(0, 2000);
 
+
   const isManualRecommendedAction =
     Boolean(
       suppliedRecommendedAction
     ) &&
     input.recommendedActionSource !==
       "SYSTEM_RULES";
+
 
   const recommendedAction =
     isManualRecommendedAction
@@ -1051,22 +1493,28 @@ const outcome =
           evidence
         });
 
+
   const recommendedActionSource =
     isManualRecommendedAction
       ? "MANUAL"
       : "SYSTEM_RULES";
 
+
   /*
    * Sales Angle:
    * manual values stay manual.
-   * SYSTEM_RULES values are recalculated.
+   * SYSTEM_RULES values
+   * are recalculated.
    */
+
   const suppliedSalesAngle =
     String(
-      input.salesAngle || ""
+      input.salesAngle ||
+      ""
     )
       .trim()
       .slice(0, 2000);
+
 
   const isManualSalesAngle =
     Boolean(
@@ -1074,6 +1522,7 @@ const outcome =
     ) &&
     input.salesAngleSource !==
       "SYSTEM_RULES";
+
 
   const salesAngle =
     isManualSalesAngle
@@ -1096,25 +1545,32 @@ const outcome =
           evidence
         });
 
+
   const salesAngleSource =
     isManualSalesAngle
       ? "MANUAL"
       : "SYSTEM_RULES";
 
+
   return {
+
     companyId:
       String(
-        input.companyId || ""
+        input.companyId ||
+        ""
       )
         .trim()
         .slice(0, 160),
 
+
     companyName:
       String(
-        input.companyName || ""
+        input.companyName ||
+        ""
       )
         .trim()
         .slice(0, 240),
+
 
     vesselIds:
       Array.isArray(
@@ -1127,56 +1583,77 @@ const outcome =
                   value
                 ).trim()
             )
-            .filter(Boolean)
-            .slice(0, 50)
+            .filter(
+              Boolean
+            )
+            .slice(
+              0,
+              50
+            )
         : [],
+
 
     productId:
       String(
-        input.productId || ""
+        input.productId ||
+        ""
       )
         .trim()
         .slice(0, 160),
 
+
     productName:
       String(
-        input.productName || ""
+        input.productName ||
+        ""
       )
         .trim()
         .slice(0, 240),
+
 
     productFit:
       scoring.components
         .productFit,
 
+
     segmentFit:
       scoring.components
         .companyFit,
 
+
     fleetFit:
       scoring.components
         .fleetFit,
+
 
     buyingSignals:
       Array.isArray(
         input.buyingSignals
       )
         ? input.buyingSignals
-            .slice(0, 20)
+            .slice(
+              0,
+              20
+            )
             .map(
               (value) =>
                 String(
                   value
                 ).trim()
             )
-            .filter(Boolean)
+            .filter(
+              Boolean
+            )
         : [],
+
 
     signalRecency:
       scoring.components
         .signalRecency,
 
+
     decisionMaker: {
+
       name:
         decisionMakerName,
 
@@ -1196,6 +1673,10 @@ const outcome =
         decisionMakerIntelligence
           .verificationStatus,
 
+      verificationEvidence:
+        decisionMakerIntelligence
+          .verificationEvidence,
+
       contactPriority:
         decisionMakerIntelligence
           .contactPriority,
@@ -1213,51 +1694,67 @@ const outcome =
           .source
     },
 
+
     whyNow,
+
 
     whyNowConfidence,
 
+
     evidence,
+
 
     opportunityScore:
       scoring.score,
 
+
     scoreBreakdown:
       scoring.breakdown,
 
+
     scoringComponents:
       scoring.components,
+
 
     commercialRelevance:
       scoring.components
         .commercialRelevance,
 
+
     timingUrgency:
       scoring.components
         .timingUrgency,
 
+
     recommendedAction,
+
 
     recommendedActionSource,
 
+
     salesAngle,
+
 
     salesAngleSource,
 
+
     outreachDraft:
-  String(
-    input.outreachDraft || ""
-  )
-    .trim()
-    .slice(0, 5000),
+      String(
+        input.outreachDraft ||
+        ""
+      )
+        .trim()
+        .slice(0, 5000),
 
-outcome,
 
-status:
-  OPPORTUNITY_STATUSES.includes(
-    input.status
-  )
-    ? input.status
-    : "New"
+    outcome,
+
+
+    status:
+      OPPORTUNITY_STATUSES.includes(
+        input.status
+      )
+        ? input.status
+        : "New"
   };
 }
