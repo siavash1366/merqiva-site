@@ -66,43 +66,38 @@
     },
     {
       "parameters": {
-        "modelName": "gpt-4o-mini",
-        "messages": {
-          "values": [
+        "method": "POST",
+        "url": "={{ $env.MERQIVA_LLM_API_URL || 'https://api.openai.com/v1/chat/completions' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "contentType": "text",
-              "role": "system",
-              "text": "You are Merqiva's evidence-first maritime sales research agent. Never invent companies, vessels, people, contracts, buying signals, scores, or URLs. Use only the supplied public-source material and the job criteria. Separate verified facts from inference and unknowns. Prefer recent, commercially relevant GCC maritime opportunities. Return ONLY valid JSON matching the requested schema."
+              "name": "Content-Type",
+              "value": "application/json"
             },
             {
-              "contentType": "text",
-              "role": "user",
-              "text": "Research Job:\n{{ JSON.stringify($node[\"Normalize Research Job\"].json) }}\n\nPublic news signals:\n{{ JSON.stringify($json.newsItems) }}\n\nReturn JSON:\n{\n  \"status\":\"COMPLETED\",\n  \"notes\":\"brief research summary\",\n  \"opportunities\":[\n    {\n      \"companyName\":\"string\",\n      \"productName\":\"same as job.productName\",\n      \"companyFit\":0,\n      \"productFit\":0,\n      \"fleetFit\":0,\n      \"buyingSignalStrength\":0,\n      \"signalRecency\":0,\n      \"decisionMakerConfidence\":0,\n      \"commercialRelevance\":0,\n      \"timingUrgency\":0,\n      \"whyNow\":\"evidence-backed concise rationale\",\n      \"buyingSignals\":[\"string\"],\n      \"decisionMaker\":{\"name\":\"UNKNOWN\",\"role\":\"UNKNOWN\",\"relevance\":0,\"influence\":0,\"confidence\":0,\"verificationStatus\":\"UNKNOWN\",\"verificationEvidence\":{}},\n      \"evidence\":[{\"title\":\"string\",\"summary\":\"string\",\"sourceName\":\"string\",\"sourceUrl\":\"string\",\"observedAt\":\"ISO-8601 string\",\"evidenceLevel\":\"VERIFIED FACT\"}],\n      \"outreachDraft\":\"optional draft using only verified evidence\"\n    }\n  ]\n}"
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.MERQIVA_LLM_API_KEY }}"
             }
           ]
         },
-        "options": {
-          "responseFormat": "json"
-        }
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n    model: $env.MERQIVA_LLM_MODEL || 'gpt-4o-mini',\n    temperature: 0.1,\n    messages: [\n      {\n        role: 'system',\n        content: 'You are Merqiva\\'s evidence-first maritime sales research agent. Never invent companies, vessels, people, contracts, buying signals, scores, or URLs. Use only the supplied public-source material and the job criteria. Separate verified facts from inference and unknowns. Prefer recent, commercially relevant GCC maritime opportunities. Return ONLY valid JSON matching the requested schema.'\n      },\n      {\n        role: 'user',\n        content:\n          'Research Job:\\n' + JSON.stringify($node['Normalize Research Job'].json) +\n          '\\n\\nPublic news signals:\\n' + JSON.stringify($json.newsItems) +\n          '\\n\\nReturn JSON:\\n' +\n          JSON.stringify({\n            status:'COMPLETED',\n            notes:'brief research summary',\n            opportunities:[{\n              companyName:'string',\n              productName:'same as job.productName',\n              companyFit:0,\n              productFit:0,\n              fleetFit:0,\n              buyingSignalStrength:0,\n              signalRecency:0,\n              decisionMakerConfidence:0,\n              commercialRelevance:0,\n              timingUrgency:0,\n              whyNow:'evidence-backed concise rationale',\n              buyingSignals:['string'],\n              decisionMaker:{name:'UNKNOWN',role:'UNKNOWN',relevance:0,influence:0,confidence:0,verificationStatus:'UNKNOWN',verificationEvidence:{}},\n              evidence:[{title:'string',summary:'string',sourceName:'string',sourceUrl:'string',observedAt:'ISO-8601 string',evidenceLevel:'VERIFIED FACT'}],\n              outreachDraft:'optional draft using only verified evidence'\n            }]\n          }, null, 2)\n      }\n    ]\n  }) }}"
       },
       "id": "ai-research",
-      "name": "AI Research & Qualification",
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.5,
+      "name": "AI Research & Qualification (OpenAI-compatible)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         120,
         0
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "__SET_IN_N8N__",
-          "name": "Merqiva OpenAI / Compatible LLM"
-        }
-      }
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const job=$node[\"Normalize Research Job\"].json;\nconst parsed=$json.output ?? $json.text ?? $json;\nconst result=typeof parsed===\"string\" ? JSON.parse(parsed) : parsed;\nconst opportunities=Array.isArray(result.opportunities) ? result.opportunities.slice(0,job.maxOpportunities) : [];\nfor (const op of opportunities) {\n  if (!op.companyName || !op.productName) continue;\n  if (!Array.isArray(op.evidence)) op.evidence=[];\n  op.buyingSignals=Array.isArray(op.buyingSignals)?op.buyingSignals:[];\n  op.status=\"New\";\n}\nreturn [{json:{\n  jobId:job.jobId,\n  callbackUrl:job.callbackUrl,\n  callbackSecret:job.callbackSecret,\n  provider:\"N8N\",\n  status:result.status===\"FAILED\"?\"FAILED\":\"COMPLETED\",\n  notes:String(result.notes||\"\").slice(0,2500),\n  opportunities\n}}];"
+        "jsCode": "const job = $node[\"Normalize Research Job\"].json;\nconst response = $json;\nlet raw = response?.choices?.[0]?.message?.content ?? response?.output ?? response?.text ?? response;\nif (typeof raw !== \"string\") raw = JSON.stringify(raw);\nraw = raw.trim().replace(/^\\`\\`\\`json/i, \"\").replace(/^\\`\\`\\`/i, \"\").replace(/\\`\\`\\`$/i, \"\").trim();\nlet result;\ntry { result = JSON.parse(raw); } catch (error) { throw new Error(\"LLM did not return valid JSON: \" + error.message); }\n\nconst opportunities = Array.isArray(result.opportunities)\n  ? result.opportunities.slice(0, job.maxOpportunities)\n  : [];\n\nfor (const op of opportunities) {\n  if (!op.companyName || !op.productName) continue;\n  if (!Array.isArray(op.evidence)) op.evidence = [];\n  op.buyingSignals = Array.isArray(op.buyingSignals) ? op.buyingSignals : [];\n  op.status = \"New\";\n}\n\nreturn [{json:{\n  jobId: job.jobId,\n  callbackUrl: job.callbackUrl,\n  callbackSecret: job.callbackSecret,\n  provider: \"N8N\",\n  status: result.status === \"FAILED\" ? \"FAILED\" : \"COMPLETED\",\n  notes: String(result.notes || \"\").slice(0,2500),\n  opportunities\n}}];"
       },
       "id": "validate-structure",
       "name": "Validate Structured Result",
