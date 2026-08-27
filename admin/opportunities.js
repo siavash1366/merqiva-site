@@ -260,7 +260,13 @@ function showDetail(item) {
       <div><strong>Status</strong><p>${escapeHTML(item.status)}</p></div>
       <div><strong>Why Now</strong><p>${escapeHTML(item.whyNow || "UNKNOWN")}</p><span class="oi-chip ${item.whyNowConfidence === "HIGH" ? "oi-good" : item.whyNowConfidence === "MEDIUM" ? "oi-warn" : "oi-low"}">${escapeHTML(item.whyNowConfidence)} confidence</span></div>
       <div><strong>Decision Maker</strong><p>${escapeHTML(dm.name || "UNKNOWN")} — ${escapeHTML(dm.role || "UNKNOWN")}</p><span class="oi-muted">Confidence: ${escapeHTML(dm.confidence ?? 0)} / 100</span></div>
-      <div><strong>Recommended Action</strong><p>${escapeHTML(item.recommendedAction || "UNKNOWN")}</p></div>
+      <div>
+  <strong>Recommended Action</strong>
+  <p>${escapeHTML(item.recommendedAction || "UNKNOWN")}</p>
+  <span class="oi-muted">
+    Source: ${escapeHTML(item.recommendedActionSource || "UNKNOWN")}
+  </span>
+</div>
       <div><strong>Sales Angle</strong><p>${escapeHTML(item.salesAngle || "UNKNOWN")}</p></div>
       <div class="oi-detail-wide"><strong>Score Breakdown</strong><pre>${escapeHTML(JSON.stringify(components, null, 2))}</pre></div>
       <div class="oi-detail-wide"><strong>Evidence</strong>${evidence.length ? evidence.map((e) => `
