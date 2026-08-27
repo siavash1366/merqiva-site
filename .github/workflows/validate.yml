@@ -31,3 +31,8 @@ jobs:
           test -f functions/api/signals/ingest.js
           test -f functions/api/admin/monitoring.js
           test -f functions/api/admin/guarantee.js
+          test -f functions/api/admin/research.js
+          test -f functions/api/research/callback.js
+          test -f admin/operations.html
+          test -f admin/operations.js
+          test -f admin/operations.css
