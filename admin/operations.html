@@ -14,6 +14,25 @@
   <div class="toolbar"><button onclick="location.href='/admin/index.html'">CRM</button><button onclick="location.href='/admin/opportunities.html'">Opportunities</button><button id="logoutBtn">Logout</button></div>
 </header>
 
+<section class="card research-panel">
+  <div class="card-title"><div><span class="eyebrow">AI RESEARCH</span><h2>Research Agent</h2><p class="ops-subtitle">Create a research job and optionally dispatch it to an authorized n8n workflow. Results return through the secure callback and become evidence-backed opportunities.</p></div><span id="researchBadge" class="badge">READY</span></div>
+  <form id="researchForm" class="ops-form research-form">
+    <label>Product / Service <input id="researchProduct" required maxlength="240" placeholder="e.g. Marine GMDSS equipment"></label>
+    <label>Target market <input id="researchMarket" maxlength="500" placeholder="e.g. UAE, Saudi Arabia, GCC offshore"></label>
+    <label>Research question <textarea id="researchQuestion" required placeholder="Find GCC vessel operators showing recent buying signals relevant to this product. Verify source evidence, fit and likely decision makers."></textarea></label>
+    <label>Company types <textarea id="researchCompanyTypes" placeholder="One per line"></textarea></label>
+    <label>Vessel types <textarea id="researchVesselTypes" placeholder="One per line"></textarea></label>
+    <label>Relevant signals <textarea id="researchSignals" placeholder="One per line"></textarea></label>
+    <label>Decision-maker roles <textarea id="researchRoles" placeholder="One per line"></textarea></label>
+    <label>Max opportunities <input id="researchMax" type="number" min="1" max="25" value="10"></label>
+    <label>Language
+      <select id="researchLanguage"><option value="en">English</option><option value="ar">Arabic</option></select>
+    </label>
+    <button class="primary" type="submit">Create Research Job</button>
+  </form>
+  <div class="research-jobs"><h3>Recent Research Jobs</h3><div id="researchJobs">Loading…</div></div>
+</section>
+
 <section class="ops-grid">
   <article class="card">
     <div class="card-title"><div><span class="eyebrow">MARKET SIGNALS</span><h2>Monitoring</h2></div><span id="monitorBadge" class="badge">Loading</span></div>
