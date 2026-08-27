@@ -958,6 +958,10 @@ async function loadOpportunities() {
       currentOpportunityItems
     );
 
+    renderOpportunityAlerts(
+      currentOpportunityItems
+    );
+
   } catch (error) {
 
     document.getElementById(
@@ -1254,6 +1258,370 @@ async function updateDecisionMakerVerification(
       error.message
     );
   }
+}
+
+
+// =======================
+// BASIC IN-APP ALERTS
+// =======================
+
+function buildOpportunityAlerts(
+  items
+) {
+  const alerts = [];
+
+  const terminalStatuses = [
+    "Won",
+    "Lost",
+    "Disqualified"
+  ];
+
+  const activeCommercialStatuses = [
+    "Contacted",
+    "Replied",
+    "Meeting",
+    "Opportunity"
+  ];
+
+  for (
+    const item of items
+  ) {
+    const status =
+      item.status ||
+      "New";
+
+    if (
+      terminalStatuses.includes(
+        status
+      )
+    ) {
+      continue;
+    }
+
+    const score =
+      Number(
+        item.opportunityScore
+      ) || 0;
+
+    const dm =
+      item.decisionMaker ||
+      {};
+
+    const verificationStatus =
+      dm.verificationStatus ||
+      "UNKNOWN";
+
+    const outcome =
+      item.outcome &&
+      item.outcome.type
+        ? item.outcome
+        : null;
+
+    /*
+     * Evidence-first workflow alert:
+     * do not recommend tailored outreach
+     * when the decision maker is not verified.
+     */
+    if (
+      (
+        status ===
+          "Qualified" ||
+        status ===
+          "Outreach Ready"
+      ) &&
+      (
+        verificationStatus ===
+          "UNVERIFIED" ||
+        verificationStatus ===
+          "UNKNOWN"
+      )
+    ) {
+      alerts.push({
+        id:
+          item.id,
+
+        severity:
+          "HIGH",
+
+        title:
+          "VERIFY DECISION MAKER",
+
+        message:
+          "This opportunity is commercially advanced, but the decision maker is not backed by sufficient verification evidence.",
+
+        score
+      });
+    }
+
+
+    if (
+      (
+        status ===
+          "Qualified" ||
+        status ===
+          "Outreach Ready"
+      ) &&
+      verificationStatus ===
+        "VERIFIED" &&
+      dm.contactPriority ===
+        "HIGH"
+    ) {
+      alerts.push({
+        id:
+          item.id,
+
+        severity:
+          "HIGH",
+
+        title:
+          "READY FOR TAILORED OUTREACH",
+
+        message:
+          "The opportunity is qualified, the decision maker is verified, and contact priority is HIGH.",
+
+        score
+      });
+    }
+
+
+    if (
+      score >= 80 &&
+      (
+        status ===
+          "New" ||
+        status ===
+          "Reviewed"
+      )
+    ) {
+      alerts.push({
+        id:
+          item.id,
+
+        severity:
+          "MEDIUM",
+
+        title:
+          "HIGH-SCORE REVIEW",
+
+        message:
+          "This opportunity has a score of 80 or higher and still needs qualification review.",
+
+        score
+      });
+    }
+
+
+    if (
+      activeCommercialStatuses.includes(
+        status
+      ) &&
+      !outcome
+    ) {
+      alerts.push({
+        id:
+          item.id,
+
+        severity:
+          "MEDIUM",
+
+        title:
+          "OUTCOME NOT RECORDED",
+
+        message:
+          "Commercial activity is recorded, but no structured outcome has been saved yet.",
+
+        score
+      });
+    }
+  }
+
+
+  return alerts.sort(
+    (a, b) => {
+      const severityWeight = {
+        HIGH: 2,
+        MEDIUM: 1
+      };
+
+      const severityDiff =
+        (
+          severityWeight[
+            b.severity
+          ] || 0
+        ) -
+        (
+          severityWeight[
+            a.severity
+          ] || 0
+        );
+
+      if (severityDiff) {
+        return severityDiff;
+      }
+
+      return (
+        b.score -
+        a.score
+      );
+    }
+  );
+}
+
+
+function renderOpportunityAlerts(
+  items
+) {
+  const box =
+    document.getElementById(
+      "opportunityAlerts"
+    );
+
+  const summary =
+    document.getElementById(
+      "opportunityAlertSummary"
+    );
+
+  if (
+    !box ||
+    !summary
+  ) {
+    return;
+  }
+
+  const alerts =
+    buildOpportunityAlerts(
+      items
+    );
+
+  summary.textContent =
+    `${alerts.length} active alert${
+      alerts.length === 1
+        ? ""
+        : "s"
+    }`;
+
+
+  if (
+    !alerts.length
+  ) {
+    box.innerHTML = `
+      <div class="wide oi-muted">
+        No workflow alerts for the current opportunity view.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  box.innerHTML =
+    alerts
+      .map(
+        (alert) => {
+          const item =
+            items.find(
+              (candidate) =>
+                candidate.id ===
+                alert.id
+            );
+
+          const severityClass =
+            alert.severity ===
+            "HIGH"
+              ? "oi-low"
+              : "oi-warn";
+
+          return `
+            <div class="oi-evidence">
+
+              <div>
+                <span
+                  class="oi-chip ${severityClass}"
+                >
+                  ${escapeHTML(
+                    alert.severity
+                  )}
+                </span>
+              </div>
+
+              <strong>
+                ${escapeHTML(
+                  alert.title
+                )}
+              </strong>
+
+              <div>
+                ${escapeHTML(
+                  item?.companyName ||
+                  "UNKNOWN"
+                )}
+              </div>
+
+              <div class="oi-muted">
+                Score:
+                ${escapeHTML(
+                  item?.opportunityScore ??
+                  0
+                )}
+                / 100
+                —
+                Status:
+                ${escapeHTML(
+                  item?.status ||
+                  "UNKNOWN"
+                )}
+              </div>
+
+              <p>
+                ${escapeHTML(
+                  alert.message
+                )}
+              </p>
+
+              <button
+                type="button"
+                data-alert-opportunity-id="${escapeHTML(
+                  alert.id
+                )}"
+              >
+                View Opportunity
+              </button>
+
+            </div>
+          `;
+        }
+      )
+      .join("");
+
+
+  box
+    .querySelectorAll(
+      "[data-alert-opportunity-id]"
+    )
+    .forEach(
+      (button) => {
+        button.onclick =
+          () => {
+            const id =
+              button.getAttribute(
+                "data-alert-opportunity-id"
+              );
+
+            const item =
+              items.find(
+                (candidate) =>
+                  candidate.id ===
+                  id
+              );
+
+            if (item) {
+              showDetail(
+                item
+              );
+            }
+          };
+      }
+    );
 }
 
 // =======================
