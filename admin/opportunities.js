@@ -1,7 +1,9 @@
 const OPPORTUNITIES_URL = "/api/admin/opportunities";
 const CONFIG_URL = "/api/admin/opportunity-config";
 const session = localStorage.getItem("admin_session");
+
 let currentOpportunityItems = [];
+
 
 function authHeaders(extra = {}) {
   return {
@@ -88,6 +90,8 @@ function toISOStringOrEmpty(value) {
 
   return date.toISOString();
 }
+
+
 // =======================
 // OPPORTUNITY EXPORT
 // =======================
@@ -137,10 +141,23 @@ function downloadTextFile(
 
 
 function csvCell(value) {
-  const text =
+  let text =
     String(
       value ?? ""
     );
+
+  /*
+   * Prevent spreadsheet formula injection
+   * when exported CSV is opened in Excel.
+   */
+  if (
+    /^[=+\-@]/.test(
+      text.trimStart()
+    )
+  ) {
+    text =
+      `'${text}`;
+  }
 
   return `"${text.replace(
     /"/g,
@@ -365,6 +382,7 @@ function exportOpportunitiesCsv() {
     "text/csv"
   );
 }
+
 // =======================
 // SESSION
 // =======================
@@ -399,19 +417,21 @@ if (!session) {
   document.getElementById(
     "filterBtn"
   ).onclick = loadOpportunities;
-document.getElementById(
-  "exportCsvBtn"
-)?.addEventListener(
-  "click",
-  exportOpportunitiesCsv
-);
 
-document.getElementById(
-  "exportJsonBtn"
-)?.addEventListener(
-  "click",
-  exportOpportunitiesJson
-);
+  document.getElementById(
+    "exportCsvBtn"
+  )?.addEventListener(
+    "click",
+    exportOpportunitiesCsv
+  );
+
+  document.getElementById(
+    "exportJsonBtn"
+  )?.addEventListener(
+    "click",
+    exportOpportunitiesJson
+  );
+
   document.getElementById(
     "configForm"
   ).addEventListener(
@@ -929,14 +949,15 @@ async function loadOpportunities() {
       await request(
         `${OPPORTUNITIES_URL}?${params.toString()}`
       );
-currentOpportunityItems =
-  data.opportunities ||
-  [];
 
-renderOpportunities(
-  currentOpportunityItems
-);
-    
+    currentOpportunityItems =
+      data.opportunities ||
+      [];
+
+    renderOpportunities(
+      currentOpportunityItems
+    );
+
   } catch (error) {
 
     document.getElementById(
