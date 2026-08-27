@@ -173,7 +173,24 @@ function scoreClass(score) {
   if (score >= 60) return "oi-warn";
   return "oi-low";
 }
+async function updateOpportunityStatus(id, status) {
+  try {
+    await request(OPPORTUNITIES_URL, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        id,
+        status
+      })
+    });
 
+    await loadOpportunities();
+  } catch (error) {
+    alert(error.message);
+  }
+}
 function renderOpportunities(items) {
   const table = document.getElementById("opportunityTable");
   table.innerHTML = "";
@@ -192,10 +209,36 @@ function renderOpportunities(items) {
       <td>${escapeHTML(item.productName)}</td>
       <td>${escapeHTML(item.whyNow || "UNKNOWN")}</td>
       <td>${escapeHTML(dm.name || "UNKNOWN")}<br><span class="oi-muted">${escapeHTML(dm.role || "UNKNOWN")}</span></td>
-      <td><span class="oi-chip">${escapeHTML(item.status)}</span></td>
+      <td>
+  <select class="oi-status-select" data-status-id="${escapeHTML(item.id)}">
+    ${[
+      "New",
+      "Reviewed",
+      "Qualified",
+      "Outreach Ready",
+      "Contacted",
+      "Replied",
+      "Meeting",
+      "Opportunity",
+      "Won",
+      "Lost",
+      "Disqualified"
+    ].map((status) => `
+      <option value="${status}" ${status === item.status ? "selected" : ""}>
+        ${status}
+      </option>
+    `).join("")}
+  </select>
+</td>
       <td class="oi-row-action"><button data-id="${escapeHTML(item.id)}">View</button></td>
     `;
     row.querySelector("button").onclick = () => showDetail(item);
+    row.querySelector(".oi-status-select").onchange = async (event) => {
+  await updateOpportunityStatus(
+    item.id,
+    event.target.value
+  );
+};
     table.appendChild(row);
   }
 }
