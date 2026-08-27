@@ -14,21 +14,28 @@ function clean(value, max = 5000) {
   return String(value || "").trim().slice(0, max);
 }
 
-function list(value, max = 20) {
-  return Array.isArray(value)
-    ? value.map((v) => v && typeof v === "object" ? v : clean(v, 500)).slice(0, max)
-    : [];
+function hasUsableEvidence(item) {
+  if (!Array.isArray(item?.evidence) || item.evidence.length === 0) return false;
+  return item.evidence.some((e) => {
+    if (!e || typeof e !== "object") return false;
+    const url = clean(e.sourceUrl, 1500);
+    const title = clean(e.title, 500);
+    const summary = clean(e.summary, 2000);
+    return /^https:\/\//i.test(url) && title && summary;
+  });
 }
 
-async function saveOpportunity(env, payload, jobId) {
+async function saveOpportunity(env, payload, jobId, sourceIndex) {
   const normalized = normalizeOpportunityPayload(payload);
-  if (!normalized.companyName || !normalized.productName) {
-    return null;
-  }
+  if (!normalized.companyName || !normalized.productName) return null;
+  if (!hasUsableEvidence(payload)) return null;
+
+  const fingerprint = await sha256(`${jobId}|${sourceIndex}|${normalized.companyName}|${normalized.productName}`);
+  const existing = await env.LEADS_KV.get("research:opportunity:" + fingerprint);
+  if (existing) return JSON.parse(existing);
 
   const id = "OPP" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
   const now = new Date().toISOString();
-
   const opportunity = {
     id,
     ...normalized,
@@ -37,17 +44,24 @@ async function saveOpportunity(env, payload, jobId) {
     ingestion: {
       source: "AI_RESEARCH",
       researchJobId: jobId,
+      evidenceGated: true,
       ingestedAt: now
     }
   };
 
   await env.LEADS_KV.put("opportunity:" + id, JSON.stringify(opportunity));
+  await env.LEADS_KV.put("research:opportunity:" + fingerprint, JSON.stringify(opportunity));
 
   const index = JSON.parse(await env.LEADS_KV.get("opportunities:index") || "[]");
-  index.push(id);
+  if (!index.includes(id)) index.push(id);
   await env.LEADS_KV.put("opportunities:index", JSON.stringify(index));
-
   return opportunity;
+}
+
+async function sha256(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export async function onRequestPost(context) {
@@ -65,11 +79,14 @@ export async function onRequestPost(context) {
     const job = await env.LEADS_KV.get("research:job:" + jobId, { type: "json" });
     if (!job) return jsonResponse({ success: false, error: "Research job not found" }, 404);
 
+    if (job.status === "COMPLETED" && Array.isArray(job.opportunityIds)) {
+      return jsonResponse({ success: true, jobId, status: "COMPLETED", createdOpportunityIds: job.opportunityIds, idempotent: true }, 200);
+    }
+
     const resultItems = Array.isArray(body.opportunities) ? body.opportunities.slice(0, job.maxOpportunities || 25) : [];
     const created = [];
-
-    for (const item of resultItems) {
-      const opportunity = await saveOpportunity(env, item, jobId);
+    for (let i = 0; i < resultItems.length; i += 1) {
+      const opportunity = await saveOpportunity(env, resultItems[i], jobId, i);
       if (opportunity) created.push(opportunity.id);
     }
 
@@ -83,15 +100,9 @@ export async function onRequestPost(context) {
       provider: clean(body.provider || "N8N", 120),
       notes: clean(body.notes, 2500)
     };
-
     await env.LEADS_KV.put("research:job:" + jobId, JSON.stringify(job));
 
-    return jsonResponse({
-      success: true,
-      jobId,
-      status: job.status,
-      createdOpportunityIds: created
-    }, 201);
+    return jsonResponse({ success: true, jobId, status: job.status, createdOpportunityIds: created }, 201);
   } catch (error) {
     console.error("Research callback error:", error);
     return jsonResponse({ success: false, error: "Research callback failed" }, 500);
