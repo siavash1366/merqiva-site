@@ -56,3 +56,23 @@ Merqiva normalizes the result through the shared Opportunity Intelligence core b
 Trigger/Schedule -> Retrieve permitted sources -> AI research/extraction -> Evidence validation -> Structured JSON -> POST /api/research/callback
 
 The workflow should obey each source's terms, rate limits and applicable data/privacy requirements.
+
+## n8n starter workflow
+Import `n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json` into n8n. The workflow:
+1. receives the Merqiva research job webhook,
+2. normalizes the job,
+3. retrieves a public Google News RSS search result as a starter signal source,
+4. parses the feed,
+5. asks an LLM for evidence-first structured research,
+6. validates the JSON shape,
+7. POSTs results to the Merqiva callback.
+
+Before activation:
+- configure an LLM credential in the AI node,
+- configure the n8n environment variable `MERQIVA_RESEARCH_CALLBACK_SECRET`,
+- configure Merqiva `RESEARCH_CALLBACK_SECRET` with the same value,
+- configure Merqiva `RESEARCH_N8N_WEBHOOK_URL` to the n8n webhook URL,
+- verify the source terms/rate limits for each source used,
+- test with a single small research job.
+
+This starter workflow is intentionally conservative: it is not a general web crawler and does not claim unrestricted source access. Add additional permitted source connectors only after validating their terms and data rights.
