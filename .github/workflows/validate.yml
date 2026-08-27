@@ -32,7 +32,11 @@ jobs:
           test -f functions/api/admin/monitoring.js
           test -f functions/api/admin/guarantee.js
           test -f functions/api/admin/research.js
+          test -f functions/api/admin/system-check.js
           test -f functions/api/research/callback.js
-          test -f admin/operations.html
           test -f admin/operations.js
           test -f admin/operations.css
+          test -f n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json
+      - name: Validate n8n workflow JSON
+        shell: bash
+        run: node -e "const fs=require('fs'); const w=JSON.parse(fs.readFileSync('n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json','utf8')); if(!Array.isArray(w.nodes)||!w.connections) throw new Error('Invalid n8n workflow shape'); console.log('n8n workflow JSON OK');"
