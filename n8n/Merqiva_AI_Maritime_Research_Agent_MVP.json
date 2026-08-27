@@ -1,247 +1,26 @@
 {
   "name": "Merqiva — AI Maritime Research Agent (MVP)",
   "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "merqiva-research",
-        "responseMode": "lastNode",
-        "options": {}
-      },
-      "id": "webhook-research",
-      "name": "Merqiva Research Job",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        -800,
-        0
-      ],
-      "webhookId": "merqiva-research"
-    },
-    {
-      "parameters": {
-        "jsCode": "const job = $json.body?.job || $json.job || $json;\nconst clean = (v, max=2500) => String(v ?? \"\").trim().slice(0,max);\nconst list = (v) => Array.isArray(v) ? v.map(x=>clean(x,500)).filter(Boolean) : [];\nreturn [{\n  json:{\n    jobId: clean(job.jobId || $json.body?.jobId,160),\n    callbackUrl: clean(job.callbackUrl || $json.callbackUrl,1000),\n    callbackSecret: clean($env.MERQIVA_RESEARCH_CALLBACK_SECRET,500),\n    productName: clean(job.productName,240),\n    productId: clean(job.productId,160),\n    targetMarket: clean(job.targetMarket,500),\n    researchQuestion: clean(job.researchQuestion,2500),\n    targetCompanyTypes: list(job.targetCompanyTypes),\n    targetVesselTypes: list(job.targetVesselTypes),\n    relevantSignals: list(job.relevantSignals),\n    targetDecisionMakerRoles: list(job.targetDecisionMakerRoles),\n    maxOpportunities: Math.max(1, Math.min(10, Number(job.maxOpportunities)||10)),\n    language: [\"en\",\"ar\"].includes(job.language) ? job.language : \"en\"\n  }\n}];"
-      },
-      "id": "normalize-job",
-      "name": "Normalize Research Job",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -580,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ 'https://news.google.com/rss/search?q=' + encodeURIComponent($json.researchQuestion + ' ' + $json.targetMarket) + '&hl=en-US&gl=US&ceid=US:en' }}",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "text"
-            }
-          }
-        }
-      },
-      "id": "news-rss",
-      "name": "Retrieve Public News Signals",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -350,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const raw = String($json.data || $json.body || $json || \"\");\nconst items = [];\nconst re = /<item>([\\\\s\\\\S]*?)<\\\\/item>/gi;\nlet m;\nwhile ((m = re.exec(raw)) && items.length < 30) {\n  const block=m[1];\n  const get=(tag)=>{ const x=new RegExp('<'+tag+'[^>]*>([\\\\s\\\\S]*?)<\\\\/'+tag+'>','i').exec(block); return x ? x[1].replace(/<!\\\\[CDATA\\\\[|\\\\]\\\\]>/g,'').trim() : ''; };\n  items.push({title:get('title'),link:get('link'),pubDate:get('pubDate'),description:get('description')});\n}\nreturn [{json:{newsItems:items}}];"
-      },
-      "id": "parse-rss",
-      "name": "Parse Public Signals",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -120,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $env.MERQIVA_LLM_API_URL || 'https://api.openai.com/v1/chat/completions' }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Authorization",
-              "value": "={{ 'Bearer ' + $env.MERQIVA_LLM_API_KEY }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n    model: $env.MERQIVA_LLM_MODEL || 'gpt-4o-mini',\n    temperature: 0.1,\n    messages: [\n      {\n        role: 'system',\n        content: 'You are Merqiva\\'s evidence-first maritime sales research agent. Never invent companies, vessels, people, contracts, buying signals, scores, or URLs. Use only the supplied public-source material and the job criteria. Separate verified facts from inference and unknowns. Prefer recent, commercially relevant GCC maritime opportunities. Return ONLY valid JSON matching the requested schema.'\n      },\n      {\n        role: 'user',\n        content:\n          'Research Job:\\n' + JSON.stringify($node['Normalize Research Job'].json) +\n          '\\n\\nPublic news signals:\\n' + JSON.stringify($json.newsItems) +\n          '\\n\\nReturn JSON:\\n' +\n          JSON.stringify({\n            status:'COMPLETED',\n            notes:'brief research summary',\n            opportunities:[{\n              companyName:'string',\n              productName:'same as job.productName',\n              companyFit:0,\n              productFit:0,\n              fleetFit:0,\n              buyingSignalStrength:0,\n              signalRecency:0,\n              decisionMakerConfidence:0,\n              commercialRelevance:0,\n              timingUrgency:0,\n              whyNow:'evidence-backed concise rationale',\n              buyingSignals:['string'],\n              decisionMaker:{name:'UNKNOWN',role:'UNKNOWN',relevance:0,influence:0,confidence:0,verificationStatus:'UNKNOWN',verificationEvidence:{}},\n              evidence:[{title:'string',summary:'string',sourceName:'string',sourceUrl:'string',observedAt:'ISO-8601 string',evidenceLevel:'VERIFIED FACT'}],\n              outreachDraft:'optional draft using only verified evidence'\n            }]\n          }, null, 2)\n      }\n    ]\n  }) }}"
-      },
-      "id": "ai-research",
-      "name": "AI Research & Qualification (OpenAI-compatible)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        120,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const job = $node[\"Normalize Research Job\"].json;\nconst response = $json;\nlet raw = response?.choices?.[0]?.message?.content ?? response?.output ?? response?.text ?? response;\nif (typeof raw !== \"string\") raw = JSON.stringify(raw);\nraw = raw.trim().replace(/^\\`\\`\\`json/i, \"\").replace(/^\\`\\`\\`/i, \"\").replace(/\\`\\`\\`$/i, \"\").trim();\nlet result;\ntry { result = JSON.parse(raw); } catch (error) { throw new Error(\"LLM did not return valid JSON: \" + error.message); }\n\nconst opportunities = Array.isArray(result.opportunities)\n  ? result.opportunities.slice(0, job.maxOpportunities)\n  : [];\n\nfor (const op of opportunities) {\n  if (!op.companyName || !op.productName) continue;\n  if (!Array.isArray(op.evidence)) op.evidence = [];\n  op.buyingSignals = Array.isArray(op.buyingSignals) ? op.buyingSignals : [];\n  op.status = \"New\";\n}\n\nreturn [{json:{\n  jobId: job.jobId,\n  callbackUrl: job.callbackUrl,\n  callbackSecret: job.callbackSecret,\n  provider: \"N8N\",\n  status: result.status === \"FAILED\" ? \"FAILED\" : \"COMPLETED\",\n  notes: String(result.notes || \"\").slice(0,2500),\n  opportunities\n}}];"
-      },
-      "id": "validate-structure",
-      "name": "Validate Structured Result",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        360,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $json.callbackUrl }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "X-Merqiva-Research-Callback-Secret",
-              "value": "={{ $json.callbackSecret }}"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({jobId:$json.jobId,status:$json.status,provider:$json.provider,notes:$json.notes,opportunities:$json.opportunities}) }}"
-      },
-      "id": "merqiva-callback",
-      "name": "Send Results to Merqiva",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        600,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({success:true,jobId:$node['Validate Structured Result'].json.jobId,status:$node['Validate Structured Result'].json.status}) }}",
-        "options": {}
-      },
-      "id": "respond",
-      "name": "Respond to Merqiva",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        840,
-        0
-      ]
-    }
+    {"parameters":{"httpMethod":"POST","path":"merqiva-research","responseMode":"lastNode","options":{}},"id":"webhook-research","name":"Merqiva Research Job","type":"n8n-nodes-base.webhook","typeVersion":2.1,"position":[-800,0],"webhookId":"merqiva-research"},
+    {"parameters":{"conditions":{"options":{"caseSensitive":true,"typeValidation":"strict"},"conditions":[{"leftValue":"={{ $json.headers?.['x-merqiva-research-secret'] || '' }}","rightValue":"={{ $env.MERQIVA_RESEARCH_WEBHOOK_SECRET }}","operator":{"type":"string","operation":"equals"}}],"combinator":"and"}},"id":"auth-webhook","name":"Authorize Merqiva","type":"n8n-nodes-base.if","typeVersion":2.2,"position":[-590,0]},
+    {"parameters":{"respondWith":"json","responseBody":"={\"success\":false,\"error\":\"Unauthorized\"}","options":{"responseCode":401}},"id":"unauthorized","name":"Reject Unauthorized","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[-350,180]},
+    {"parameters":{"jsCode":"const job=$json.body?.job||$json.job||$json; const clean=(v,max=2500)=>String(v??'').trim().slice(0,max); const list=v=>Array.isArray(v)?v.map(x=>clean(x,500)).filter(Boolean):[]; return [{json:{jobId:clean(job.jobId||$json.body?.jobId,160),callbackUrl:clean(job.callbackUrl||$json.callbackUrl,1000),callbackSecret:clean($env.MERQIVA_RESEARCH_CALLBACK_SECRET,500),productName:clean(job.productName,240),productId:clean(job.productId,160),targetMarket:clean(job.targetMarket,500),researchQuestion:clean(job.researchQuestion,2500),targetCompanyTypes:list(job.targetCompanyTypes),targetVesselTypes:list(job.targetVesselTypes),relevantSignals:list(job.relevantSignals),targetDecisionMakerRoles:list(job.targetDecisionMakerRoles),maxOpportunities:Math.max(1,Math.min(10,Number(job.maxOpportunities)||10)),language:['en','ar'].includes(job.language)?job.language:'en'}}];"},"id":"normalize-job","name":"Normalize Research Job","type":"n8n-nodes-base.code","typeVersion":2,"position":[-350,-40]},
+    {"parameters":{"url":"={{ 'https://news.google.com/rss/search?q=' + encodeURIComponent($json.researchQuestion + ' ' + $json.targetMarket) + '&hl=en-US&gl=US&ceid=US:en' }}","options":{"response":{"response":{"responseFormat":"text"}}}},"id":"news-rss","name":"Retrieve Public News Signals","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[-120,-40]},
+    {"parameters":{"jsCode":"const raw=String($json.data||$json.body||$json||''); const items=[]; const re=/<item>([\\s\\S]*?)<\\/item>/gi; let m; while((m=re.exec(raw))&&items.length<30){const block=m[1]; const get=tag=>{const x=new RegExp('<'+tag+'[^>]*>([\\s\\S]*?)<\\/'+tag+'>','i').exec(block); return x?x[1].replace(/<!\\[CDATA\\[|\\]\\]>/g,'').trim():''}; items.push({title:get('title'),link:get('link'),pubDate:get('pubDate'),description:get('description')});} return [{json:{newsItems:items}}];"},"id":"parse-rss","name":"Parse Public Signals","type":"n8n-nodes-base.code","typeVersion":2,"position":[110,-40]},
+    {"parameters":{"method":"POST","url":"={{ $env.MERQIVA_LLM_API_URL || 'https://api.openai.com/v1/chat/completions' }}","sendHeaders":true,"headerParameters":{"parameters":[{"name":"Content-Type","value":"application/json"},{"name":"Authorization","value":"={{ 'Bearer ' + $env.MERQIVA_LLM_API_KEY }}"}]},"sendBody":true,"contentType":"json","specifyBody":"json","jsonBody":"={{ JSON.stringify({model:$env.MERQIVA_LLM_MODEL||'gpt-4o-mini',temperature:0.1,messages:[{role:'system',content:'You are Merqiva\\'s evidence-first maritime sales research agent. Never invent companies, vessels, people, contracts, buying signals, scores, or URLs. Use only the supplied public-source material and job criteria. Separate verified facts from inference and unknowns. Return ONLY valid JSON.'},{role:'user',content:'Research Job:\\n'+JSON.stringify($node['Normalize Research Job'].json)+'\\n\\nPublic news signals:\\n'+JSON.stringify($json.newsItems)+'\\n\\nReturn {status,notes,opportunities:[{companyName,productName,companyFit,productFit,fleetFit,buyingSignalStrength,signalRecency,decisionMakerConfidence,commercialRelevance,timingUrgency,whyNow,buyingSignals,decisionMaker,evidence,outreachDraft}]}'}]}) }}"},"id":"ai-research","name":"AI Research & Qualification","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[340,-40]},
+    {"parameters":{"jsCode":"const job=$node['Normalize Research Job'].json; const response=$json; let raw=response?.choices?.[0]?.message?.content??response?.output??response?.text??response; if(typeof raw!=='string')raw=JSON.stringify(raw); raw=raw.trim().replace(/^```json/i,'').replace(/^```/i,'').replace(/```$/i,'').trim(); let result; try{result=JSON.parse(raw)}catch(e){throw new Error('LLM did not return valid JSON: '+e.message)} const opportunities=Array.isArray(result.opportunities)?result.opportunities.slice(0,job.maxOpportunities):[]; for(const op of opportunities){if(!op.companyName||!op.productName)continue; if(!Array.isArray(op.evidence))op.evidence=[]; op.buyingSignals=Array.isArray(op.buyingSignals)?op.buyingSignals:[]; op.status='New';} return [{json:{jobId:job.jobId,callbackUrl:job.callbackUrl,callbackSecret:job.callbackSecret,provider:'N8N',status:result.status==='FAILED'?'FAILED':'COMPLETED',notes:String(result.notes||'').slice(0,2500),opportunities}}];"},"id":"validate-structure","name":"Validate Structured Result","type":"n8n-nodes-base.code","typeVersion":2,"position":[570,-40]},
+    {"parameters":{"method":"POST","url":"={{ $json.callbackUrl }}","sendHeaders":true,"headerParameters":{"parameters":[{"name":"Content-Type","value":"application/json"},{"name":"X-Merqiva-Research-Callback-Secret","value":"={{ $json.callbackSecret }}"}]},"sendBody":true,"contentType":"json","specifyBody":"json","jsonBody":"={{ JSON.stringify({jobId:$json.jobId,status:$json.status,provider:$json.provider,notes:$json.notes,opportunities:$json.opportunities}) }}"},"id":"merqiva-callback","name":"Send Results to Merqiva","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[800,-40]},
+    {"parameters":{"respondWith":"json","responseBody":"={{ JSON.stringify({success:true,jobId:$node['Validate Structured Result'].json.jobId,status:$node['Validate Structured Result'].json.status}) }}","options":{}},"id":"respond","name":"Respond to Merqiva","type":"n8n-nodes-base.respondToWebhook","typeVersion":1.1,"position":[1030,-40]}
   ],
-  "connections": {
-    "Merqiva Research Job": {
-      "main": [
-        [
-          {
-            "node": "Normalize Research Job",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize Research Job": {
-      "main": [
-        [
-          {
-            "node": "Retrieve Public News Signals",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Retrieve Public News Signals": {
-      "main": [
-        [
-          {
-            "node": "Parse Public Signals",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Public Signals": {
-      "main": [
-        [
-          {
-            "node": "AI Research & Qualification",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Research & Qualification": {
-      "main": [
-        [
-          {
-            "node": "Validate Structured Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Validate Structured Result": {
-      "main": [
-        [
-          {
-            "node": "Send Results to Merqiva",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send Results to Merqiva": {
-      "main": [
-        [
-          {
-            "node": "Respond to Merqiva",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+  "connections":{
+    "Merqiva Research Job":{"main":[[{"node":"Authorize Merqiva","type":"main","index":0}]]},
+    "Authorize Merqiva":{"main":[[{"node":"Normalize Research Job","type":"main","index":0}],[{"node":"Reject Unauthorized","type":"main","index":0}]]},
+    "Normalize Research Job":{"main":[[{"node":"Retrieve Public News Signals","type":"main","index":0}]]},
+    "Retrieve Public News Signals":{"main":[[{"node":"Parse Public Signals","type":"main","index":0}]]},
+    "Parse Public Signals":{"main":[[{"node":"AI Research & Qualification","type":"main","index":0}]]},
+    "AI Research & Qualification":{"main":[[{"node":"Validate Structured Result","type":"main","index":0}]]},
+    "Validate Structured Result":{"main":[[{"node":"Send Results to Merqiva","type":"main","index":0}]]},
+    "Send Results to Merqiva":{"main":[[{"node":"Respond to Merqiva","type":"main","index":0}]]}
   },
-  "pinData": {},
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "merqiva-v2-mvp",
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "tags": []
+  "pinData":{},"active":false,"settings":{"executionOrder":"v1"},"versionId":"merqiva-v2-mvp-secure","meta":{"templateCredsSetupCompleted":false},"tags":[]
 }
