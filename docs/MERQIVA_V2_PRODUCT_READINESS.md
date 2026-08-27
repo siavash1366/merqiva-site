@@ -8,7 +8,8 @@ Merqiva is positioned as GCC maritime B2B sales intelligence: identify accounts 
 - Public-site quality promise explaining replacement-based quality assurance rather than promising sales outcomes.
 - Secure market-signal ingestion endpoint for authorized n8n/API workflows.
 - Admin monitoring configuration and ingestion status endpoint.
-- Admin operations dashboard for monitoring and guarantee status.
+- Admin operations dashboard for monitoring, research jobs and guarantee status.
+- Provider-agnostic AI Research Agent orchestration: secure research-job creation, optional n8n dispatch, authenticated callback and opportunity creation.
 - Configurable guarantee criteria: minimum score, verified evidence, Why Now confidence, decision-maker verification, period and replacement policy.
 - Public privacy and service-terms pages.
 - GitHub Actions JavaScript syntax/file validation.
@@ -30,9 +31,28 @@ The monitoring endpoint is an ingestion boundary, not a claim that Merqiva indep
 ## Not represented as finished yet
 - Payment processor/subscription billing integration.
 - Customer self-service authentication and tenant isolation.
-- Fully automated source-specific monitoring connectors.
-- AI agent orchestration and autonomous research.
+- Fully automated source-specific monitoring connectors and source-specific research workflows.
+- Learned scoring model based on sufficient outcome history.
 - Learned scoring model based on sufficient outcome history.
 - Formal legal review of the privacy/terms copy for the actual operating jurisdiction and customer contracts.
 
 These are intentionally separated from the current branch so the product does not claim capabilities that are not actually operational.
+
+
+## AI Research Agent contract
+The Admin Research Agent creates a job describing the product, market, research question and qualification context. If `RESEARCH_N8N_WEBHOOK_URL` is configured, Merqiva dispatches the job to the authorized n8n workflow. The workflow must return results to `/api/research/callback` with `X-Merqiva-Research-Callback-Secret`.
+
+Each returned opportunity should include:
+- companyName and productName
+- scoring inputs
+- whyNow
+- buyingSignals
+- decisionMaker data
+- evidence items with sourceName/sourceUrl/observedAt/evidenceLevel
+
+Merqiva normalizes the result through the shared Opportunity Intelligence core before storing it. The callback is intentionally authenticated and does not accept unauthenticated research results.
+
+### Recommended n8n flow
+Trigger/Schedule -> Retrieve permitted sources -> AI research/extraction -> Evidence validation -> Structured JSON -> POST /api/research/callback
+
+The workflow should obey each source's terms, rate limits and applicable data/privacy requirements.
