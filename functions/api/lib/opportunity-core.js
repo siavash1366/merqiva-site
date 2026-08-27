@@ -12,6 +12,13 @@ export const OPPORTUNITY_STATUSES = [
   "Disqualified"
 ];
 
+export const DECISION_MAKER_VERIFICATION_STATUSES = [
+  "VERIFIED",
+  "PARTIAL",
+  "UNVERIFIED",
+  "UNKNOWN"
+];
+
 export const SCORE_WEIGHTS = Object.freeze({
   companyFit: 15,
   productFit: 15,
@@ -165,8 +172,7 @@ export function deriveWhyNowConfidence(
     return "LOW";
   }
 
-  const now =
-    Date.now();
+  const now = Date.now();
 
   const hasRecent =
     verified.some((item) => {
@@ -204,6 +210,220 @@ export function deriveWhyNowConfidence(
 
 
 // =======================
+// DECISION MAKER
+// =======================
+
+function deriveDecisionMakerRoleReason(role) {
+  const value =
+    String(
+      role || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    value.includes("technical") ||
+    value.includes("engineer") ||
+    value.includes("engineering") ||
+    value.includes("superintendent")
+  ) {
+    return (
+      "The stated role suggests possible involvement in technical evaluation, " +
+      "specification review, operational fit, or implementation decisions."
+    );
+  }
+
+  if (
+    value.includes("procurement") ||
+    value.includes("purchasing") ||
+    value.includes("buyer")
+  ) {
+    return (
+      "The stated role suggests possible involvement in supplier evaluation, " +
+      "commercial requirements, qualification, or purchasing workflow."
+    );
+  }
+
+  if (
+    value.includes("fleet") ||
+    value.includes("operations") ||
+    value.includes("operation")
+  ) {
+    return (
+      "The stated role suggests possible involvement in fleet requirements, " +
+      "operational suitability, deployment, or implementation."
+    );
+  }
+
+  if (
+    value.includes("commercial") ||
+    value.includes("business development")
+  ) {
+    return (
+      "The stated role suggests possible involvement in commercial evaluation, " +
+      "business relevance, supplier discussions, or deal progression."
+    );
+  }
+
+  if (
+    value.includes("owner") ||
+    value.includes("chief") ||
+    value.includes("ceo") ||
+    value.includes("director") ||
+    value.includes("general manager")
+  ) {
+    return (
+      "The stated role suggests possible senior influence over priorities, " +
+      "evaluation criteria, budget direction, or final approval."
+    );
+  }
+
+  if (
+    !value ||
+    value === "unknown"
+  ) {
+    return (
+      "The person's role is not sufficiently known to infer decision relevance."
+    );
+  }
+
+  return (
+    "The stated role may be relevant, but its involvement in this specific buying decision " +
+    "has not been independently verified."
+  );
+}
+
+
+export function deriveDecisionMakerIntelligence({
+  name = "",
+  role = "UNKNOWN",
+  relevance = 0,
+  influence = 0,
+  confidence = 0,
+  verificationStatus = ""
+} = {}) {
+  const normalizedName =
+    String(
+      name || ""
+    ).trim();
+
+  const normalizedRole =
+    String(
+      role || "UNKNOWN"
+    ).trim() || "UNKNOWN";
+
+  const relevanceScore =
+    clampScore(relevance);
+
+  const influenceScore =
+    clampScore(influence);
+
+  const confidenceScore =
+    clampScore(confidence);
+
+  const suppliedVerificationStatus =
+    String(
+      verificationStatus || ""
+    )
+      .trim()
+      .toUpperCase();
+
+  const resolvedVerificationStatus =
+    DECISION_MAKER_VERIFICATION_STATUSES.includes(
+      suppliedVerificationStatus
+    )
+      ? suppliedVerificationStatus
+      : normalizedName
+        ? "UNVERIFIED"
+        : "UNKNOWN";
+
+  const priorityScore =
+    Math.round(
+      relevanceScore * 0.4 +
+      influenceScore * 0.35 +
+      confidenceScore * 0.25
+    );
+
+  let contactPriority = "LOW";
+
+  if (
+    normalizedName &&
+    normalizedRole !== "UNKNOWN"
+  ) {
+    if (priorityScore >= 70) {
+      contactPriority = "HIGH";
+    } else if (priorityScore >= 45) {
+      contactPriority = "MEDIUM";
+    }
+  }
+
+  /*
+   * Do not treat an unverified identity as
+   * immediately ready for high-priority outreach.
+   */
+  if (
+    resolvedVerificationStatus === "UNVERIFIED" &&
+    contactPriority === "HIGH"
+  ) {
+    contactPriority = "MEDIUM";
+  }
+
+  if (
+    resolvedVerificationStatus === "UNKNOWN"
+  ) {
+    contactPriority = "LOW";
+  }
+
+  const roleReason =
+    deriveDecisionMakerRoleReason(
+      normalizedRole
+    );
+
+  let verificationNote = "";
+
+  if (
+    resolvedVerificationStatus === "VERIFIED"
+  ) {
+    verificationNote =
+      " Identity and role are marked as verified.";
+  } else if (
+    resolvedVerificationStatus === "PARTIAL"
+  ) {
+    verificationNote =
+      " Identity or role is only partially verified; confirm remaining details before relying on it.";
+  } else if (
+    resolvedVerificationStatus === "UNVERIFIED"
+  ) {
+    verificationNote =
+      " Identity and role have not yet been independently verified.";
+  } else {
+    verificationNote =
+      " Decision-maker identity is currently unknown.";
+  }
+
+  return {
+    verificationStatus:
+      resolvedVerificationStatus,
+
+    contactPriority,
+
+    priorityScore,
+
+    whyThisPersonMatters:
+      (
+        roleReason +
+        verificationNote
+      )
+        .trim()
+        .slice(0, 2000),
+
+    source:
+      "SYSTEM_RULES"
+  };
+}
+
+
+// =======================
 // RECOMMENDED ACTION
 // =======================
 
@@ -211,6 +431,7 @@ export function deriveRecommendedAction({
   opportunityScore = 0,
   whyNowConfidence = "LOW",
   decisionMakerConfidence = 0,
+  decisionMakerVerificationStatus = "UNKNOWN",
   evidence = []
 } = {}) {
   const score =
@@ -246,10 +467,19 @@ export function deriveRecommendedAction({
   }
 
   if (
+    decisionMakerVerificationStatus === "UNKNOWN" ||
+    decisionMakerVerificationStatus === "UNVERIFIED"
+  ) {
+    return (
+      "Verify the decision maker's identity and role before tailored outreach."
+    );
+  }
+
+  if (
     dmConfidence < 50
   ) {
     return (
-      "Identify and verify the relevant decision maker before outreach."
+      "Strengthen decision-maker confidence before direct outreach."
     );
   }
 
@@ -259,7 +489,7 @@ export function deriveRecommendedAction({
     dmConfidence >= 70
   ) {
     return (
-      "Prioritize tailored outreach to the identified decision maker. " +
+      "Prioritize tailored outreach to the verified or partially verified decision maker. " +
       "Reference the verified recent signal and request a short discovery conversation."
     );
   }
@@ -267,7 +497,7 @@ export function deriveRecommendedAction({
   if (score >= 60) {
     return (
       "Review the verified signal with the identified decision maker " +
-      "and prepare a targeted outreach message."
+      "and prepare a targeted discovery message."
     );
   }
 
@@ -349,6 +579,7 @@ function deriveRoleFocus(
 export function deriveSalesAngle({
   productName = "",
   decisionMakerRole = "UNKNOWN",
+  decisionMakerVerificationStatus = "UNKNOWN",
   opportunityScore = 0,
   whyNowConfidence = "LOW",
   evidence = []
@@ -384,8 +615,17 @@ export function deriveSalesAngle({
   if (!verifiedEvidence.length) {
     return (
       `Do not make a direct sales claim for ${product} yet. ` +
-      `Use a discovery-led approach with the ${role} to verify the buying signal, ` +
-      `current need, and ${roleFocus}.`
+      `Verify the buying signal and current need before commercial outreach.`
+    );
+  }
+
+  if (
+    decisionMakerVerificationStatus === "UNKNOWN" ||
+    decisionMakerVerificationStatus === "UNVERIFIED"
+  ) {
+    return (
+      `Use the verified opportunity evidence to guide research for ${product}, ` +
+      `but verify the ${role}'s identity and decision relevance before tailoring outreach.`
     );
   }
 
@@ -418,7 +658,7 @@ export function deriveSalesAngle({
 
   return (
     `Use a low-pressure discovery angle for ${product}. ` +
-    `Reference only the verified evidence and ask the ${role} to clarify ${roleFocus} ` +
+    `Reference only verified evidence and validate ${roleFocus} ` +
     `before treating this as an active buying opportunity.`
   );
 }
@@ -533,9 +773,7 @@ export function normalizeOpportunityPayload(
     );
 
   /*
-   * Preserve original scoring inputs during PATCH.
-   * This prevents status-only updates from
-   * accidentally resetting the Opportunity Score.
+   * Preserve scoring inputs during PATCH.
    */
   const scoring =
     calculateOpportunityScore({
@@ -608,6 +846,14 @@ export function normalizeOpportunityPayload(
       whyNow
     );
 
+  const decisionMakerName =
+    String(
+      input.decisionMaker
+        ?.name || ""
+    )
+      .trim()
+      .slice(0, 200);
+
   const decisionMakerRole =
     String(
       input.decisionMaker
@@ -617,9 +863,47 @@ export function normalizeOpportunityPayload(
       .trim()
       .slice(0, 200);
 
+  const decisionMakerRelevance =
+    clampScore(
+      input.decisionMaker
+        ?.relevance
+    );
+
+  const decisionMakerInfluence =
+    clampScore(
+      input.decisionMaker
+        ?.influence
+    );
+
+  const decisionMakerConfidence =
+    scoring.components
+      .decisionMakerConfidence;
+
+  const decisionMakerIntelligence =
+    deriveDecisionMakerIntelligence({
+      name:
+        decisionMakerName,
+
+      role:
+        decisionMakerRole,
+
+      relevance:
+        decisionMakerRelevance,
+
+      influence:
+        decisionMakerInfluence,
+
+      confidence:
+        decisionMakerConfidence,
+
+      verificationStatus:
+        input.decisionMaker
+          ?.verificationStatus
+    });
+
   /*
    * Recommended Action:
-   * manual values are preserved.
+   * manual values stay manual.
    * SYSTEM_RULES values are recalculated.
    */
   const suppliedRecommendedAction =
@@ -646,9 +930,11 @@ export function normalizeOpportunityPayload(
 
           whyNowConfidence,
 
-          decisionMakerConfidence:
-            scoring.components
-              .decisionMakerConfidence,
+          decisionMakerConfidence,
+
+          decisionMakerVerificationStatus:
+            decisionMakerIntelligence
+              .verificationStatus,
 
           evidence
         });
@@ -660,7 +946,7 @@ export function normalizeOpportunityPayload(
 
   /*
    * Sales Angle:
-   * manual values are preserved.
+   * manual values stay manual.
    * SYSTEM_RULES values are recalculated.
    */
   const suppliedSalesAngle =
@@ -685,6 +971,10 @@ export function normalizeOpportunityPayload(
             input.productName,
 
           decisionMakerRole,
+
+          decisionMakerVerificationStatus:
+            decisionMakerIntelligence
+              .verificationStatus,
 
           opportunityScore:
             scoring.score,
@@ -776,31 +1066,39 @@ export function normalizeOpportunityPayload(
 
     decisionMaker: {
       name:
-        String(
-          input.decisionMaker
-            ?.name || ""
-        )
-          .trim()
-          .slice(0, 200),
+        decisionMakerName,
 
       role:
         decisionMakerRole,
 
       relevance:
-        clampScore(
-          input.decisionMaker
-            ?.relevance
-        ),
+        decisionMakerRelevance,
 
       confidence:
-        scoring.components
-          .decisionMakerConfidence,
+        decisionMakerConfidence,
 
       influence:
-        clampScore(
-          input.decisionMaker
-            ?.influence
-        )
+        decisionMakerInfluence,
+
+      verificationStatus:
+        decisionMakerIntelligence
+          .verificationStatus,
+
+      contactPriority:
+        decisionMakerIntelligence
+          .contactPriority,
+
+      priorityScore:
+        decisionMakerIntelligence
+          .priorityScore,
+
+      whyThisPersonMatters:
+        decisionMakerIntelligence
+          .whyThisPersonMatters,
+
+      intelligenceSource:
+        decisionMakerIntelligence
+          .source
     },
 
     whyNow,
