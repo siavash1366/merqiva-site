@@ -243,13 +243,12 @@ export async function onRequestPost(context) {
     const now =
       new Date().toISOString();
 
-    const opportunity = {
-      id,
-      ...normalized,
-      createdAt: now,
-      updatedAt: now,
-      outcome: null
-    };
+   const opportunity = {
+  id,
+  ...normalized,
+  createdAt: now,
+  updatedAt: now
+};
 
     await env.LEADS_KV.put(
       `opportunity:${id}`,
@@ -364,20 +363,13 @@ export async function onRequestPatch(context) {
         }
       );
 
-    const updated = {
-      ...existing,
-      ...merged,
-      id,
-      outcome:
-        body.outcome !== undefined
-          ? body.outcome
-          : (
-              existing.outcome ||
-              null
-            ),
-      updatedAt:
-        new Date().toISOString()
-    };
+   const updated = {
+  ...existing,
+  ...merged,
+  id,
+  updatedAt:
+    new Date().toISOString()
+};
 
     await env.LEADS_KV.put(
       `opportunity:${id}`,
