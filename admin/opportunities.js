@@ -1,7 +1,7 @@
 const OPPORTUNITIES_URL = "/api/admin/opportunities";
 const CONFIG_URL = "/api/admin/opportunity-config";
 const session = localStorage.getItem("admin_session");
-
+let currentOpportunityItems = [];
 
 function authHeaders(extra = {}) {
   return {
@@ -641,12 +641,14 @@ async function loadOpportunities() {
       await request(
         `${OPPORTUNITIES_URL}?${params.toString()}`
       );
+currentOpportunityItems =
+  data.opportunities ||
+  [];
 
-    renderOpportunities(
-      data.opportunities ||
-      []
-    );
-
+renderOpportunities(
+  currentOpportunityItems
+);
+    
   } catch (error) {
 
     document.getElementById(
