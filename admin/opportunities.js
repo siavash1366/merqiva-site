@@ -249,35 +249,217 @@ function showDetail(item) {
   const components = item.scoreBreakdown || {};
   const evidence = item.evidence || [];
 
+  const verificationClass =
+    dm.verificationStatus === "VERIFIED"
+      ? "oi-good"
+      : dm.verificationStatus === "PARTIAL"
+        ? "oi-warn"
+        : "oi-low";
+
+  const priorityClass =
+    dm.contactPriority === "HIGH"
+      ? "oi-good"
+      : dm.contactPriority === "MEDIUM"
+        ? "oi-warn"
+        : "oi-low";
+
   box.classList.remove("hidden");
+
   box.innerHTML = `
     <div class="oi-list-head">
-      <div><h2>${escapeHTML(item.companyName)}</h2><div class="oi-muted">${escapeHTML(item.id)}</div></div>
-      <div class="oi-score">${escapeHTML(item.opportunityScore)}/100</div>
-    </div>
-    <div class="oi-detail-grid">
-      <div><strong>Product</strong><p>${escapeHTML(item.productName)}</p></div>
-      <div><strong>Status</strong><p>${escapeHTML(item.status)}</p></div>
-      <div><strong>Why Now</strong><p>${escapeHTML(item.whyNow || "UNKNOWN")}</p><span class="oi-chip ${item.whyNowConfidence === "HIGH" ? "oi-good" : item.whyNowConfidence === "MEDIUM" ? "oi-warn" : "oi-low"}">${escapeHTML(item.whyNowConfidence)} confidence</span></div>
-      <div><strong>Decision Maker</strong><p>${escapeHTML(dm.name || "UNKNOWN")} — ${escapeHTML(dm.role || "UNKNOWN")}</p><span class="oi-muted">Confidence: ${escapeHTML(dm.confidence ?? 0)} / 100</span></div>
       <div>
-  <strong>Recommended Action</strong>
-  <p>${escapeHTML(item.recommendedAction || "UNKNOWN")}</p>
-  <span class="oi-muted">
-    Source: ${escapeHTML(item.recommendedActionSource || "UNKNOWN")}
-  </span>
-</div>
-      <div><strong>Sales Angle</strong><p>${escapeHTML(item.salesAngle || "UNKNOWN")}</p></div>
-      <div class="oi-detail-wide"><strong>Score Breakdown</strong><pre>${escapeHTML(JSON.stringify(components, null, 2))}</pre></div>
-      <div class="oi-detail-wide"><strong>Evidence</strong>${evidence.length ? evidence.map((e) => `
-        <div class="oi-evidence">
-          <strong>${escapeHTML(e.title || "Untitled evidence")}</strong>
-          <div>${escapeHTML(e.summary || "")}</div>
-          <div class="oi-muted">${escapeHTML(e.evidenceLevel)} — ${escapeHTML(e.observedAt || "UNKNOWN")}</div>
-          <div class="oi-link">${escapeHTML(e.sourceUrl || e.sourceName || "Source UNKNOWN")}</div>
-        </div>`).join("") : `<div class="oi-muted">No evidence recorded.</div>`}</div>
+        <h2>${escapeHTML(item.companyName)}</h2>
+        <div class="oi-muted">${escapeHTML(item.id)}</div>
+      </div>
+
+      <div class="oi-score">
+        ${escapeHTML(item.opportunityScore)}/100
+      </div>
+    </div>
+
+    <div class="oi-detail-grid">
+
+      <div>
+        <strong>Product</strong>
+        <p>${escapeHTML(item.productName)}</p>
+      </div>
+
+      <div>
+        <strong>Status</strong>
+        <p>${escapeHTML(item.status)}</p>
+      </div>
+
+      <div>
+        <strong>Why Now</strong>
+
+        <p>
+          ${escapeHTML(item.whyNow || "UNKNOWN")}
+        </p>
+
+        <span class="oi-chip ${
+          item.whyNowConfidence === "HIGH"
+            ? "oi-good"
+            : item.whyNowConfidence === "MEDIUM"
+              ? "oi-warn"
+              : "oi-low"
+        }">
+          ${escapeHTML(item.whyNowConfidence)} confidence
+        </span>
+      </div>
+
+      <div>
+        <strong>Decision Maker</strong>
+
+        <p>
+          ${escapeHTML(dm.name || "UNKNOWN")}
+          —
+          ${escapeHTML(dm.role || "UNKNOWN")}
+        </p>
+
+        <div class="oi-muted">
+          Confidence:
+          ${escapeHTML(dm.confidence ?? 0)} / 100
+        </div>
+
+        <div class="oi-muted">
+          Relevance:
+          ${escapeHTML(dm.relevance ?? 0)} / 100
+        </div>
+
+        <div class="oi-muted">
+          Influence:
+          ${escapeHTML(dm.influence ?? 0)} / 100
+        </div>
+
+        <p>
+          <span class="oi-chip ${verificationClass}">
+            ${escapeHTML(dm.verificationStatus || "UNKNOWN")}
+          </span>
+
+          <span class="oi-chip ${priorityClass}">
+            ${escapeHTML(dm.contactPriority || "LOW")} contact priority
+          </span>
+        </p>
+
+        <div class="oi-muted">
+          Decision Priority Score:
+          ${escapeHTML(dm.priorityScore ?? 0)} / 100
+        </div>
+
+        <div class="oi-muted">
+          Intelligence Source:
+          ${escapeHTML(dm.intelligenceSource || "UNKNOWN")}
+        </div>
+      </div>
+
+      <div class="oi-detail-wide">
+        <strong>Why This Person Matters</strong>
+
+        <p>
+          ${escapeHTML(
+            dm.whyThisPersonMatters ||
+            "Decision-maker relevance has not been established."
+          )}
+        </p>
+      </div>
+
+      <div>
+        <strong>Recommended Action</strong>
+
+        <p>
+          ${escapeHTML(item.recommendedAction || "UNKNOWN")}
+        </p>
+
+        <span class="oi-muted">
+          Source:
+          ${escapeHTML(
+            item.recommendedActionSource || "UNKNOWN"
+          )}
+        </span>
+      </div>
+
+      <div>
+        <strong>Sales Angle</strong>
+
+        <p>
+          ${escapeHTML(item.salesAngle || "UNKNOWN")}
+        </p>
+
+        <span class="oi-muted">
+          Source:
+          ${escapeHTML(
+            item.salesAngleSource || "UNKNOWN"
+          )}
+        </span>
+      </div>
+
+      <div class="oi-detail-wide">
+        <strong>Score Breakdown</strong>
+
+        <pre>${escapeHTML(
+          JSON.stringify(
+            components,
+            null,
+            2
+          )
+        )}</pre>
+      </div>
+
+      <div class="oi-detail-wide">
+        <strong>Evidence</strong>
+
+        ${
+          evidence.length
+            ? evidence.map((e) => `
+                <div class="oi-evidence">
+
+                  <strong>
+                    ${escapeHTML(
+                      e.title ||
+                      "Untitled evidence"
+                    )}
+                  </strong>
+
+                  <div>
+                    ${escapeHTML(
+                      e.summary || ""
+                    )}
+                  </div>
+
+                  <div class="oi-muted">
+                    ${escapeHTML(
+                      e.evidenceLevel
+                    )}
+                    —
+                    ${escapeHTML(
+                      e.observedAt ||
+                      "UNKNOWN"
+                    )}
+                  </div>
+
+                  <div class="oi-link">
+                    ${escapeHTML(
+                      e.sourceUrl ||
+                      e.sourceName ||
+                      "Source UNKNOWN"
+                    )}
+                  </div>
+
+                </div>
+              `).join("")
+            : `
+              <div class="oi-muted">
+                No evidence recorded.
+              </div>
+            `
+        }
+      </div>
+
     </div>
   `;
-  box.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
+  box.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
