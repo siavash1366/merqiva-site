@@ -96,58 +96,86 @@
     <div class="card">
       <div class="oi-list-head">
         <div>
+          <h2>Opportunity Alerts</h2>
+          <div class="oi-muted">
+            Rule-based workflow alerts from stored opportunity data. This is not continuous external monitoring.
+          </div>
+        </div>
+        <div id="opportunityAlertSummary" class="oi-muted">0 active alerts</div>
+      </div>
+
+      <div id="opportunityAlerts" class="oi-grid">
+        <div class="wide oi-muted">Loading alerts...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="oi-list-head">
+        <div>
           <h2>Opportunities</h2>
           <div class="oi-muted">Score is a transparent initial heuristic, not a learned model.</div>
         </div>
-<div class="toolbar">
-  <select id="statusFilter">
-    <option value="">All statuses</option>
-    <option>New</option>
-    <option>Reviewed</option>
-    <option>Qualified</option>
-    <option>Outreach Ready</option>
-    <option>Contacted</option>
-    <option>Replied</option>
-    <option>Meeting</option>
-    <option>Opportunity</option>
-    <option>Won</option>
-    <option>Lost</option>
-    <option>Disqualified</option>
-  </select>
 
-  <input
-    id="minScoreFilter"
-    type="number"
-    min="0"
-    max="100"
-    placeholder="Min score"
-  >
+        <div class="toolbar">
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option>New</option>
+            <option>Reviewed</option>
+            <option>Qualified</option>
+            <option>Outreach Ready</option>
+            <option>Contacted</option>
+            <option>Replied</option>
+            <option>Meeting</option>
+            <option>Opportunity</option>
+            <option>Won</option>
+            <option>Lost</option>
+            <option>Disqualified</option>
+          </select>
 
-  <button
-    type="button"
-    id="filterBtn"
-  >
-    Filter
-  </button>
+          <input
+            id="minScoreFilter"
+            type="number"
+            min="0"
+            max="100"
+            placeholder="Min score"
+          >
 
-  <button
-    type="button"
-    id="exportCsvBtn"
-  >
-    Export CSV
-  </button>
+          <button
+            type="button"
+            id="filterBtn"
+          >
+            Filter
+          </button>
 
-  <button
-    type="button"
-    id="exportJsonBtn"
-  >
-    Export JSON
-  </button>
-</div> 
+          <button
+            type="button"
+            id="exportCsvBtn"
+          >
+            Export CSV
+          </button>
+
+          <button
+            type="button"
+            id="exportJsonBtn"
+          >
+            Export JSON
+          </button>
+        </div>
       </div>
+
       <div class="oi-table-wrap">
         <table>
-          <thead><tr><th>Score</th><th>Company</th><th>Product</th><th>Why Now</th><th>Decision Maker</th><th>Status</th><th>Action</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th>Company</th>
+              <th>Product</th>
+              <th>Why Now</th>
+              <th>Decision Maker</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
           <tbody id="opportunityTable"></tbody>
         </table>
       </div>
@@ -156,6 +184,7 @@
     <div id="detailCard" class="card hidden"></div>
   </div>
 </div>
+
 <script src="/admin/opportunities.js"></script>
 </body>
 </html>
