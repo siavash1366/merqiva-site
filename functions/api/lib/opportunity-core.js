@@ -11,7 +11,15 @@ export const OPPORTUNITY_STATUSES = [
   "Lost",
   "Disqualified"
 ];
-
+export const OPPORTUNITY_OUTCOME_TYPES = [
+  "Positive Reply",
+  "Negative Reply",
+  "Meeting Booked",
+  "Qualified Opportunity",
+  "Won",
+  "Lost",
+  "Disqualified"
+];
 export const DECISION_MAKER_VERIFICATION_STATUSES = [
   "VERIFIED",
   "PARTIAL",
@@ -141,7 +149,108 @@ export function deriveEvidenceQuality(evidence) {
 
   return 0;
 }
+// =======================
+// OUTCOME
+// =======================
 
+export function normalizeOutcome(outcome) {
+  if (!outcome) {
+    return null;
+  }
+
+  /*
+   * Backward compatibility:
+   * accept an older string outcome if it matches
+   * one of the supported outcome types.
+   */
+  if (typeof outcome === "string") {
+    const legacyType =
+      String(outcome).trim();
+
+    if (
+      !OPPORTUNITY_OUTCOME_TYPES.includes(
+        legacyType
+      )
+    ) {
+      return null;
+    }
+
+    return {
+      type: legacyType,
+      reason: "",
+      notes: "",
+      recordedAt: "",
+      source: "LEGACY"
+    };
+  }
+
+  if (
+    typeof outcome !== "object" ||
+    Array.isArray(outcome)
+  ) {
+    return null;
+  }
+
+  const type =
+    String(
+      outcome.type || ""
+    ).trim();
+
+  if (
+    !OPPORTUNITY_OUTCOME_TYPES.includes(
+      type
+    )
+  ) {
+    return null;
+  }
+
+  const suppliedRecordedAt =
+    String(
+      outcome.recordedAt || ""
+    ).trim();
+
+  const parsedRecordedAt =
+    Date.parse(
+      suppliedRecordedAt
+    );
+
+  const recordedAt =
+    Number.isFinite(
+      parsedRecordedAt
+    )
+      ? new Date(
+          parsedRecordedAt
+        ).toISOString()
+      : new Date().toISOString();
+
+  return {
+    type,
+
+    reason:
+      String(
+        outcome.reason || ""
+      )
+        .trim()
+        .slice(0, 1000),
+
+    notes:
+      String(
+        outcome.notes || ""
+      )
+        .trim()
+        .slice(0, 3000),
+
+    recordedAt,
+
+    source:
+      String(
+        outcome.source ||
+        "MANUAL"
+      )
+        .trim()
+        .slice(0, 80)
+  };
+}
 
 // =======================
 // WHY NOW
@@ -832,7 +941,10 @@ export function normalizeOpportunityPayload(
 
       evidence
     });
-
+const outcome =
+  normalizeOutcome(
+    input.outcome
+  );
   const whyNow =
     String(
       input.whyNow || ""
@@ -1133,17 +1245,19 @@ export function normalizeOpportunityPayload(
     salesAngleSource,
 
     outreachDraft:
-      String(
-        input.outreachDraft || ""
-      )
-        .trim()
-        .slice(0, 5000),
+  String(
+    input.outreachDraft || ""
+  )
+    .trim()
+    .slice(0, 5000),
 
-    status:
-      OPPORTUNITY_STATUSES.includes(
-        input.status
-      )
-        ? input.status
-        : "New"
+outcome,
+
+status:
+  OPPORTUNITY_STATUSES.includes(
+    input.status
+  )
+    ? input.status
+    : "New"
   };
 }
