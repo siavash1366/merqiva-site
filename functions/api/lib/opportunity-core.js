@@ -24,6 +24,7 @@ export const SCORE_WEIGHTS = Object.freeze({
   timingUrgency: 5
 });
 
+
 function clampScore(value) {
   const number = Number(value);
 
@@ -277,6 +278,153 @@ export function deriveRecommendedAction({
 
 
 // =======================
+// SALES ANGLE
+// =======================
+
+function deriveRoleFocus(
+  decisionMakerRole
+) {
+  const role =
+    String(
+      decisionMakerRole || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    role.includes("technical") ||
+    role.includes("engineer") ||
+    role.includes("engineering") ||
+    role.includes("superintendent")
+  ) {
+    return (
+      "technical fit, operational requirements, integration constraints, " +
+      "and implementation timing"
+    );
+  }
+
+  if (
+    role.includes("procurement") ||
+    role.includes("purchasing") ||
+    role.includes("buyer") ||
+    role.includes("commercial")
+  ) {
+    return (
+      "specification fit, supplier qualification, commercial requirements, " +
+      "and procurement timing"
+    );
+  }
+
+  if (
+    role.includes("fleet") ||
+    role.includes("operations") ||
+    role.includes("operation")
+  ) {
+    return (
+      "operational fit, fleet requirements, deployment constraints, " +
+      "and implementation timing"
+    );
+  }
+
+  if (
+    role.includes("owner") ||
+    role.includes("chief") ||
+    role.includes("ceo") ||
+    role.includes("director") ||
+    role.includes("general manager")
+  ) {
+    return (
+      "business relevance, operational priority, evaluation criteria, " +
+      "and decision timing"
+    );
+  }
+
+  return (
+    "current requirements, operational fit, evaluation criteria, " +
+    "and decision timing"
+  );
+}
+
+
+export function deriveSalesAngle({
+  productName = "",
+  decisionMakerRole = "UNKNOWN",
+  opportunityScore = 0,
+  whyNowConfidence = "LOW",
+  evidence = []
+} = {}) {
+  const product =
+    String(
+      productName || ""
+    ).trim() || "the offering";
+
+  const role =
+    String(
+      decisionMakerRole || ""
+    ).trim() || "the identified decision maker";
+
+  const score =
+    clampScore(
+      opportunityScore
+    );
+
+  const verifiedEvidence =
+    normalizeEvidence(evidence)
+      .filter(
+        (item) =>
+          item.evidenceLevel ===
+          "VERIFIED FACT"
+      );
+
+  const roleFocus =
+    deriveRoleFocus(
+      role
+    );
+
+  if (!verifiedEvidence.length) {
+    return (
+      `Do not make a direct sales claim for ${product} yet. ` +
+      `Use a discovery-led approach with the ${role} to verify the buying signal, ` +
+      `current need, and ${roleFocus}.`
+    );
+  }
+
+  if (
+    whyNowConfidence === "LOW"
+  ) {
+    return (
+      `Position ${product} around the verified evidence, but treat timing as unconfirmed. ` +
+      `With the ${role}, focus on validating ${roleFocus}.`
+    );
+  }
+
+  if (
+    score >= 75 &&
+    whyNowConfidence === "HIGH"
+  ) {
+    return (
+      `Position ${product} around the verified recent trigger. ` +
+      `For the ${role}, focus on ${roleFocus}. ` +
+      `Use the evidence as the reason for the conversation, not as proof of purchase intent.`
+    );
+  }
+
+  if (score >= 60) {
+    return (
+      `Use the verified signal to open a discovery conversation about ${product}. ` +
+      `With the ${role}, validate ${roleFocus} before making a stronger commercial proposition.`
+    );
+  }
+
+  return (
+    `Use a low-pressure discovery angle for ${product}. ` +
+    `Reference only the verified evidence and ask the ${role} to clarify ${roleFocus} ` +
+    `before treating this as an active buying opportunity.`
+  );
+}
+
+
+// =======================
 // OPPORTUNITY SCORE
 // =======================
 
@@ -385,12 +533,9 @@ export function normalizeOpportunityPayload(
     );
 
   /*
-   * Important:
-   * These fallback mappings preserve scoring inputs
-   * when an existing Opportunity is PATCHed.
-   *
-   * Without these fallbacks, changing only Status
-   * could accidentally reset parts of the Score.
+   * Preserve original scoring inputs during PATCH.
+   * This prevents status-only updates from
+   * accidentally resetting the Opportunity Score.
    */
   const scoring =
     calculateOpportunityScore({
@@ -463,13 +608,19 @@ export function normalizeOpportunityPayload(
       whyNow
     );
 
+  const decisionMakerRole =
+    String(
+      input.decisionMaker
+        ?.role ||
+      "UNKNOWN"
+    )
+      .trim()
+      .slice(0, 200);
+
   /*
-   * Recommended Action rules:
-   *
-   * - A manually entered recommendation is preserved.
-   * - A SYSTEM_RULES recommendation is recalculated
-   *   whenever the Opportunity changes.
-   * - Empty recommendations are generated automatically.
+   * Recommended Action:
+   * manual values are preserved.
+   * SYSTEM_RULES values are recalculated.
    */
   const suppliedRecommendedAction =
     String(
@@ -504,6 +655,47 @@ export function normalizeOpportunityPayload(
 
   const recommendedActionSource =
     isManualRecommendedAction
+      ? "MANUAL"
+      : "SYSTEM_RULES";
+
+  /*
+   * Sales Angle:
+   * manual values are preserved.
+   * SYSTEM_RULES values are recalculated.
+   */
+  const suppliedSalesAngle =
+    String(
+      input.salesAngle || ""
+    )
+      .trim()
+      .slice(0, 2000);
+
+  const isManualSalesAngle =
+    Boolean(
+      suppliedSalesAngle
+    ) &&
+    input.salesAngleSource !==
+      "SYSTEM_RULES";
+
+  const salesAngle =
+    isManualSalesAngle
+      ? suppliedSalesAngle
+      : deriveSalesAngle({
+          productName:
+            input.productName,
+
+          decisionMakerRole,
+
+          opportunityScore:
+            scoring.score,
+
+          whyNowConfidence,
+
+          evidence
+        });
+
+  const salesAngleSource =
+    isManualSalesAngle
       ? "MANUAL"
       : "SYSTEM_RULES";
 
@@ -592,13 +784,7 @@ export function normalizeOpportunityPayload(
           .slice(0, 200),
 
       role:
-        String(
-          input.decisionMaker
-            ?.role ||
-          "UNKNOWN"
-        )
-          .trim()
-          .slice(0, 200),
+        decisionMakerRole,
 
       relevance:
         clampScore(
@@ -644,12 +830,9 @@ export function normalizeOpportunityPayload(
 
     recommendedActionSource,
 
-    salesAngle:
-      String(
-        input.salesAngle || ""
-      )
-        .trim()
-        .slice(0, 2000),
+    salesAngle,
+
+    salesAngleSource,
 
     outreachDraft:
       String(
