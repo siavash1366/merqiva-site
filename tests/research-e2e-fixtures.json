@@ -1,0 +1,19 @@
+{
+  "job": {
+    "productName": "Maritime GMDSS equipment",
+    "targetMarket": "UAE GCC",
+    "researchQuestion": "Find public, recent commercial signals from maritime companies relevant to GMDSS equipment. Use only verifiable public evidence.",
+    "targetCompanyTypes": ["ship management", "ship operator"],
+    "targetVesselTypes": ["commercial vessel"],
+    "relevantSignals": ["fleet expansion", "new vessel", "port activity", "procurement announcement"],
+    "targetDecisionMakerRoles": ["procurement manager", "technical manager", "fleet manager"],
+    "maxOpportunities": 2,
+    "language": "en"
+  },
+  "expectedRules": {
+    "unknownPersonPolicy": "Use UNKNOWN when not verified",
+    "evidenceRequired": true,
+    "noAutomaticOutreach": true,
+    "sourceRestriction": "configured authorized sources only"
+  }
+}
