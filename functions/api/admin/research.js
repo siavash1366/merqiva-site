@@ -45,7 +45,15 @@ export async function onRequestGet(context) {
       const job = await env.LEADS_KV.get("research:job:" + id, { type: "json" });
       if (job) jobs.push(job);
     }
-    return jsonResponse({ success: true, jobs });
+    return jsonResponse({
+      success: true,
+      jobs,
+      configuration: {
+        n8nConfigured: Boolean(env.RESEARCH_N8N_WEBHOOK_URL),
+        callbackSecretConfigured: Boolean(env.RESEARCH_CALLBACK_SECRET),
+        dispatchSecretConfigured: Boolean(env.RESEARCH_N8N_WEBHOOK_SECRET)
+      }
+    });
   } catch (error) {
     console.error("Research jobs GET error:", error);
     return jsonResponse({ success: false, error: "Failed to load research jobs" }, 500);
@@ -63,14 +71,13 @@ export async function onRequestPost(context) {
     const targetMarket = clean(body.targetMarket, 500);
 
     if (!productName || !researchQuestion) {
-      return jsonResponse({
-        success: false,
-        error: "productName and researchQuestion are required"
-      }, 400);
+      return jsonResponse({ success: false, error: "productName and researchQuestion are required" }, 400);
     }
 
     const id = "RES" + Date.now();
     const now = new Date().toISOString();
+    const n8nConfigured = Boolean(env.RESEARCH_N8N_WEBHOOK_URL);
+    const callbackConfigured = Boolean(env.RESEARCH_CALLBACK_SECRET);
 
     const job = {
       id,
@@ -87,19 +94,24 @@ export async function onRequestPost(context) {
       targetDecisionMakerRoles: list(body.targetDecisionMakerRoles),
       maxOpportunities: Math.max(1, Math.min(25, Number(body.maxOpportunities) || 10)),
       language: ["en", "ar"].includes(body.language) ? body.language : "en",
-      dispatch: {
-        provider: env.RESEARCH_N8N_WEBHOOK_URL ? "N8N" : "NOT_CONFIGURED"
-      },
+      dispatch: { provider: n8nConfigured ? "N8N" : "NOT_CONFIGURED" },
       resultCount: 0
     };
 
     await env.LEADS_KV.put("research:job:" + id, JSON.stringify(job));
-
     const index = await getIndex(env);
     index.push(id);
     await saveIndex(env, index);
 
-    if (env.RESEARCH_N8N_WEBHOOK_URL) {
+    if (n8nConfigured && !callbackConfigured) {
+      job.status = "CONFIGURATION_REQUIRED";
+      job.dispatch.error = "RESEARCH_CALLBACK_SECRET is not configured.";
+      job.updatedAt = new Date().toISOString();
+      await env.LEADS_KV.put("research:job:" + id, JSON.stringify(job));
+      return jsonResponse({ success: false, error: "Research callback secret is not configured", job }, 503);
+    }
+
+    if (n8nConfigured) {
       try {
         const dispatchResponse = await fetch(env.RESEARCH_N8N_WEBHOOK_URL, {
           method: "POST",
@@ -112,7 +124,7 @@ export async function onRequestPost(context) {
           body: JSON.stringify({
             jobId: id,
             callbackUrl: new URL("/api/research/callback", request.url).toString(),
-            callbackSecretConfigured: Boolean(env.RESEARCH_CALLBACK_SECRET),
+            callbackSecretConfigured: true,
             job
           })
         });
