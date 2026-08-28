@@ -1,3 +1,0 @@
-Contact: mailto:security@merqivaintel.com
-Preferred-Languages: en
-Canonical: https://merqivaintel.com/.well-known/security.txt
