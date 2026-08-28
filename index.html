@@ -9,16 +9,15 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
-<!-- Merqiva Website v1.4 — secure direct contact form with Turnstile -->
 <nav><div class="container nav">
 <a class="brand" href="#top">MER<span>Q</span>IVA</a>
 <div class="links">
-<a href="#intelligence" data-t="nav1">Intelligence</a><a href="#sample" data-t="nav2">Sample</a><a href="#process" data-t="nav3">How It Works</a><a href="#offer" data-t="nav4">Pricing</a><a href="#contact" data-t="nav5">Contact</a>
+<a href="#intelligence">Intelligence</a><a href="#sample">Sample</a><a href="#process">How It Works</a><a href="#guarantee">Quality Promise</a><a href="#offer">Pricing</a><a href="#contact">Contact</a>
 </div>
 <div class="nav-actions">
 <div class="langs" aria-label="Language selector"><button type="button" class="lang active" data-lang="en" aria-label="English">EN</button><button type="button" class="lang" data-lang="ar" aria-label="العربية">العربية</button></div>
-<a href="#contact" class="btn primary desktop-cta" data-t="cta">Get 10 Free Opportunities</a>
-<a href="#contact" class="btn primary mobile-cta" data-t="mcta">Get Free Sample</a>
+<a href="#contact" class="btn primary desktop-cta">Get 10 Free Opportunities</a>
+<a href="#contact" class="btn primary mobile-cta">Get Free Sample</a>
 </div>
 </div></nav>
 
@@ -80,6 +79,16 @@
 <div class="step"><div class="step-no" data-t="step4">STEP 04</div><h3 data-t="s4h">Your team starts targeted outreach</h3><p data-t="s4p">Contact better-fit accounts with better timing.</p></div>
 </div></div></section>
 
+<section class="guarantee-section" id="guarantee"><div class="container">
+<div class="section-head"><div class="kicker">Quality Promise</div><h2>We guarantee the quality of the opportunity definition — not a customer's sales outcome.</h2><p>Every delivered opportunity is designed to meet published qualification criteria. If an opportunity fails those criteria, the delivery can be reviewed for replacement under the service policy.</p></div>
+<div class="guarantee-grid">
+<div class="guarantee-card"><span class="guarantee-mark">01</span><h3>Qualification threshold</h3><p>Opportunities are prioritized using company fit, product fit, fleet fit, buying-signal strength, recency, commercial relevance and timing.</p></div>
+<div class="guarantee-card"><span class="guarantee-mark">02</span><h3>Evidence-first</h3><p>Key claims are separated into verified facts, inferences and unknowns. Sources are recorded so the customer can inspect the reasoning.</p></div>
+<div class="guarantee-card"><span class="guarantee-mark">03</span><h3>Replacement policy</h3><p>If a delivered opportunity does not meet the agreed qualification criteria, Merqiva can replace the affected opportunity instead of pretending that every lead is equally valuable.</p></div>
+</div>
+<div class="guarantee-note"><strong>Important:</strong> This promise covers Merqiva's defined research and qualification criteria. It does not guarantee replies, meetings, contracts, revenue or a customer's sales performance.</div>
+</div></section>
+
 <section class="problem" id="offer"><div class="container"><div class="pricing">
 <div class="kicker" data-t="offer">Maritime Opportunity Intelligence</div><div class="price"><strong data-t="price">$299</strong><span data-t="month">/ month</span></div>
 <p class="muted" data-t="offerp">A focused monthly research service for maritime suppliers targeting vessel operators and buyers across the GCC.</p>
@@ -95,10 +104,7 @@
 <section class="problem" id="contact"><div class="container contact-grid">
 <div class="contact-copy"><div class="kicker" data-t="contact">Contact Us</div><h2 data-t="contacth">Tell us what you sell and where you want to grow.</h2><p data-t="contactp">Share a few details about your company, products and target GCC market. We’ll use that context to understand whether Merqiva can support your sales team.</p>
 <div class="details">
-<div class="contact-detail">
-<small data-t="email">Sales inquiries</small>
-<strong><a href="mailto:sales@merqivaintel.com">sales@merqivaintel.com</a></strong>
-</div>
+<div class="contact-detail"><small data-t="email">Sales inquiries</small><strong><a href="mailto:sales@merqivaintel.com">sales@merqivaintel.com</a></strong></div>
 <div class="contact-detail"><small data-t="focus">Current focus</small><strong data-t="focusv">GCC Maritime Sales Intelligence</strong></div>
 <div class="contact-detail"><small data-t="coverage">Coverage</small><strong data-t="coveragev">UAE · Saudi Arabia · Oman · Qatar · Kuwait · Bahrain</strong></div>
 </div></div>
@@ -113,43 +119,13 @@
 <div class="group full"><label data-t="target">Target GCC Market</label><select class="control" name="market"><option value="" data-t="select">Select a market</option><option value="UAE" data-t="uae">UAE</option><option value="Saudi Arabia" data-t="saudi">Saudi Arabia</option><option value="Oman" data-t="oman">Oman</option><option value="Qatar" data-t="qatar">Qatar</option><option value="Kuwait" data-t="kuwait">Kuwait</option><option value="Bahrain" data-t="bahrain">Bahrain</option><option value="Multiple GCC markets" data-t="multiple">Multiple GCC markets</option></select></div>
 <div class="group full"><label data-t="message">Message</label><textarea class="control" name="message"></textarea></div>
 </div>
-<div class="turnstile-wrap">
-<div class="cf-turnstile"
-     data-sitekey="0x4AAAAAAESBkOeaHlh4PC_C"
-     data-theme="dark"
-     data-size="flexible"
-     data-action="contact"></div>
-</div>
-<div class="form-actions">
-<button class="btn primary" id="submitBtn" type="submit" data-t="send">Send Inquiry</button>
-<span class="form-note" data-t="formnote">Your inquiry will be sent securely to Merqiva.</span>
-</div>
+<div class="turnstile-wrap"><div class="cf-turnstile" data-sitekey="0x4AAAAAAESBkOeaHlh4PC_C" data-theme="dark" data-size="flexible" data-action="contact"></div></div>
+<div class="form-actions"><button class="btn primary" id="submitBtn" type="submit" data-t="send">Send Inquiry</button><span class="form-note" data-t="formnote">Your inquiry will be sent securely to Merqiva.</span></div>
 <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
 </form>
 </div></section>
 </main>
-<footer>
-  <div class="container footer">
-    <div>
-      © 2026 Merqiva.
-      <span data-t="rights">All rights reserved.</span>
-    </div>
-
-    <div class="footer-links">
-      <a href="#contact" data-t="nav5">Contact</a>
-
-     <a href="mailto:sales@merqivaintel.com">
-  sales@merqivaintel.com
-</a>
-
-      <span data-t="tag">
-        GCC Maritime Sales Intelligence
-      </span>
-    </div>
-  </div>
-</footer>
-
+<footer><div class="container footer"><div>© 2026 Merqiva. <span data-t="rights">All rights reserved.</span></div><div class="footer-links"><a href="#contact" data-t="nav5">Contact</a><a href="mailto:sales@merqivaintel.com">sales@merqivaintel.com</a><span data-t="tag">GCC Maritime Sales Intelligence</span></div></div></footer>
 <script src="/app.js" defer></script>
-
 </body>
 </html>
