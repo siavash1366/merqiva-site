@@ -21,13 +21,22 @@ jobs:
           find . -type f -name '*.js' -not -path './node_modules/*' -print0 | while IFS= read -r -d '' file; do
             node --check "$file"
           done
-      - name: Check required public pages
+      - name: Check required product files
         shell: bash
         run: |
+          set -e
           test -f index.html
+          test -f 404.html
           test -f privacy.html
           test -f terms.html
+          test -f _headers
+          test -f robots.txt
+          test -f sitemap.xml
+          test -f admin/index.html
           test -f admin/operations.html
+          test -f admin/opportunities.html
+          test -f functions/api/contact.js
+          test -f functions/api/health.js
           test -f functions/api/signals/ingest.js
           test -f functions/api/admin/monitoring.js
           test -f functions/api/admin/guarantee.js
@@ -36,7 +45,26 @@ jobs:
           test -f functions/api/research/callback.js
           test -f admin/operations.js
           test -f admin/operations.css
+          test -f admin/opportunities.js
+          test -f admin/opportunities.css
           test -f n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json
+      - name: Validate public HTML contracts
+        shell: bash
+        run: |
+          set -e
+          grep -q '<title>' index.html
+          grep -q 'id="contact"' index.html
+          grep -q 'action="/api/contact"' index.html
+          grep -q 'href="/styles.css"' index.html
+          grep -q 'href="/privacy.html"' index.html
+          grep -q 'href="/terms.html"' index.html
       - name: Validate n8n workflow JSON
         shell: bash
         run: node -e "const fs=require('fs'); const w=JSON.parse(fs.readFileSync('n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json','utf8')); if(!Array.isArray(w.nodes)||!w.connections) throw new Error('Invalid n8n workflow shape'); console.log('n8n workflow JSON OK');"
+      - name: Validate security headers file
+        shell: bash
+        run: |
+          set -e
+          grep -q 'X-Content-Type-Options: nosniff' _headers
+          grep -q 'X-Frame-Options: DENY' _headers
+          grep -q 'Content-Security-Policy:' _headers
