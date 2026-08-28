@@ -52,12 +52,13 @@ jobs:
         shell: bash
         run: |
           set -e
-          grep -q '<title>' index.html
+          grep -q '<title>Merqiva' index.html
           grep -q 'id="contact"' index.html
           grep -q 'action="/api/contact"' index.html
           grep -q 'href="/styles.css"' index.html
-          grep -q 'href="/privacy.html"' index.html
-          grep -q 'href="/terms.html"' index.html
+          grep -q '<meta name="description"' index.html
+          grep -q '<meta name="robots"' privacy.html
+          grep -q '<meta name="robots"' terms.html
       - name: Validate n8n workflow JSON
         shell: bash
         run: node -e "const fs=require('fs'); const w=JSON.parse(fs.readFileSync('n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json','utf8')); if(!Array.isArray(w.nodes)||!w.connections) throw new Error('Invalid n8n workflow shape'); console.log('n8n workflow JSON OK');"
