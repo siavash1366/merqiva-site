@@ -35,6 +35,9 @@ jobs:
           test -f admin/index.html
           test -f admin/operations.html
           test -f admin/opportunities.html
+          test -f admin/performance.css
+          test -f admin/performance.js
+          test -f admin/performance.html
           test -f functions/api/contact.js
           test -f functions/api/health.js
           test -f functions/api/signals/ingest.js
