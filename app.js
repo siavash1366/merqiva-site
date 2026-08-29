@@ -11,18 +11,18 @@ const T = {
 
     eyebrow: "GCC MARITIME SALES INTELLIGENCE",
 
-    h1a: "Find GCC Maritime Buyers Worth Contacting",
-    h1b: "— and Know Why Now.",
+    h1a: "Turn Market Signals Into Sales Opportunities",
+    h1b: "— with Evidence, Fit and Timing.",
 
     hero:
-      "Merqiva researches vessel operators, fleets, decision-makers and buying signals to identify maritime sales opportunities your team can prioritize with confidence.",
+      "Merqiva turns public market signals into evidence-backed sales opportunities — matched to your product, buyer, timing and next action.",
 
     samplecta: "View Sample Opportunity",
 
     note:
-      "Built for marine equipment suppliers, service providers and maritime sales teams targeting the GCC.",
+      "Built for maritime suppliers, service providers and sales teams that need qualified opportunities — not generic lead lists.",
 
-    olabel: "Opportunity Intelligence",
+    olabel: "AI-Powered Opportunity Intelligence",
     priority: "HIGH PRIORITY",
     ocompany: "GCC Offshore Vessel Operator",
 
@@ -45,9 +45,15 @@ const T = {
     why: "Why Now",
     whyv: "New vessel activity creates qualification timing",
 
+    hp1: "Signal", hp2: "Evidence", hp3: "Qualified Opportunity", hp4: "Sales Action",
+    scorelabel: "Opportunity Score", scoremeta: "High-fit · recent signal · buyer path identified",
+    bar1: "Detect", bar1p: "Market & buying signals",
+    bar2: "Verify", bar2p: "Evidence & source quality",
+    bar3: "Qualify", bar3p: "Fit, timing & decision maker",
+    bar4: "Act", bar4p: "Next-best sales action",
     beyond: "Beyond generic lead lists",
 
-    ih: "Sales intelligence built around buying relevance.",
+    ih: "From market signals to sales-ready opportunities.",
 
     id:
       "A company name and email address are not enough. Merqiva connects fleet intelligence, product relevance, decision-makers and current market signals.",
@@ -56,7 +62,7 @@ const T = {
     fv: "Fleet & Vessel Type",
 
     receive: "What you receive",
-    rh: "Research your sales team can act on.",
+    rh: "From raw signals to sales-ready opportunities.",
 
     f1h: "Target Company Research",
     f1p:
@@ -80,7 +86,7 @@ const T = {
 
     f6h: "Sales Angle & Priority",
     f6p:
-      "Why the account matters now, suggested outreach angle and a consistent opportunity priority.",
+      "Why the account matters now, recommended next action and a consistent opportunity priority.",
 
     sk: "Sample opportunity",
 
@@ -123,7 +129,7 @@ const T = {
     s4h: "Your team starts targeted outreach",
     s4p: "Contact better-fit accounts with better timing.",
 
-    offer: "Maritime Opportunity Intelligence",
+    offer: "AI-Powered Maritime Opportunity Intelligence",
     price: "$299",
     month: "/ month",
 
@@ -148,10 +154,10 @@ const T = {
     about: "About Merqiva",
 
     abouth:
-      "Independent B2B sales intelligence for complex markets.",
+      "An AI-assisted intelligence layer for complex B2B sales.",
 
     aboutp:
-      "Merqiva is an independent B2B sales intelligence service, initially focused on the GCC maritime sector. We combine public-source research, commercial relevance and structured qualification to help sales teams focus on accounts worth pursuing.",
+      "Merqiva combines public-source research, AI-assisted analysis and transparent qualification to turn market activity into prioritized commercial opportunities for maritime sales teams.",
 
     a1h: "Research-led",
     a1p:
@@ -238,18 +244,18 @@ const T = {
 
     eyebrow: "استخبارات المبيعات البحرية في دول الخليج",
 
-    h1a: "اعثر على المشترين البحريين المناسبين في الخليج",
-    h1b: "وتواصل معهم في الوقت المناسب.",
+    h1a: "حوّل إشارات السوق إلى فرص مبيعات",
+    h1b: "مدعومة بالأدلة والملاءمة والتوقيت.",
 
     hero:
-      "تُجري Merqiva أبحاثًا حول مشغلي السفن والأساطيل وصنّاع القرار وإشارات الشراء، لتحديد فرص مبيعات بحرية يستطيع فريقك ترتيبها حسب الأولوية بثقة.",
+      "تحوّل Merqiva إشارات السوق العامة إلى فرص مبيعات مدعومة بالأدلة، ومطابقة لمنتجك والمشتري والتوقيت والخطوة التالية.",
 
     samplecta: "عرض نموذج فرصة",
 
     note:
-      "موجّه لموردي المعدات البحرية ومقدمي الخدمات وفرق المبيعات التي تستهدف أسواق دول الخليج.",
+      "مصممة لموردي القطاع البحري ومقدمي الخدمات وفرق المبيعات التي تحتاج إلى فرص مؤهلة، وليس قوائم عملاء عامة.",
 
-    olabel: "استخبارات الفرص البيعية",
+    olabel: "استخبارات الفرص المدعومة بالذكاء الاصطناعي",
     priority: "أولوية عالية",
     ocompany: "مشغّل سفن دعم بحري في الخليج",
 
@@ -273,10 +279,16 @@ const T = {
     whyv:
       "نشاط السفن الجديدة يوفّر توقيتًا مناسبًا للتواصل",
 
+    hp1: "إشارة", hp2: "دليل", hp3: "فرصة مؤهلة", hp4: "إجراء مبيعات",
+    scorelabel: "درجة الفرصة", scoremeta: "ملاءمة عالية · إشارة حديثة · مسار المشتري محدد",
+    bar1: "اكتشاف", bar1p: "إشارات السوق والشراء",
+    bar2: "تحقق", bar2p: "جودة الأدلة والمصادر",
+    bar3: "تأهيل", bar3p: "الملاءمة والتوقيت وصانع القرار",
+    bar4: "إجراء", bar4p: "أفضل إجراء مبيعات تالي",
     beyond: "أبعد من قوائم العملاء المحتملين العامة",
 
     ih:
-      "استخبارات مبيعات تركّز على الفرص ذات الصلة والتوقيت المناسب.",
+      "من إشارات السوق إلى فرص مبيعات جاهزة للتنفيذ.",
 
     id:
       "اسم الشركة والبريد الإلكتروني لا يكفيان. تربط Merqiva بين معلومات الأسطول وملاءمة المنتج وصنّاع القرار وإشارات السوق الحالية.",
@@ -285,7 +297,7 @@ const T = {
     fv: "الأسطول ونوع السفينة",
 
     receive: "ما الذي تحصل عليه",
-    rh: "أبحاث يستطيع فريق المبيعات استخدامها مباشرة.",
+    rh: "من الإشارة الخام إلى الفرصة الجاهزة للمبيعات.",
 
     f1h: "البحث عن الشركات المستهدفة",
     f1p:
@@ -309,7 +321,7 @@ const T = {
 
     f6h: "زاوية المبيعات والأولوية",
     f6p:
-      "لماذا يهم هذا الحساب الآن، وما زاوية التواصل المقترحة، وما مستوى الأولوية المناسب.",
+      "لماذا يهم هذا الحساب الآن، وما الإجراء التالي المقترح، وما مستوى الأولوية المناسب.",
 
     sk: "نموذج فرصة",
 
@@ -355,7 +367,7 @@ const T = {
     s4p:
       "تواصل مع الحسابات الأكثر ملاءمة وفي توقيت أفضل.",
 
-    offer: "استخبارات الفرص البحرية",
+    offer: "استخبارات فرص مبيعات بحرية مدعومة بالذكاء الاصطناعي",
     price: "299 دولارًا",
     month: "شهريًا",
 
@@ -380,10 +392,10 @@ const T = {
     about: "عن Merqiva",
 
     abouth:
-      "استخبارات مبيعات مستقلة بين الشركات (B2B) للأسواق المعقدة.",
+      "طبقة استخبارات مدعومة بالذكاء الاصطناعي للمبيعات المعقدة بين الشركات.",
 
     aboutp:
-      "Merqiva خدمة مستقلة لاستخبارات مبيعات الشركات، وتركّز في البداية على القطاع البحري في دول الخليج. نجمع بين البحث في المصادر العامة والملاءمة التجارية والتأهيل المنظم لمساعدة فرق المبيعات على التركيز على الحسابات التي تستحق المتابعة.",
+      "تجمع Merqiva بين البحث في المصادر العامة والتحليل المدعوم بالذكاء الاصطناعي والتأهيل الشفاف لتحويل نشاط السوق إلى فرص تجارية مرتبة حسب الأولوية لفرق المبيعات البحرية.",
 
     a1h: "قائم على البحث",
     a1p:
