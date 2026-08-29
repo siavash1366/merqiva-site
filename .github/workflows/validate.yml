@@ -35,11 +35,19 @@ jobs:
           test -f admin/index.html
           test -f admin/operations.html
           test -f admin/opportunities.html
+          test -f admin/performance.css
+          test -f admin/performance.js
+          test -f admin/performance.html
           test -f functions/api/contact.js
           test -f functions/api/health.js
           test -f functions/api/signals/ingest.js
           test -f functions/api/admin/monitoring.js
           test -f functions/api/admin/guarantee.js
+          test -f functions/api/admin/billing.js
+          test -f functions/api/admin/guarantee-claim.js
+          test -f functions/api/admin/metrics.js
+          test -f functions/api/admin/opportunity-outcome.js
+          test -f functions/api/admin/opportunity-action.js
           test -f functions/api/admin/research.js
           test -f functions/api/admin/system-check.js
           test -f functions/api/research/callback.js

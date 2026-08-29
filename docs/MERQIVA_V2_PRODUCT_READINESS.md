@@ -90,3 +90,24 @@ Before activation:
 - only then activate scheduled/continuous research.
 
 This starter workflow is intentionally conservative: it is not a general web crawler and does not claim unrestricted source access. Add additional permitted source connectors only after validating their terms and data rights.
+
+## Final-product implementation status (excluding n8n activation)
+Implemented in the final-product branch/main path:
+- strategic public positioning: Signal → Evidence → Qualified Opportunity → Sales Action
+- transparent opportunity scoring and qualification gate
+- evidence-first research boundaries and decision-maker verification
+- sales action pack with recommended person/channel, sales angle, outreach draft and follow-ups
+- structured opportunity outcome capture
+- commercial performance metrics and outcome summaries
+- measurable guarantee-claim workflow
+- provider-neutral billing plans/readiness surface (actual payment provider activation remains external configuration)
+- public Privacy and Service Terms
+- operations and quality dashboard
+- automated validation for required product files and n8n workflow contract
+
+Not implemented/activated because they require external infrastructure or live credentials:
+- live n8n activation and source connector configuration
+- payment-provider account/checkout activation
+- production end-to-end test against live external sources
+- learned/predictive ranking trained on meaningful historical customer outcomes
+- self-service multi-tenant SaaS billing/authentication
