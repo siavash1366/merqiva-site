@@ -37,17 +37,7 @@ function buildAction(item){
   const evidenceLead=verifiedFacts.length?verifiedFacts.join(" "):whyNow;
   const greeting=role==="UNKNOWN"?"Hello,":"Hello "+role+",";
   const subject="Relevant opportunity for "+company;
-  const email=[greeting,
-    "",
-    "We noticed "+evidenceLead,
-    "",
-    "Given "+company+"'s apparent relevance to "+product+", I thought it may be useful to connect and understand whether this is currently on your team's radar.",
-    "",
-    "Would a brief conversation next week be appropriate?",
-    "",
-    "Best regards"
-  ].join("
-");
+  const email=[greeting,"","We noticed "+evidenceLead,"","Given "+company+"'s apparent relevance to "+product+", I thought it may be useful to connect and understand whether this is currently on your team's radar.","","Would a brief conversation next week be appropriate?","","Best regards"].join("\\n");
   const linkedin=[
     greeting,
     "I’m reaching out because of a recent, publicly reported development relevant to "+company+".",
