@@ -20,7 +20,7 @@ export async function onRequestGet(context){
    const lastSignals=opps.filter(o=>o.ingestion?.source||o.buyingSignals?.length).sort((a,b)=>Date.parse(b.updatedAt||0)-Date.parse(a.updatedAt||0)).slice(0,10);
    return json({success:true,metrics:{
      leads:leads.length,opportunities:opps.length,qualifiedOpportunities:q.length,
-     outcomes:outcomes.length,replies,meetings,won:w​​on.length,
+     outcomes:outcomes.length,replies,meetings,won:won.length,
      replyRate:outcomes.length?Math.round(replies/outcomes.length*100):0,
      meetingRate:outcomes.length?Math.round(meetings/outcomes.length*100):0,
      evidenceCoverage:opps.length?Math.round(evidenceComplete/opps.length*100):0,
