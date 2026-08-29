@@ -33,6 +33,10 @@ jobs:
           test -f robots.txt
           test -f sitemap.xml
           test -f admin/index.html
+          test -f admin/campaigns.html
+          test -f admin/campaigns.js
+          test -f admin/campaign-audience.html
+          test -f admin/campaign-audience.js
           test -f admin/operations.html
           test -f admin/opportunities.html
           test -f admin/performance.css
@@ -51,6 +55,7 @@ jobs:
           test -f functions/api/admin/research.js
           test -f functions/api/admin/system-check.js
           test -f functions/api/research/callback.js
+          test -f functions/api/webhooks/resend.js
           test -f admin/operations.js
           test -f admin/operations.css
           test -f admin/opportunities.js
