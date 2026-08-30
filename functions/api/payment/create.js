@@ -14,7 +14,7 @@ export async function onRequestPost(context){
   if(!/^\S+@\S+\.\S+$/.test(email))return J({success:false,error:"Valid customer email is required"},400);
   const invoiceId="MQV-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,8).toUpperCase();
   const orderNumber=invoiceId;
-  const invoice={invoiceId,orderNumber,serviceName:clean(b.serviceName,240),amount:Number(amount.toFixed(2)),currency,status:"PENDING",customerName:clean(b.customerName,240),customerEmail:email,createdAt:new Date().toISOString(),provider:"YEKPAY"};
+  const invoice={invoiceId,orderNumber,serviceName:clean(b.serviceName,240),amount:Number(amount.toFixed(2)),currency,status:"PENDING",customerName:clean(b.customerName,240),customerEmail:email,opportunityId:clean(b.opportunityId,160)||null,createdAt:new Date().toISOString(),provider:"YEKPAY"};
   const callback=new URL("/api/payment/yekpay-callback",request.url).toString();
   const form=new URLSearchParams();
   form.set("merchantId",env.YEKPAY_MERCHANT_ID);
