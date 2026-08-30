@@ -16,6 +16,16 @@ export async function onRequestPost(context){
   if(String(status).toLowerCase()!=="1"&&String(status).toLowerCase()!=="success") {
     invoice.status="CANCELLED";invoice.updatedAt=new Date().toISOString();
     await env.LEADS_KV.put("payment_invoice:"+invoiceId,JSON.stringify(invoice));
+  if(invoice.opportunityId){
+    const opportunity=await env.LEADS_KV.get("opportunity:"+invoice.opportunityId,{type:"json"});
+    if(opportunity){
+      opportunity.status="Won";
+      opportunity.paymentStatus="PAID";
+      opportunity.paymentInvoiceId=invoiceId;
+      opportunity.updatedAt=new Date().toISOString();
+      await env.LEADS_KV.put("opportunity:"+invoice.opportunityId,JSON.stringify(opportunity));
+    }
+  }
     return reply("Payment cancelled","No charge was confirmed.");
   }
   const verify=await fetch("https://gate.ypsapi.com/api/payment/verify",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({merchantId:env.YEKPAY_MERCHANT_ID,authority})});
