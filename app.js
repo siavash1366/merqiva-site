@@ -11,8 +11,8 @@ const T = {
 
     eyebrow: "GCC MARITIME SALES INTELLIGENCE",
 
-    h1a: "Turn Market Signals Into Sales Opportunities",
-    h1b: "— with Evidence, Fit and Timing.",
+    h1a: "Find the Opportunities Worth Your Sales Team’s Time.",
+    h1b: "",
 
     hero:
       "Merqiva turns public market signals into evidence-backed sales opportunities — matched to your product, buyer, timing and next action.",
@@ -53,7 +53,7 @@ const T = {
     bar4: "Act", bar4p: "Next-best sales action",
     beyond: "Beyond generic lead lists",
 
-    ih: "From market signals to sales-ready opportunities.",
+    ih: "Stop Chasing Leads. Start Pursuing Opportunities.",
 
     id:
       "A company name and email address are not enough. Merqiva connects fleet intelligence, product relevance, decision-makers and current market signals.",
@@ -62,7 +62,7 @@ const T = {
     fv: "Fleet & Vessel Type",
 
     receive: "What you receive",
-    rh: "From raw signals to sales-ready opportunities.",
+    rh: "Fewer leads. Better-qualified opportunities.",
 
     f1h: "Target Company Research",
     f1p:
@@ -157,7 +157,7 @@ const T = {
       "An AI-assisted intelligence layer for complex B2B sales.",
 
     aboutp:
-      "Merqiva combines public-source research, AI-assisted analysis and transparent qualification to turn market activity into prioritized commercial opportunities for maritime sales teams.",
+      "Merqiva combines public-source research, AI-assisted analysis and structured qualification to turn market activity into prioritized, sales-ready opportunities for maritime teams.",
 
     a1h: "Research-led",
     a1p:
