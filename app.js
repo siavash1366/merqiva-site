@@ -1095,6 +1095,19 @@ if (
     }
   });
 
-  /* Auto-open as soon as the page is ready, with no page dimming. */
-  openChat();
+  document.querySelectorAll("[data-chat-prompt]").forEach(button => {
+    button.addEventListener("click", () => {
+      const value = button.getAttribute("data-chat-prompt") || "";
+      if (!value || !messageInput) return;
+      messageInput.value = value;
+      messageInput.focus();
+    });
+  });
+
+  /* Gentle delayed prompt for engaged visitors; never block the page. */
+  window.setTimeout(() => {
+    if (!widget.classList.contains("open")) {
+      launcher.hidden = false;
+    }
+  }, 12000);
 })();
