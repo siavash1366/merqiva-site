@@ -16,7 +16,7 @@
 </div>
 <div class="nav-actions">
 <div class="langs" aria-label="Language selector"><button type="button" class="lang active" data-lang="en" aria-label="English">EN</button><button type="button" class="lang" data-lang="ar" aria-label="العربية">العربية</button></div>
-<a href="/chat.html" class="btn secondary desktop-chat">Chat with Merqiva</a><a href="#contact" class="btn primary desktop-cta">Get 10 Free Opportunities</a>
+<button type="button" class="btn secondary desktop-chat" data-chat-open>Chat with Merqiva</button><a href="#contact" class="btn primary desktop-cta">Get 10 Free Opportunities</a>
 <a href="/chat.html" class="btn primary mobile-cta">Chat with Merqiva</a>
 </div>
 </div></nav>
@@ -30,7 +30,7 @@
 <div class="hero-proof" aria-label="Merqiva intelligence chain">
   <span data-t="hp1">Signal</span><i>→</i><span data-t="hp2">Evidence</span><i>→</i><span data-t="hp3">Qualified Opportunity</span><i>→</i><span data-t="hp4">Sales Action</span>
 </div>
-<div class="actions"><a href="#contact" class="btn primary" data-t="cta">Get 10 Free Opportunities</a><a href="/chat.html" class="btn secondary" data-t="chatcta">Chat with Merqiva</a></div>
+<div class="actions"><a href="#contact" class="btn primary" data-t="cta">Get 10 Free Opportunities</a><button type="button" class="btn secondary" data-chat-open data-t="chatcta">Chat with Merqiva</button></div>
 <p class="note" data-t="note">Built for marine equipment suppliers, service providers and maritime sales teams targeting the GCC.</p>
 </div>
 <div class="card">
@@ -137,7 +137,7 @@
 <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
 </form>
 </div></section>
-</main>
+<div id="chatWidget" class="chat-widget" aria-hidden="true"><div class="chat-backdrop" data-chat-close></div><section class="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chatTitle"><div class="chat-modal-head"><div><div class="chat-eyebrow">MERQIVA CUSTOMER ASSISTANT</div><h2 id="chatTitle">Talk to Merqiva</h2><p>Ask about the service, pricing, qualification, or tell us what you sell.</p></div><button class="chat-close" type="button" data-chat-close aria-label="Close chat">×</button></div><div id="chatMessages" class="chat-messages" aria-live="polite"></div><form id="chatWidgetForm" class="chat-form"><div class="chat-identity"><input id="chatName" maxlength="100" placeholder="Your name (optional)"><input id="chatEmail" type="email" maxlength="200" placeholder="Work email (optional)"></div><div class="chat-composer"><textarea id="chatMessage" required maxlength="2000" placeholder="How can we help?"></textarea><button type="submit" id="chatSend" class="btn primary">Send</button></div><small>Do not share passwords, payment credentials, or other sensitive information.</small><div id="chatStatus" class="chat-status"></div></form></section></div></main>
 <footer><div class="container footer"><div>© 2026 Merqiva. <span data-t="rights">All rights reserved.</span></div><div class="footer-links"><a href="#contact" data-t="nav5">Contact</a><a href="mailto:sales@merqivaintel.com">sales@merqivaintel.com</a><span data-t="tag">GCC Maritime Sales Intelligence</span></div></div></footer>
 <script src="/app.js" defer></script>
 </body>
