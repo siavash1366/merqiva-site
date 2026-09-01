@@ -19,6 +19,8 @@ const PREPARE_CAMPAIGN_URL =
 const RUN_BATCH_URL =
   "/api/admin/run-campaign-batch";
 
+const CHAT_URL = "/api/chat";
+
 
 let adminSession =
   localStorage.getItem(
@@ -30,6 +32,7 @@ let currentPage = 1;
 let currentLead = null;
 let currentSearch = "";
 let currentStatus = "";
+let currentChatConversation = null;
 
 
 
@@ -108,6 +111,12 @@ document
     login
   );
 
+
+document
+  .getElementById(
+    "refreshChatBtn"
+  )
+  ?.addEventListener("click", loadChatInbox);
 
 document
   .getElementById(
@@ -431,6 +440,7 @@ function showPanel() {
 
   loadLeads();
   loadCampaigns();
+  loadChatInbox();
 
 }
 
@@ -450,6 +460,32 @@ function logout() {
 }
 
 
+
+// =====================
+// CUSTOMER CHAT
+// =====================
+
+async function loadChatInbox() {
+  const box=document.getElementById("chatInbox"); if(!box) return;
+  try {
+    const response=await authorizedFetch(CHAT_URL);
+    const data=await response.json();
+    if(!data.success) throw new Error(data.error||"Failed to load chats");
+    if(!data.conversations?.length){box.innerHTML="<div class='chat-empty'>No customer conversations yet.</div>";return;}
+    box.innerHTML=data.conversations.map(c=>{
+      const m=c.lastMessage||{}; const text=escapeHTML(m.message||"");
+      return "<button type='button' class='chat-thread' data-chat-id='"+escapeHTML(c.conversationId)+"'><div><strong>"+escapeHTML(c.conversationId.slice(0,18))+"</strong><span>"+escapeHTML(new Date(m.at||Date.now()).toLocaleString())+"</span></div><p>"+text+"</p><small>"+c.messageCount+" messages</small></button>";
+    }).join("");
+    box.querySelectorAll(".chat-thread").forEach(btn=>btn.addEventListener("click",()=>openChatConversation(btn.dataset.chatId)));
+  } catch(e){console.error(e);box.innerHTML="<div class='chat-empty'>Failed to load chats.</div>";}
+}
+
+async function openChatConversation(id){
+  currentChatConversation=id;
+  const panel=document.getElementById("chatConversation"); const box=document.getElementById("chatConversationMessages"); const title=document.getElementById("chatConversationTitle");
+  if(!panel||!box)return; panel.classList.remove("hidden"); title.textContent="Conversation · "+id;
+  try{const r=await authorizedFetch(CHAT_URL+"?conversation="+encodeURIComponent(id));const d=await r.json();if(!d.success)throw Error(d.error||"Failed");box.innerHTML=(d.messages||[]).map(m=>"<div class='admin-chat-message "+(m.role==="user"?"from-customer":"from-assistant")+"'><div class='admin-chat-role'>"+(m.role==="user"?"Customer":"Merqiva")+"</div><div>"+escapeHTML(m.message)+"</div><time>"+escapeHTML(new Date(m.at||Date.now()).toLocaleString())+"</time></div>").join("")||"<div class='chat-empty'>No messages.</div>";}catch(e){box.innerHTML="<div class='chat-empty'>Unable to load conversation.</div>";}
+}
 
 // =====================
 // LOAD LEADS
