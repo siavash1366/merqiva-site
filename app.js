@@ -752,35 +752,47 @@ if (
 }
 
 /* Customer chat popup */
-(function () {
-  const widget = document.getElementById("chatWidget");
-  if (!widget) return;
-  const messages = document.getElementById("chatMessages");
-  const form = document.getElementById("chatWidgetForm");
-  const messageInput = document.getElementById("chatMessage");
-  const nameInput = document.getElementById("chatName");
-  const emailInput = document.getElementById("chatEmail");
-  const sendButton = document.getElementById("chatSend");
-  const status = document.getElementById("chatStatus");
-  const launcher = document.createElement("button");
-  launcher.type="button"; launcher.id="merqivaChatLauncher"; launcher.textContent="MERQIVA · Chat";
+(function(){
+  const widget=document.getElementById("chatWidget");
+  if(!widget)return;
+  const messages=document.getElementById("chatMessages");
+  const form=document.getElementById("chatWidgetForm");
+  const messageInput=document.getElementById("chatMessage");
+  const nameInput=document.getElementById("chatName");
+  const emailInput=document.getElementById("chatEmail");
+  const sendButton=document.getElementById("chatSend");
+  const status=document.getElementById("chatStatus");
+  const launcher=document.createElement("button");
+  launcher.type="button"; launcher.id="merqivaChatLauncher"; launcher.className="merqiva-chat-launcher";
+  launcher.innerHTML='<span class="launcher-dot"></span><strong>Merqiva</strong><span>Chat</span>';
   launcher.hidden=true; launcher.setAttribute("aria-label","Open Merqiva customer assistant"); document.body.appendChild(launcher);
   let conversationId;
   try{conversationId=localStorage.getItem("merqiva_chat_id")||crypto.randomUUID();localStorage.setItem("merqiva_chat_id",conversationId)}catch(_){conversationId=crypto.randomUUID()}
   let historyLoaded=false;
   const add=(role,text)=>{if(!messages||!text)return;const n=document.createElement("div");n.className="chat-msg "+(role==="user"?"user":"bot");n.textContent=text;messages.appendChild(n);messages.scrollTop=messages.scrollHeight};
   const welcome=()=>{if(messages&&!messages.children.length)add("bot","Hi — I’m Merqiva’s customer assistant. Tell me what you sell, which market you target, or ask about our opportunity intelligence service.")};
-  const loadHistory=async()=>{if(historyLoaded)return;historyLoaded=true;try{const r=await fetch("/api/chat?conversation="+encodeURIComponent(conversationId),{headers:{Accept:"application/json"},cache:"no-store"});if(r.ok){const d=await r.json();if(d.success&&d.messages?.length){messages.innerHTML="";d.messages.forEach(m=>add(m.role,m.message));return}}}catch(_){}welcome()};
-  const open=()=>{widget.classList.add("open");widget.setAttribute("aria-hidden","false");launcher.hidden=true;loadHistory()};
+  const loadHistory=async()=>{if(historyLoaded)return;historyLoaded=true;try{const r=await fetch("/api/chat?conversation="+encodeURIComponent(conversationId),{headers:{Accept:"application/json"},cache:"no-store"});if(r.ok){const d=await r.json();if(d.success&&Array.isArray(d.messages)&&d.messages.length){messages.innerHTML="";d.messages.forEach(m=>add(m.role,m.message));return}}}catch(_){}welcome()};
+  const open=()=>{widget.classList.add("open");widget.setAttribute("aria-hidden","false");launcher.hidden=true;loadHistory();setTimeout(()=>messageInput?.focus(),80)};
   const minimize=()=>{widget.classList.remove("open");widget.setAttribute("aria-hidden","true");launcher.hidden=false};
-  widget.querySelector(".chat-backdrop")?.remove();
-  widget.querySelectorAll("[data-chat-close]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();minimize()}));
-  document.querySelectorAll("[data-chat-open]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();open();setTimeout(()=>messageInput?.focus(),0)}));
-  launcher.addEventListener("click",()=>{open();setTimeout(()=>messageInput?.focus(),0)});
+  widget.querySelector("[data-chat-close]")?.addEventListener("click",e=>{e.preventDefault();minimize()});
+  document.querySelectorAll("[data-chat-open]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();open()}));
+  launcher.addEventListener("click",open);
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&widget.classList.contains("open"))minimize()});
-  document.querySelectorAll("[data-chat-prompt]").forEach(b=>b.addEventListener("click",()=>{const v=b.getAttribute("data-chat-prompt")||"";if(v&&messageInput){messageInput.value=v;messageInput.focus()}}));
+  document.querySelectorAll("[data-chat-prompt]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.chatPrompt||"";if(v){open();messageInput.value=v;messageInput.focus()}}));
   try{if(nameInput)nameInput.value=localStorage.getItem("merqiva_chat_name")||"";if(emailInput)emailInput.value=localStorage.getItem("merqiva_chat_email")||""}catch(_){}
-  form?.addEventListener("submit",async e=>{e.preventDefault();const message=messageInput?.value.trim()||"",name=nameInput?.value.trim()||"",email=emailInput?.value.trim()||"";if(!message)return;try{localStorage.setItem("merqiva_chat_name",name);localStorage.setItem("merqiva_chat_email",email)}catch(_){}add("user",message);messageInput.value="";sendButton.disabled=true;status.textContent="Thinking…";const c=new AbortController();const tm=setTimeout(()=>c.abort(),18000);try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({conversationId,message,name,email}),signal:c.signal});const d=await r.json();if(!r.ok||!d.success)throw Error(d.error||"Chat unavailable");add("bot",d.reply);status.textContent=d.leadCaptured?"Your details were captured for the Merqiva team.":""}catch(err){add("bot",err?.name==="AbortError"?"The assistant took too long to respond. Please try again.":"I’m unable to complete that request right now. Please email sales@merqivaintel.com.");status.textContent=err?.message||"Chat unavailable"}finally{clearTimeout(tm);sendButton.disabled=false;messageInput.focus()}});
+  form?.addEventListener("submit",async e=>{
+    e.preventDefault();
+    const message=messageInput?.value.trim()||"",name=nameInput?.value.trim()||"",email=emailInput?.value.trim()||"";
+    if(!message)return;
+    try{localStorage.setItem("merqiva_chat_name",name);localStorage.setItem("merqiva_chat_email",email)}catch(_){}
+    add("user",message); messageInput.value=""; sendButton.disabled=true; status.textContent="Thinking…";
+    const c=new AbortController(); const tm=setTimeout(()=>c.abort(),18000);
+    try{
+      const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({conversationId,message,name,email}),signal:c.signal});
+      const d=await r.json(); if(!r.ok||!d.success)throw Error(d.error||"Chat unavailable");
+      add("bot",d.reply); status.textContent=d.leadCaptured?"Your details were captured for the Merqiva team.":"";
+    }catch(err){add("bot",err?.name==="AbortError"?"The assistant took too long to respond. Please try again.":"I’m unable to complete that request right now. Please email sales@merqivaintel.com.");status.textContent=err?.message||"Chat unavailable"}finally{clearTimeout(tm);sendButton.disabled=false;messageInput.focus()}
+  });
   let shown=false;try{shown=sessionStorage.getItem("merqiva_chat_auto_shown")==="1"}catch(_){}
   setTimeout(()=>{if(!shown&&!widget.classList.contains("open")){try{sessionStorage.setItem("merqiva_chat_auto_shown","1")}catch(_){}open()}else if(!widget.classList.contains("open"))launcher.hidden=false},5000);
 })();
