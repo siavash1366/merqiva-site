@@ -1104,10 +1104,15 @@ if (
     });
   });
 
-  /* Gentle delayed prompt for engaged visitors; never block the page. */
+  /* Auto-open once for a new visitor after a short reading window. */
+  let chatAutoShown = false;
+  try { chatAutoShown = sessionStorage.getItem("merqiva_chat_auto_shown") === "1"; } catch (_) {}
   window.setTimeout(() => {
-    if (!widget.classList.contains("open")) {
+    if (!chatAutoShown && !widget.classList.contains("open")) {
+      try { sessionStorage.setItem("merqiva_chat_auto_shown", "1"); } catch (_) {}
+      openChat();
+    } else if (!widget.classList.contains("open")) {
       launcher.hidden = false;
     }
-  }, 12000);
+  }, 9000);
 })();
