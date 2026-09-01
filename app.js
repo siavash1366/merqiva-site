@@ -1115,4 +1115,23 @@ if (
       launcher.hidden = false;
     }
   }, 9000);
-})();
+})();    .chat-widget{position:fixed!important;inset:0!important;z-index:99990!important;display:none!important;pointer-events:none!important;background:transparent!important;}
+    .chat-widget.open{display:block!important;}
+    .chat-modal{position:fixed!important;right:24px!important;bottom:24px!important;left:auto!important;top:auto!important;width:460px!important;height:680px!important;max-width:calc(100vw - 32px)!important;max-height:calc(100vh - 32px)!important;display:flex!important;flex-direction:column!important;pointer-events:auto!important;overflow:hidden!important;background:#0d1a2b!important;border:1px solid #2b4059!important;border-radius:18px!important;box-shadow:0 22px 70px rgba(0,0,0,.45)!important;color:#eef6fb!important;}
+    .chat-modal-head,.chat-form{background:#0d1a2b!important;color:#eef6fb!important;}
+    .chat-modal-head{flex:0 0 auto!important;padding:18px 18px 15px!important;border-bottom:1px solid #24364d!important;}
+    .chat-messages{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;padding:16px!important;background:#091522!important;color:#eef6fb!important;}
+    .chat-form{flex:0 0 auto!important;padding:14px!important;border-top:1px solid #24364d!important;}
+    .chat-identity{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin-bottom:8px!important;}
+    .chat-composer{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;}
+    .chat-composer textarea{min-height:72px!important;}
+    .chat-composer .btn{min-height:72px!important;}
+    .chat-widget .chat-quick-actions{display:flex!important;flex-wrap:wrap!important;}
+    @media(max-width:640px){
+      .chat-modal{left:12px!important;right:12px!important;bottom:12px!important;top:auto!important;width:auto!important;height:calc(100vh - 24px)!important;max-width:none!important;max-height:none!important;border-radius:15px!important;}
+      .chat-identity{grid-template-columns:1fr!important;}
+      .chat-composer{grid-template-columns:1fr!important;}
+      .chat-composer .btn{min-height:44px!important;}
+      .chat-messages{min-height:0!important;max-height:none!important;}
+    }
+
