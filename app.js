@@ -751,5 +751,350 @@ if (
   );
 }
 
-/* Customer chat popup */
-(function(){const openers=document.querySelectorAll("[data-chat-open]"),widget=document.getElementById("chatWidget");if(!widget)return;const close=()=>{widget.classList.remove("open");widget.setAttribute("aria-hidden","true")};openers.forEach(b=>b.addEventListener("click",()=>{widget.classList.add("open");widget.setAttribute("aria-hidden","false");document.getElementById("chatMessage")?.focus();if(!window.__merqivaChatStarted){window.__merqivaChatStarted=true;chatAdd("bot","Hi — I’m Merqiva’s customer assistant. Tell me what you sell, which market you target, or ask about our opportunity intelligence service.");}}));widget.querySelectorAll("[data-chat-close]").forEach(b=>b.addEventListener("click",close));document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});let cid=localStorage.getItem("merqiva_chat_id")||crypto.randomUUID();localStorage.setItem("merqiva_chat_id",cid);const chatAdd=(role,text)=>{const d=document.createElement("div");d.className="chat-msg "+(role==="user"?"user":"bot");d.textContent=text;const box=document.getElementById("chatMessages");box.appendChild(d);box.scrollTop=box.scrollHeight};document.getElementById("chatWidgetForm")?.addEventListener("submit",async e=>{e.preventDefault();const msg=document.getElementById("chatMessage").value.trim(),name=document.getElementById("chatName").value.trim(),email=document.getElementById("chatEmail").value.trim();if(!msg)return;chatAdd("user",msg);document.getElementById("chatMessage").value="";document.getElementById("chatSend").disabled=true;document.getElementById("chatStatus").textContent="Thinking…";try{const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({conversationId:cid,message:msg,name,email})});const data=await res.json();if(!res.ok||!data.success)throw Error(data.error||"Chat unavailable");chatAdd("bot",data.reply);document.getElementById("chatStatus").textContent=data.leadCaptured?"Your details were captured for the Merqiva team.":"";}catch(err){chatAdd("bot","I’m unable to complete that request right now. Please email sales@merqivaintel.com.");document.getElementById("chatStatus").textContent=err.message;}finally{document.getElementById("chatSend").disabled=false;document.getElementById("chatMessage").focus()}})})();
+/* Customer chat popup — non-blocking, fixed, auto-open, persistent history */
+(function () {
+  const widget = document.getElementById("chatWidget");
+  if (!widget) return;
+
+  const messages = document.getElementById("chatMessages");
+  const form = document.getElementById("chatWidgetForm");
+  const messageInput = document.getElementById("chatMessage");
+  const nameInput = document.getElementById("chatName");
+  const emailInput = document.getElementById("chatEmail");
+  const sendButton = document.getElementById("chatSend");
+  const status = document.getElementById("chatStatus");
+
+  /*
+   * The previous modal implementation used a full-screen backdrop.
+   * These scoped overrides keep the page fully visible and usable while
+   * the assistant stays fixed in the viewport during scrolling.
+   */
+  const style = document.createElement("style");
+  style.id = "merqiva-chat-popup-v2";
+  style.textContent = `
+    .chat-widget{
+      position:fixed!important;
+      inset:auto 22px 22px auto!important;
+      width:min(390px,calc(100vw - 32px))!important;
+      height:auto!important;
+      background:transparent!important;
+      backdrop-filter:none!important;
+      -webkit-backdrop-filter:none!important;
+      pointer-events:none!important;
+      z-index:99999!important;
+      display:none!important;
+    }
+    .chat-widget.open{display:block!important;}
+    .chat-widget .chat-backdrop{display:none!important;}
+    .chat-modal{
+      position:relative!important;
+      inset:auto!important;
+      width:100%!important;
+      max-width:none!important;
+      max-height:min(650px,calc(100vh - 44px))!important;
+      margin:0!important;
+      transform:none!important;
+      display:flex!important;
+      flex-direction:column!important;
+      overflow:hidden!important;
+      pointer-events:auto!important;
+      background:#0d1a2b!important;
+      border:1px solid #2b4059!important;
+      border-radius:18px!important;
+      box-shadow:0 22px 70px rgba(0,0,0,.45)!important;
+      color:#eef6fb!important;
+    }
+    .chat-modal-head,
+    .chat-form{
+      background:#0d1a2b!important;
+      color:#eef6fb!important;
+    }
+    .chat-modal-head{
+      padding:17px 18px 14px!important;
+      border-bottom:1px solid #24364d!important;
+    }
+    .chat-modal-head h2{
+      color:#ffffff!important;
+      margin:.25rem 0 .3rem!important;
+    }
+    .chat-modal-head p,
+    .chat-form small,
+    .chat-status{
+      color:#a9bed0!important;
+    }
+    .chat-eyebrow{
+      color:#39d5d0!important;
+      font-weight:800!important;
+    }
+    .chat-close{
+      color:#eef6fb!important;
+      background:#13243a!important;
+      border:1px solid #314a65!important;
+      opacity:1!important;
+    }
+    .chat-messages{
+      min-height:145px!important;
+      max-height:270px!important;
+      overflow-y:auto!important;
+      padding:14px!important;
+      background:#091522!important;
+      color:#eef6fb!important;
+    }
+    .chat-msg{
+      color:#eef6fb!important;
+      background:#13243a!important;
+      border:1px solid #2a405b!important;
+      line-height:1.5!important;
+    }
+    .chat-msg.user{
+      background:#39d5d0!important;
+      color:#04110f!important;
+      border-color:#39d5d0!important;
+    }
+    .chat-form{
+      padding:14px!important;
+      border-top:1px solid #24364d!important;
+    }
+    .chat-identity input,
+    .chat-composer textarea{
+      color:#f5fbff!important;
+      background:#091627!important;
+      border:1px solid #2a405b!important;
+      caret-color:#39d5d0!important;
+    }
+    .chat-identity input::placeholder,
+    .chat-composer textarea::placeholder{
+      color:#8fa6ba!important;
+      opacity:1!important;
+    }
+    .chat-identity input:focus,
+    .chat-composer textarea:focus{
+      border-color:#39d5d0!important;
+      outline:2px solid rgba(57,213,208,.15)!important;
+      outline-offset:0!important;
+    }
+    #chatSend{
+      color:#04110f!important;
+      background:#39d5d0!important;
+    }
+    [data-chat-open].btn.secondary,
+    .desktop-chat.btn.secondary{
+      color:#eef6fb!important;
+      background:#13243a!important;
+      border:1px solid #314a65!important;
+    }
+    #merqivaChatLauncher{
+      position:fixed!important;
+      right:22px!important;
+      bottom:22px!important;
+      z-index:99998!important;
+      border:1px solid #2c5366!important;
+      border-radius:999px!important;
+      padding:12px 17px!important;
+      background:#0d1a2b!important;
+      color:#eef6fb!important;
+      box-shadow:0 14px 40px rgba(0,0,0,.35)!important;
+      cursor:pointer!important;
+      font:700 14px/1.2 Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif!important;
+    }
+    #merqivaChatLauncher strong{color:#39d5d0!important;}
+    @media(max-width:640px){
+      .chat-widget{
+        right:10px!important;
+        bottom:10px!important;
+        width:calc(100vw - 20px)!important;
+      }
+      .chat-modal{
+        max-height:76vh!important;
+        border-radius:15px!important;
+      }
+      .chat-messages{max-height:220px!important;}
+      #merqivaChatLauncher{
+        right:10px!important;
+        bottom:10px!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  /* Make the existing mobile CTA open this same popup instead of /chat.html. */
+  const mobileCta = document.querySelector(".mobile-cta");
+  if (mobileCta) {
+    mobileCta.setAttribute("href", "#");
+    mobileCta.setAttribute("data-chat-open", "");
+  }
+
+  const launcher = document.createElement("button");
+  launcher.type = "button";
+  launcher.id = "merqivaChatLauncher";
+  launcher.innerHTML = '<strong>MERQIVA</strong> · Chat';
+  launcher.hidden = true;
+  launcher.setAttribute("aria-label", "Open Merqiva customer assistant");
+  document.body.appendChild(launcher);
+
+  let conversationId;
+  try {
+    conversationId = localStorage.getItem("merqiva_chat_id") || crypto.randomUUID();
+    localStorage.setItem("merqiva_chat_id", conversationId);
+  } catch (_) {
+    conversationId = crypto.randomUUID();
+  }
+
+  let historyLoaded = false;
+
+  const chatAdd = (role, text) => {
+    if (!messages || !text) return;
+    const node = document.createElement("div");
+    node.className = "chat-msg " + (role === "user" ? "user" : "bot");
+    node.textContent = text;
+    messages.appendChild(node);
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  const addWelcome = () => {
+    if (!messages || messages.children.length) return;
+    chatAdd(
+      "bot",
+      "Hi — I’m Merqiva’s customer assistant. Tell me what you sell, which market you target, or ask about our opportunity intelligence service."
+    );
+  };
+
+  const loadHistory = async () => {
+    if (historyLoaded) return;
+    historyLoaded = true;
+    try {
+      const response = await fetch(
+        "/api/chat?conversation=" + encodeURIComponent(conversationId),
+        { headers: { Accept: "application/json" }, cache: "no-store" }
+      );
+      if (!response.ok) {
+        addWelcome();
+        return;
+      }
+      const data = await response.json();
+      if (data.success && Array.isArray(data.messages) && data.messages.length) {
+        messages.innerHTML = "";
+        data.messages.forEach(item => chatAdd(item.role, item.message));
+        return;
+      }
+    } catch (_) {}
+    addWelcome();
+  };
+
+  const openChat = () => {
+    widget.classList.add("open");
+    widget.setAttribute("aria-hidden", "false");
+    widget.querySelector(".chat-modal")?.setAttribute("aria-modal", "false");
+    launcher.hidden = true;
+    window.__merqivaChatStarted = true;
+    loadHistory();
+  };
+
+  const minimizeChat = () => {
+    widget.classList.remove("open");
+    widget.setAttribute("aria-hidden", "true");
+    launcher.hidden = false;
+  };
+
+  /* Remove the blocking visual layer from the old modal markup. */
+  widget.querySelector(".chat-backdrop")?.remove();
+
+  /* Existing close button now minimizes instead of closing a modal overlay. */
+  widget.querySelectorAll("[data-chat-close]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      minimizeChat();
+    }, true);
+  });
+
+  document.querySelectorAll("[data-chat-open]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      openChat();
+      setTimeout(() => messageInput?.focus(), 0);
+    }, true);
+  });
+
+  launcher.addEventListener("click", () => {
+    openChat();
+    setTimeout(() => messageInput?.focus(), 0);
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && widget.classList.contains("open")) {
+      minimizeChat();
+    }
+  }, true);
+
+  /* Restore optional identity fields for returning visitors. */
+  try {
+    if (nameInput) nameInput.value = localStorage.getItem("merqiva_chat_name") || "";
+    if (emailInput) emailInput.value = localStorage.getItem("merqiva_chat_email") || "";
+  } catch (_) {}
+
+  form?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const message = messageInput?.value.trim() || "";
+    const name = nameInput?.value.trim() || "";
+    const email = emailInput?.value.trim() || "";
+    if (!message) return;
+
+    try {
+      localStorage.setItem("merqiva_chat_name", name);
+      localStorage.setItem("merqiva_chat_email", email);
+    } catch (_) {}
+
+    chatAdd("user", message);
+    messageInput.value = "";
+    sendButton.disabled = true;
+    status.textContent = "Thinking…";
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 18000);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ conversationId, message, name, email }),
+        signal: controller.signal
+      });
+
+      let data = {};
+      try { data = await response.json(); } catch (_) {}
+
+      if (response.status === 429) {
+        throw new Error("Too many chat requests. Please wait a few minutes and try again.");
+      }
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Chat unavailable");
+      }
+
+      if (data.conversationId && data.conversationId !== conversationId) {
+        conversationId = data.conversationId;
+        try { localStorage.setItem("merqiva_chat_id", conversationId); } catch (_) {}
+      }
+
+      chatAdd("bot", data.reply);
+      status.textContent = data.leadCaptured
+        ? "Your details were captured for the Merqiva team."
+        : "";
+    } catch (error) {
+      const messageText = error?.name === "AbortError"
+        ? "The assistant took too long to respond. Please try again."
+        : "I’m unable to complete that request right now. Please email sales@merqivaintel.com.";
+      chatAdd("bot", messageText);
+      status.textContent = error?.message || "Chat unavailable";
+    } finally {
+      clearTimeout(timeout);
+      sendButton.disabled = false;
+      messageInput.focus();
+    }
+  });
+
+  /* Auto-open as soon as the page is ready, with no page dimming. */
+  openChat();
+})();
