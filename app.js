@@ -15,7 +15,7 @@ const T = {
     h1b: "",
 
     hero:
-      "تحوّل Merqiva إشارات السوق إلى فرص مبيعات مؤهلة ومدعومة بالأدلة، ومطابقة لما تبيعه، ولمن يشتريه، ولماذا الآن.",
+      "Merqiva turns market signals into evidence-backed, sales-ready opportunities — matched to what you sell, who buys it, and why now.",
 
     samplecta: "View Sample Opportunity",
 
@@ -56,7 +56,7 @@ const T = {
     ih: "Stop Chasing Leads. Start Pursuing Opportunities.",
 
     id:
-      "A company name and email address are not enough. Merqiva connects fleet intelligence, product relevance, decision-makers and current market signals.",
+      "A company name and email address are not enough. Merqiva identifies which accounts are worth your sales team’s attention — and shows the evidence, timing, decision maker and next action behind the opportunity.",
 
     company: "Company",
     fv: "Fleet & Vessel Type",
@@ -64,34 +64,34 @@ const T = {
     receive: "What you receive",
     rh: "Fewer leads. Better-qualified opportunities.",
 
-    f1h: "Target Company Research",
+    f1h: "Find the right accounts",
     f1p:
-      "Relevant GCC vessel operators, ship managers, offshore companies and maritime buyers.",
+      "Identify companies that match your market, product and target customer profile before your team spends time prospecting.",
 
-    f2h: "Fleet Intelligence",
+    f2h: "Validate real fit",
     f2p:
-      "Fleet size, vessel types and operating profile evaluated against what you sell.",
+      "Evaluate fleet, vessel and operating profiles against what you actually sell — not what merely looks relevant.",
 
-    f3h: "Product-to-Buyer Matching",
+    f3h: "Match product to buyer",
     f3p:
-      "Each account is assessed for relevance to your equipment, systems or maritime services.",
+      "See why an account fits your equipment, system or service and who is most relevant to the buying process.",
 
-    f4h: "Decision-Maker Verification",
+    f4h: "Know who to contact",
     f4p:
-      "Procurement, purchasing, technical and fleet contacts researched with current-company verification.",
+      "Identify and verify the relevant procurement, purchasing, technical or fleet-side decision maker.",
 
-    f5h: "Buying Signals",
+    f5h: "See what changed",
     f5p:
-      "Fleet expansion, new vessels, contracts, drydock, retrofit, recruitment and other relevant activity.",
+      "Surface fleet expansion, new vessels, contracts, retrofit, drydock, recruitment and other signals that can change buying priority.",
 
-    f6h: "Sales Angle & Priority",
+    f6h: "Know why now and what to do next",
     f6p:
-      "Why the account matters now, recommended next action and a consistent opportunity priority.",
+      "Understand the timing, priority, recommended sales angle and next action before your team reaches out.",
 
     sk: "Sample opportunity",
 
     sh:
-      "Not just who to contact. Why they are worth contacting.",
+      "Not just who to contact. Why they are worth pursuing now.",
 
     st: "Example: Offshore Vessel Operator",
 
@@ -110,7 +110,7 @@ const T = {
     priov: "HIGH",
 
     how: "How it works",
-    howh: "From what you sell to who should hear about it.",
+    howh: "From what you sell to the opportunities worth pursuing.",
 
     step1: "STEP 01",
     step2: "STEP 02",
@@ -134,7 +134,7 @@ const T = {
     month: "/ month",
 
     offerp:
-      "A focused monthly research service for maritime suppliers targeting vessel operators and buyers across the GCC.",
+      "30 sales-ready opportunities each month, with evidence, decision-maker research, timing and a recommended next action — for maritime suppliers targeting the GCC.",
 
     p1: "30 new researched opportunities / month",
     p2: "Weekly delivery",
@@ -154,7 +154,7 @@ const T = {
     about: "About Merqiva",
 
     abouth:
-      "An AI-assisted intelligence layer for complex B2B sales.",
+      "An intelligence layer between market activity and your sales team.",
 
     aboutp:
       "Merqiva combines public-source research, AI-assisted analysis and structured qualification to turn market activity into prioritized, sales-ready opportunities for maritime teams.",
@@ -501,7 +501,7 @@ function applyLang(lang) {
 
   if (lang === "ar") {
     document.title =
-      "Merqiva | استخبارات المبيعات البحرية في دول الخليج";
+      "Merqiva | استخبارات فرص المبيعات البحرية في دول الخليج";
 
     document
       .querySelector('meta[name="description"]')
@@ -511,13 +511,13 @@ function applyLang(lang) {
       );
   } else {
     document.title =
-      "Merqiva | GCC Maritime Sales Intelligence";
+      "Merqiva | Find the Opportunities Worth Your Sales Team’s Time";
 
     document
       .querySelector('meta[name="description"]')
       .setAttribute(
         "content",
-        "Merqiva researches GCC maritime buyers, fleets, decision-makers and buying signals to identify sales opportunities worth pursuing."
+        "Merqiva turns market signals into evidence-backed, sales-ready opportunities — matched to what you sell, who buys it, and why now."
       );
   }
 
