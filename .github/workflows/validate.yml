@@ -65,7 +65,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          grep -q '<title>Merqiva' index.html
+          grep -Eq '<title>[^<]*Merqiva' index.html
           grep -q 'id="contact"' index.html
           grep -q 'action="/api/contact"' index.html
           grep -q 'href="/styles.css"' index.html
