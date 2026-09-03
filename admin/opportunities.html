@@ -6,185 +6,78 @@
 <title>Merqiva Opportunity Intelligence</title>
 <link rel="stylesheet" href="/admin/admin.css">
 <link rel="stylesheet" href="/admin/opportunities.css">
+<link rel="stylesheet" href="/admin/shell.css">
 </head>
-<body>
-<div class="container">
-  <div id="loginBox" class="card">
-    <h1>Merqiva Opportunity Intelligence</h1>
-    <p>Use the same Admin session as the CRM.</p>
-    <a href="/admin/" class="button-link">Back to Admin</a>
-  </div>
-
-  <div id="panel" class="hidden">
-    <div class="card oi-header">
-      <div>
-        <div class="oi-eyebrow">MERQIVA</div>
-        <h1>Opportunity Intelligence</h1>
-        <p>Evidence-backed opportunities for GCC maritime sales.</p>
-      </div>
-      <div class="toolbar">
-        <button id="backBtn">Admin</button>
-        <button id="refreshBtn">Refresh</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Product / ICP Definition</h2>
-      <form id="configForm" class="oi-grid">
-        <input id="productName" placeholder="Product / Service">
-        <input id="minVesselLength" type="number" min="0" step="0.1" placeholder="Minimum vessel length (m)">
-        <textarea id="regions" placeholder="Regions — one per line"></textarea>
-        <textarea id="targetCompanyTypes" placeholder="Target company types — one per line"></textarea>
-        <textarea id="targetVesselTypes" placeholder="Target vessel types — one per line"></textarea>
-        <textarea id="targetSegments" placeholder="Target segments — one per line"></textarea>
-        <textarea id="relevantSignals" placeholder="Relevant signals — one per line"></textarea>
-        <textarea id="targetDecisionMakerRoles" placeholder="Decision-maker roles — one per line"></textarea>
-        <textarea id="configNotes" class="wide" placeholder="Notes / qualification rules"></textarea>
-        <div class="wide"><button type="submit">Save ICP</button></div>
-      </form>
-      <div id="configStatus" class="oi-muted"></div>
-    </div>
-
-    <div class="card">
-      <h2>Create Opportunity</h2>
-      <form id="opportunityForm" class="oi-grid">
-        <input id="companyName" placeholder="Company name" required>
-        <input id="companyId" placeholder="Company ID (optional)">
-        <input id="productNameOpportunity" placeholder="Product / service" required>
-        <input id="vesselIds" placeholder="Vessel IDs, comma-separated">
-
-        <label>Company / Segment Fit <input id="companyFit" type="number" min="0" max="100" value="0"></label>
-        <label>Product Fit <input id="productFit" type="number" min="0" max="100" value="0"></label>
-        <label>Fleet Fit <input id="fleetFit" type="number" min="0" max="100" value="0"></label>
-        <label>Buying Signal Strength <input id="buyingSignalStrength" type="number" min="0" max="100" value="0"></label>
-        <label>Signal Recency <input id="signalRecency" type="number" min="0" max="100" value="0"></label>
-        <label>Decision-maker Confidence <input id="decisionMakerConfidence" type="number" min="0" max="100" value="0"></label>
-        <label>Commercial Relevance <input id="commercialRelevance" type="number" min="0" max="100" value="0"></label>
-        <label>Timing / Urgency <input id="timingUrgency" type="number" min="0" max="100" value="0"></label>
-
-        <input id="decisionMakerName" placeholder="Decision-maker name (UNKNOWN allowed)">
-        <input id="decisionMakerRole" placeholder="Decision-maker role">
-        <input id="decisionMakerRelevance" type="number" min="0" max="100" value="0" placeholder="Role relevance">
-        <input id="decisionMakerInfluence" type="number" min="0" max="100" value="0" placeholder="Influence">
-
-        <textarea id="buyingSignals" placeholder="Buying signals — one per line"></textarea>
-        <textarea id="whyNow" placeholder="Why Now — evidence-backed rationale"></textarea>
-        <textarea id="recommendedAction" placeholder="Recommended next action"></textarea>
-        <textarea id="salesAngle" placeholder="Recommended sales angle"></textarea>
-        <textarea id="outreachDraft" class="wide" placeholder="Optional outreach draft — do not include unsupported facts"></textarea>
-
-        <div class="wide oi-evidence-box">
-          <h3>Evidence</h3>
-          <div class="oi-evidence-row">
-            <input id="evidenceTitle" placeholder="Evidence title">
-            <select id="evidenceLevel">
-              <option>VERIFIED FACT</option>
-              <option>INFERENCE</option>
-              <option>UNKNOWN</option>
-            </select>
-            <input id="evidenceObservedAt" type="datetime-local">
-            <input id="evidenceSourceName" placeholder="Source name">
-            <input id="evidenceSourceUrl" placeholder="Source URL">
-            <input id="evidenceSummary" placeholder="Evidence summary">
-          </div>
-        </div>
-
-        <div class="wide"><button type="submit">Create Opportunity</button></div>
-      </form>
-    </div>
-
-    <div class="card">
-      <div class="oi-list-head">
-        <div>
-          <h2>Opportunity Alerts</h2>
-          <div class="oi-muted">
-            Rule-based workflow alerts from stored opportunity data. This is not continuous external monitoring.
-          </div>
-        </div>
-        <div id="opportunityAlertSummary" class="oi-muted">0 active alerts</div>
-      </div>
-
-      <div id="opportunityAlerts" class="oi-grid">
-        <div class="wide oi-muted">Loading alerts...</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="oi-list-head">
-        <div>
-          <h2>Opportunities</h2>
-          <div class="oi-muted">Score is a transparent initial heuristic, not a learned model.</div>
-        </div>
-
-        <div class="toolbar">
-          <select id="statusFilter">
-            <option value="">All statuses</option>
-            <option>New</option>
-            <option>Reviewed</option>
-            <option>Qualified</option>
-            <option>Outreach Ready</option>
-            <option>Contacted</option>
-            <option>Replied</option>
-            <option>Meeting</option>
-            <option>Opportunity</option>
-            <option>Won</option>
-            <option>Lost</option>
-            <option>Disqualified</option>
-          </select>
-
-          <input
-            id="minScoreFilter"
-            type="number"
-            min="0"
-            max="100"
-            placeholder="Min score"
-          >
-
-          <button
-            type="button"
-            id="filterBtn"
-          >
-            Filter
-          </button>
-
-          <button
-            type="button"
-            id="exportCsvBtn"
-          >
-            Export CSV
-          </button>
-
-          <button
-            type="button"
-            id="exportJsonBtn"
-          >
-            Export JSON
-          </button>
-        </div>
-      </div>
-
-      <div class="oi-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Score</th>
-              <th>Company</th>
-              <th>Product</th>
-              <th>Why Now</th>
-              <th>Decision Maker</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="opportunityTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="detailCard" class="card hidden"></div>
-  </div>
+<body class="admin-app">
+<div id="loginBox" class="card login-card">
+  <div class="admin-kicker">MERQIVA INTELLIGENCE</div>
+  <h1>Opportunity Intelligence</h1>
+  <p>Use the same Admin session as the CRM.</p>
+  <a href="/admin/" class="button-link">Back to Admin</a>
 </div>
 
+<div id="panel" class="hidden">
+  <div class="admin-shell">
+    <aside class="admin-sidebar" aria-label="Merqiva admin navigation">
+      <div class="admin-brand"><span class="admin-brand-mark"></span><div><strong>MERQIVA</strong><small>Intelligence OS</small></div></div>
+      <nav class="admin-nav">
+        <div class="admin-nav-group"><div class="admin-nav-label">Sales</div><a href="/admin/index.html">Lead CRM</a><a class="is-active" aria-current="page" href="/admin/opportunities.html">Opportunities</a><a href="/admin/index.html#chat-inbox">Chat Inbox</a></div>
+        <div class="admin-nav-group"><div class="admin-nav-label">Intelligence & Quality</div><a href="/admin/operations.html">Operations & Quality</a><a href="/admin/operations.html#research-agent">Research Agent</a><a href="/admin/operations.html#monitoring">Monitoring</a></div>
+        <div class="admin-nav-group"><div class="admin-nav-label">Outreach</div><a href="/admin/campaigns.html">Campaigns</a><a href="/admin/campaign-audience.html">Campaign Audience</a></div>
+        <div class="admin-nav-group"><div class="admin-nav-label">Analytics</div><a href="/admin/performance.html">Performance & Billing</a></div>
+      </nav>
+      <div class="admin-sidebar-footer"><button class="admin-signout" type="button" onclick="localStorage.removeItem('admin_session');location.href='/admin/';">Sign out</button></div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-main-inner">
+        <header class="admin-page-header">
+          <div><div class="admin-kicker">SALES INTELLIGENCE</div><h1>Opportunity Intelligence</h1><p>Evidence-backed GCC maritime opportunities with transparent scoring, why-now context and decision-maker confidence.</p></div>
+          <div class="admin-page-actions"><button id="refreshBtn" type="button">Refresh</button><button id="backBtn" class="btn-secondary" type="button">CRM</button></div>
+        </header>
+
+        <section class="card" aria-labelledby="alerts-title">
+          <div class="oi-list-head"><div><h2 id="alerts-title">Opportunity Alerts</h2><div class="oi-muted">Rule-based workflow alerts from stored opportunity data. This is not continuous external monitoring.</div></div><div id="opportunityAlertSummary" class="badge">0 active alerts</div></div>
+          <div id="opportunityAlerts" class="oi-grid"><div class="wide oi-muted">Loading alerts...</div></div>
+        </section>
+
+        <section class="card" aria-labelledby="opportunities-title">
+          <div class="oi-list-head">
+            <div><h2 id="opportunities-title">Opportunities</h2><div class="oi-muted">Prioritize accounts using evidence-backed why-now context. Score is a transparent initial heuristic, not a learned model.</div></div>
+            <div class="toolbar"><select id="statusFilter" aria-label="Opportunity status"><option value="">All statuses</option><option>New</option><option>Reviewed</option><option>Qualified</option><option>Outreach Ready</option><option>Contacted</option><option>Replied</option><option>Meeting</option><option>Opportunity</option><option>Won</option><option>Lost</option><option>Disqualified</option></select><input id="minScoreFilter" type="number" min="0" max="100" placeholder="Min score" aria-label="Minimum score"><button type="button" id="filterBtn">Filter</button><button type="button" id="exportCsvBtn" class="btn-secondary">Export CSV</button><button type="button" id="exportJsonBtn" class="btn-secondary">Export JSON</button></div>
+          </div>
+          <div class="oi-table-wrap"><table><thead><tr><th>Score</th><th>Company</th><th>Product</th><th>Why Now</th><th>Decision Maker</th><th>Status</th><th>Action</th></tr></thead><tbody id="opportunityTable"></tbody></table></div>
+        </section>
+
+        <details class="admin-disclosure">
+          <summary><span>Product / ICP Definition</span><small class="oi-muted">Lower-frequency configuration</small></summary>
+          <div class="admin-disclosure-body">
+            <form id="configForm" class="oi-grid">
+              <input id="productName" placeholder="Product / Service" aria-label="Product or service"><input id="minVesselLength" type="number" min="0" step="0.1" placeholder="Minimum vessel length (m)" aria-label="Minimum vessel length"><textarea id="regions" placeholder="Regions — one per line" aria-label="Regions"></textarea><textarea id="targetCompanyTypes" placeholder="Target company types — one per line" aria-label="Target company types"></textarea><textarea id="targetVesselTypes" placeholder="Target vessel types — one per line" aria-label="Target vessel types"></textarea><textarea id="targetSegments" placeholder="Target segments — one per line" aria-label="Target segments"></textarea><textarea id="relevantSignals" placeholder="Relevant signals — one per line" aria-label="Relevant signals"></textarea><textarea id="targetDecisionMakerRoles" placeholder="Decision-maker roles — one per line" aria-label="Decision-maker roles"></textarea><textarea id="configNotes" class="wide" placeholder="Notes / qualification rules" aria-label="Qualification notes"></textarea><div class="wide"><button type="submit">Save ICP</button></div>
+            </form>
+            <div id="configStatus" class="oi-muted" role="status"></div>
+          </div>
+        </details>
+
+        <details class="admin-disclosure">
+          <summary><span>Create Opportunity Manually</span><small class="oi-muted">Use only when source evidence is available</small></summary>
+          <div class="admin-disclosure-body">
+            <form id="opportunityForm" class="oi-grid">
+              <input id="companyName" placeholder="Company name" required aria-label="Company name"><input id="companyId" placeholder="Company ID (optional)" aria-label="Company ID"><input id="productNameOpportunity" placeholder="Product / service" required aria-label="Product or service"><input id="vesselIds" placeholder="Vessel IDs, comma-separated" aria-label="Vessel IDs">
+              <label>Company / Segment Fit <input id="companyFit" type="number" min="0" max="100" value="0"></label><label>Product Fit <input id="productFit" type="number" min="0" max="100" value="0"></label><label>Fleet Fit <input id="fleetFit" type="number" min="0" max="100" value="0"></label><label>Buying Signal Strength <input id="buyingSignalStrength" type="number" min="0" max="100" value="0"></label><label>Signal Recency <input id="signalRecency" type="number" min="0" max="100" value="0"></label><label>Decision-maker Confidence <input id="decisionMakerConfidence" type="number" min="0" max="100" value="0"></label><label>Commercial Relevance <input id="commercialRelevance" type="number" min="0" max="100" value="0"></label><label>Timing / Urgency <input id="timingUrgency" type="number" min="0" max="100" value="0"></label>
+              <input id="decisionMakerName" placeholder="Decision-maker name (UNKNOWN allowed)" aria-label="Decision-maker name"><input id="decisionMakerRole" placeholder="Decision-maker role" aria-label="Decision-maker role"><input id="decisionMakerRelevance" type="number" min="0" max="100" value="0" placeholder="Role relevance" aria-label="Decision-maker relevance"><input id="decisionMakerInfluence" type="number" min="0" max="100" value="0" placeholder="Influence" aria-label="Decision-maker influence">
+              <textarea id="buyingSignals" placeholder="Buying signals — one per line" aria-label="Buying signals"></textarea><textarea id="whyNow" placeholder="Why Now — evidence-backed rationale" aria-label="Why now"></textarea><textarea id="recommendedAction" placeholder="Recommended next action" aria-label="Recommended next action"></textarea><textarea id="salesAngle" placeholder="Recommended sales angle" aria-label="Recommended sales angle"></textarea><textarea id="outreachDraft" class="wide" placeholder="Optional outreach draft — do not include unsupported facts" aria-label="Outreach draft"></textarea>
+              <div class="wide oi-evidence-box"><h3>Evidence</h3><div class="oi-evidence-row"><input id="evidenceTitle" placeholder="Evidence title" aria-label="Evidence title"><select id="evidenceLevel" aria-label="Evidence level"><option>VERIFIED FACT</option><option>INFERENCE</option><option>UNKNOWN</option></select><input id="evidenceObservedAt" type="datetime-local" aria-label="Evidence observed at"><input id="evidenceSourceName" placeholder="Source name" aria-label="Evidence source name"><input id="evidenceSourceUrl" placeholder="Source URL" aria-label="Evidence source URL"><input id="evidenceSummary" placeholder="Evidence summary" aria-label="Evidence summary"></div></div>
+              <div class="wide"><button type="submit">Create Opportunity</button></div>
+            </form>
+          </div>
+        </details>
+
+        <div id="detailCard" class="card hidden"></div>
+      </div>
+    </main>
+  </div>
+</div>
 <script src="/admin/opportunities.js"></script>
 </body>
 </html>
