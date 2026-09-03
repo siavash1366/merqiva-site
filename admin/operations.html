@@ -6,81 +6,79 @@
 <title>Merqiva Operations</title>
 <link rel="stylesheet" href="/admin/admin.css">
 <link rel="stylesheet" href="/admin/operations.css">
+<link rel="stylesheet" href="/admin/shell.css">
 </head>
-<body>
-<div class="container">
-<header class="ops-header card">
-  <div><div class="eyebrow">MERQIVA V2</div><h1>Operations & Quality</h1><p>Monitor signal ingestion, research orchestration and the published quality promise.</p></div>
-  <div class="toolbar"><button onclick="location.href='/admin/index.html'">CRM</button><button onclick="location.href='/admin/opportunities.html'">Opportunities</button><button id="logoutBtn">Logout</button></div>
-</header>
+<body class="admin-app">
+<div class="admin-shell">
+  <aside class="admin-sidebar" aria-label="Merqiva admin navigation">
+    <div class="admin-brand"><span class="admin-brand-mark"></span><div><strong>MERQIVA</strong><small>Intelligence OS</small></div></div>
+    <nav class="admin-nav">
+      <div class="admin-nav-group"><div class="admin-nav-label">Sales</div><a href="/admin/index.html">Lead CRM</a><a href="/admin/opportunities.html">Opportunities</a><a href="/admin/index.html#chat-inbox">Chat Inbox</a></div>
+      <div class="admin-nav-group"><div class="admin-nav-label">Intelligence & Quality</div><a class="is-active" aria-current="page" href="/admin/operations.html">Operations & Quality</a><a href="#research-agent">Research Agent</a><a href="#monitoring">Monitoring</a></div>
+      <div class="admin-nav-group"><div class="admin-nav-label">Outreach</div><a href="/admin/campaigns.html">Campaigns</a><a href="/admin/campaign-audience.html">Campaign Audience</a></div>
+      <div class="admin-nav-group"><div class="admin-nav-label">Analytics</div><a href="/admin/performance.html">Performance & Billing</a></div>
+    </nav>
+    <div class="admin-sidebar-footer"><button class="admin-signout" type="button" onclick="localStorage.removeItem('admin_session');location.href='/admin/';">Sign out</button></div>
+  </aside>
 
-<section class="card system-check-panel">
-  <div class="card-title"><div><span class="eyebrow">STAGING / PRODUCTION READINESS</span><h2>System Check</h2><p class="ops-subtitle">Runs deterministic synthetic checks against scoring, evidence, decision-maker rules, recommended action and environment configuration. It never creates a customer opportunity.</p></div><span id="systemCheckBadge" class="badge">NOT RUN</span></div>
-  <div class="system-check-actions"><button id="runSystemCheck" class="primary">Run System Check</button><div id="systemCheckSummary" class="small-note">No check has been run yet.</div></div>
-  <div id="systemCheckResults" class="system-check-results"></div>
-</section>
+  <main class="admin-main">
+    <div class="admin-main-inner">
+      <header class="admin-page-header">
+        <div><div class="admin-kicker">INTELLIGENCE & QUALITY</div><h1>Operations & Quality</h1><p>Run research, inspect system readiness, manage signal monitoring and enforce the published opportunity-quality promise.</p></div>
+        <div class="admin-page-actions"><a class="button-link btn-secondary" href="/admin/opportunities.html">Opportunities</a><button id="logoutBtn" class="btn-secondary" type="button">Logout</button></div>
+      </header>
 
-<section class="card research-panel">
-  <div class="card-title"><div><span class="eyebrow">AI RESEARCH</span><h2>Research Agent</h2><p class="ops-subtitle">Create a research job and optionally dispatch it to an authorized n8n workflow. Results return through the secure callback and become evidence-backed opportunities.</p></div><span id="researchBadge" class="badge">READY</span></div>
-  <form id="researchForm" class="ops-form research-form">
-    <label>Product / Service <input id="researchProduct" required maxlength="240" placeholder="e.g. Marine GMDSS equipment"></label>
-    <label>Target market <input id="researchMarket" maxlength="500" placeholder="e.g. UAE, Saudi Arabia, GCC offshore"></label>
-    <label>Research question <textarea id="researchQuestion" required placeholder="Find GCC vessel operators showing recent buying signals relevant to this product. Verify source evidence, fit and likely decision makers."></textarea></label>
-    <label>Company types <textarea id="researchCompanyTypes" placeholder="One per line"></textarea></label>
-    <label>Vessel types <textarea id="researchVesselTypes" placeholder="One per line"></textarea></label>
-    <label>Relevant signals <textarea id="researchSignals" placeholder="One per line"></textarea></label>
-    <label>Decision-maker roles <textarea id="researchRoles" placeholder="One per line"></textarea></label>
-    <label>Max opportunities <input id="researchMax" type="number" min="1" max="25" value="10"></label>
-    <label>Language
-      <select id="researchLanguage"><option value="en">English</option><option value="ar">Arabic</option></select>
-    </label>
-    <button class="primary" type="submit">Create Research Job</button>
-  </form>
-  <div class="research-jobs"><h3>Recent Research Jobs</h3><div id="researchJobs">Loading…</div></div>
-</section>
+      <section id="research-agent" class="card research-panel">
+        <div class="card-title"><div><span class="admin-kicker">AI RESEARCH</span><h2>Research Agent</h2><p class="ops-subtitle">Create a research job and dispatch it to the authorized n8n workflow. Validated results return through the secure callback and become evidence-backed opportunities.</p></div><span id="researchBadge" class="badge">READY</span></div>
+        <form id="researchForm" class="ops-form research-form">
+          <label>Product / Service <input id="researchProduct" required maxlength="240" placeholder="e.g. Marine GMDSS equipment"></label>
+          <label>Target market <input id="researchMarket" maxlength="500" placeholder="e.g. UAE, Saudi Arabia, GCC offshore"></label>
+          <label>Research question <textarea id="researchQuestion" required placeholder="Find GCC vessel operators showing recent buying signals relevant to this product. Verify source evidence, fit and likely decision makers."></textarea></label>
+          <label>Company types <textarea id="researchCompanyTypes" placeholder="One per line"></textarea></label>
+          <label>Vessel types <textarea id="researchVesselTypes" placeholder="One per line"></textarea></label>
+          <label>Relevant signals <textarea id="researchSignals" placeholder="One per line"></textarea></label>
+          <label>Decision-maker roles <textarea id="researchRoles" placeholder="One per line"></textarea></label>
+          <label>Max opportunities <input id="researchMax" type="number" min="1" max="25" value="10"></label>
+          <label>Language <select id="researchLanguage"><option value="en">English</option><option value="ar">Arabic</option></select></label>
+          <button class="primary" type="submit">Create Research Job</button>
+        </form>
+        <div class="research-jobs"><div class="section-heading"><div><h3>Recent Research Jobs</h3><p>Current state and number of accepted opportunities from each run.</p></div></div><div id="researchJobs">Loading…</div></div>
+      </section>
 
-<section class="ops-grid">
-  <article class="card">
-    <div class="card-title"><div><span class="eyebrow">MARKET SIGNALS</span><h2>Monitoring</h2></div><span id="monitorBadge" class="badge">Loading</span></div>
-    <div class="metric-grid">
-      <div><small>Ingested signals</small><strong id="signalsCount">—</strong></div>
-      <div><small>Last ingestion</small><strong id="lastIngest">—</strong></div>
-      <div><small>Ingest endpoint</small><strong id="ingestState">—</strong></div>
-      <div><small>Configured interval</small><strong id="interval">—</strong></div>
+      <section id="system-health" class="card system-check-panel">
+        <div class="card-title"><div><span class="admin-kicker">PRODUCTION READINESS</span><h2>System Check</h2><p class="ops-subtitle">Runs deterministic synthetic checks against scoring, evidence, decision-maker rules, recommended action and environment configuration. It never creates a customer opportunity.</p></div><span id="systemCheckBadge" class="badge">NOT RUN</span></div>
+        <div class="system-check-actions"><button id="runSystemCheck" class="primary">Run System Check</button><div id="systemCheckSummary" class="small-note">No check has been run yet.</div></div>
+        <div id="systemCheckResults" class="system-check-results"></div>
+      </section>
+
+      <section class="ops-grid">
+        <article id="monitoring" class="card">
+          <div class="card-title"><div><span class="admin-kicker">MARKET SIGNALS</span><h2>Monitoring</h2><p class="ops-subtitle">Control approved signal ingestion sources and monitoring cadence.</p></div><span id="monitorBadge" class="badge">Loading</span></div>
+          <div class="metric-grid">
+            <div><small>Ingested signals</small><strong id="signalsCount">—</strong></div><div><small>Last ingestion</small><strong id="lastIngest">—</strong></div><div><small>Ingest endpoint</small><strong id="ingestState">—</strong></div><div><small>Configured interval</small><strong id="interval">—</strong></div>
+          </div>
+          <form id="monitorForm" class="ops-form">
+            <label>Enabled <input id="monitorEnabled" type="checkbox"></label>
+            <label>Interval (minutes) <input id="monitorInterval" type="number" min="15" max="1440" step="15"></label>
+            <label>Sources <textarea id="monitorSources" placeholder="One authorized source/workflow per line"></textarea></label>
+            <label>Notes <textarea id="monitorNotes"></textarea></label>
+            <button class="primary" type="submit">Save Monitoring Settings</button>
+          </form>
+          <p class="small-note">Merqiva does not bypass source restrictions. External monitoring must run through authorized APIs, feeds or workflows such as n8n and submit validated signals to the ingestion endpoint.</p>
+        </article>
+
+        <article id="quality-guarantee" class="card">
+          <div class="card-title"><div><span class="admin-kicker">DELIVERY PROMISE</span><h2>Quality Guarantee</h2><p class="ops-subtitle">Operational rules for opportunity-quality qualification and replacement review.</p></div><span id="guaranteeBadge" class="badge">Loading</span></div>
+          <div class="metric-grid"><div><small>Qualified delivered</small><strong id="delivered">—</strong></div><div><small>Target</small><strong id="target">—</strong></div><div><small>Remaining</small><strong id="remaining">—</strong></div><div><small>Progress</small><strong id="progress">—</strong></div></div>
+          <form id="guaranteeForm" class="ops-form">
+            <label>Target qualified opportunities <input id="targetQualified" type="number" min="1" max="500"></label><label>Period (days) <input id="periodDays" type="number" min="1" max="90"></label><label>Minimum score <input id="minimumScore" type="number" min="0" max="100"></label><label class="check"><input id="requireEvidence" type="checkbox"> Require verified evidence</label><label class="check"><input id="requireWhyNow" type="checkbox"> Require HIGH Why Now confidence</label><label>Replacement policy <select id="replacementPolicy"><option value="REPLACE">Replace</option><option value="CREDIT">Credit review</option><option value="REFUND_REVIEW">Refund review</option></select></label><button class="primary" type="submit">Save Guarantee Rules</button>
+          </form>
+          <div class="rejected"><h3>Recent non-qualified opportunities</h3><div id="rejectedList">Loading…</div></div>
+        </article>
+      </section>
+      <div id="statusMessage" class="status" role="status"></div>
     </div>
-    <form id="monitorForm" class="ops-form">
-      <label>Enabled <input id="monitorEnabled" type="checkbox"></label>
-      <label>Interval (minutes) <input id="monitorInterval" type="number" min="15" max="1440" step="15"></label>
-      <label>Sources <textarea id="monitorSources" placeholder="One authorized source/workflow per line"></textarea></label>
-      <label>Notes <textarea id="monitorNotes"></textarea></label>
-      <button class="primary" type="submit">Save Monitoring Settings</button>
-    </form>
-    <p class="small-note">Merqiva does not bypass source restrictions. External monitoring must run through authorized APIs, feeds or workflows such as n8n and submit validated signals to the ingestion endpoint.</p>
-  </article>
-
-  <article class="card">
-    <div class="card-title"><div><span class="eyebrow">DELIVERY PROMISE</span><h2>Quality Guarantee</h2></div><span id="guaranteeBadge" class="badge">Loading</span></div>
-    <div class="metric-grid">
-      <div><small>Qualified delivered</small><strong id="delivered">—</strong></div>
-      <div><small>Target</small><strong id="target">—</strong></div>
-      <div><small>Remaining</small><strong id="remaining">—</strong></div>
-      <div><small>Progress</small><strong id="progress">—</strong></div>
-    </div>
-    <form id="guaranteeForm" class="ops-form">
-      <label>Target qualified opportunities <input id="targetQualified" type="number" min="1" max="500"></label>
-      <label>Period (days) <input id="periodDays" type="number" min="1" max="90"></label>
-      <label>Minimum score <input id="minimumScore" type="number" min="0" max="100"></label>
-      <label class="check"><input id="requireEvidence" type="checkbox"> Require verified evidence</label>
-      <label class="check"><input id="requireWhyNow" type="checkbox"> Require HIGH Why Now confidence</label>
-      <label>Replacement policy
-        <select id="replacementPolicy"><option value="REPLACE">Replace</option><option value="CREDIT">Credit review</option><option value="REFUND_REVIEW">Refund review</option></select>
-      </label>
-      <button class="primary" type="submit">Save Guarantee Rules</button>
-    </form>
-    <div class="rejected"><h3>Recent non-qualified opportunities</h3><div id="rejectedList">Loading…</div></div>
-  </article>
-</section>
-<div id="statusMessage" class="status"></div>
+  </main>
 </div>
 <script src="/admin/operations.js"></script>
 </body>
