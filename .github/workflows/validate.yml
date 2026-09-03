@@ -61,6 +61,8 @@ jobs:
           test -f admin/opportunities.js
           test -f admin/opportunities.css
           test -f n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json
+          test -f n8n/Merqiva_Website_Lead_Telegram_Alert.json
+          test -f docs/MERQIVA_N8N_HANDOFF.md
       - name: Validate public HTML contracts
         shell: bash
         run: |
@@ -74,7 +76,19 @@ jobs:
           grep -q '<title>Service Terms | Merqiva' terms.html
       - name: Validate n8n workflow JSON
         shell: bash
-        run: node -e "const fs=require('fs'); const w=JSON.parse(fs.readFileSync('n8n/Merqiva_AI_Maritime_Research_Agent_MVP.json','utf8')); if(!Array.isArray(w.nodes)||!w.connections) throw new Error('Invalid n8n workflow shape'); console.log('n8n workflow JSON OK');"
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const path=require('path');
+          const files=fs.readdirSync('n8n').filter(name=>name.endsWith('.json'));
+          if(!files.length) throw new Error('No n8n workflow JSON files found');
+          for(const name of files){
+            const file=path.join('n8n',name);
+            const w=JSON.parse(fs.readFileSync(file,'utf8'));
+            if(!Array.isArray(w.nodes)||!w.connections) throw new Error(`Invalid n8n workflow shape: ${file}`);
+            console.log(`n8n workflow JSON OK: ${file}`);
+          }
+          NODE
       - name: Validate security headers file
         shell: bash
         run: |
