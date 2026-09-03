@@ -88,7 +88,8 @@
   };
 
   const lang=()=>document.documentElement.lang==="ar"?"ar":"en";
-  const setText=(selector,value)=>{const el=document.querySelector(selector);if(el&&value!=null)el.textContent=value};
+  const setValue=(el,prop,value)=>{if(el&&value!=null&&el[prop]!==value)el[prop]=value};
+  const setText=(selector,value)=>{const el=document.querySelector(selector);if(el&&value!=null&&el.textContent!==value)el.textContent=value};
 
   function localizeFocus(current){
     const c=focusCopy[current];
@@ -99,23 +100,19 @@
       const kicker=head.querySelector(".kicker");
       const title=head.querySelector("h2");
       const intro=head.querySelector("p");
-      if(kicker)kicker.textContent=c.kicker;
-      if(title)title.textContent=c.title;
-      if(intro)intro.textContent=c.intro;
+      setValue(kicker,"textContent",c.kicker);
+      setValue(title,"textContent",c.title);
+      setValue(intro,"textContent",c.intro);
     }
     root.querySelectorAll(".focus-card").forEach((card,index)=>{
       const item=c.cards[index];
       if(!item)return;
-      const tag=card.querySelector(".focus-tag");
-      const title=card.querySelector("h3");
-      const text=card.querySelector("p");
-      const link=card.querySelector("a");
-      if(tag)tag.textContent=item[0];
-      if(title)title.textContent=item[1];
-      if(text)text.textContent=item[2];
-      if(link)link.textContent=item[3];
+      setValue(card.querySelector(".focus-tag"),"textContent",item[0]);
+      setValue(card.querySelector("h3"),"textContent",item[1]);
+      setValue(card.querySelector("p"),"textContent",item[2]);
+      setValue(card.querySelector("a"),"textContent",item[3]);
     });
-    root.querySelectorAll(".market-link").forEach((link,index)=>{if(c.markets[index])link.textContent=c.markets[index]});
+    root.querySelectorAll(".market-link").forEach((link,index)=>{if(c.markets[index])setValue(link,"textContent",c.markets[index])});
   }
 
   function localizeChat(current){
@@ -128,8 +125,8 @@
     widget.querySelectorAll(".chat-quick-actions button").forEach((button,index)=>{
       const item=c.actions[index];
       if(!item)return;
-      button.textContent=item[0];
-      button.dataset.chatPrompt=item[1];
+      setValue(button,"textContent",item[0]);
+      if(button.dataset.chatPrompt!==item[1])button.dataset.chatPrompt=item[1];
     });
     const name=document.getElementById("chatName");
     const email=document.getElementById("chatEmail");
@@ -137,17 +134,17 @@
     const send=document.getElementById("chatSend");
     const note=widget.querySelector(".chat-form small");
     const launcher=document.getElementById("merqivaChatLauncher");
-    if(name)name.placeholder=c.name;
-    if(email)email.placeholder=c.email;
-    if(input)input.placeholder=c.input;
-    if(send)send.textContent=c.send;
-    if(note)note.textContent=c.note;
-    if(launcher)launcher.textContent=c.launcher;
+    setValue(name,"placeholder",c.name);
+    setValue(email,"placeholder",c.email);
+    setValue(input,"placeholder",c.input);
+    setValue(send,"textContent",c.send);
+    setValue(note,"textContent",c.note);
+    setValue(launcher,"textContent",c.launcher);
 
     const messages=document.getElementById("chatMessages");
     if(messages&&!messages.querySelector(".chat-msg.user")){
       const firstBot=messages.querySelector(".chat-msg.bot");
-      if(firstBot)firstBot.textContent=c.welcome;
+      if(firstBot&&firstBot.textContent!==c.welcome)firstBot.textContent=c.welcome;
     }
   }
 
@@ -155,7 +152,7 @@
     const current=lang();
     document.querySelectorAll("[data-growth]").forEach(el=>{
       const key=el.getAttribute("data-growth");
-      if(copy[current][key])el.textContent=copy[current][key];
+      if(copy[current][key]&&el.textContent!==copy[current][key])el.textContent=copy[current][key];
     });
     localizeFocus(current);
     localizeChat(current);
@@ -183,7 +180,7 @@
       if(target.closest("[data-chat-close]"))widget.dataset.userOpen="0";
     },true);
 
-    /* app.js still contains a legacy first-session timer. Suppress only non-user opens. */
+    /* Suppress only the legacy automatic open from app.js. */
     const widgetObserver=new MutationObserver(()=>{
       if(widget.classList.contains("open")&&widget.dataset.userOpen!=="1"){
         widget.classList.remove("open");
@@ -191,19 +188,25 @@
         if(launcher)launcher.hidden=false;
         setTimeout(()=>{if(document.activeElement===messageInput)messageInput.blur()},100);
       }
-      setTimeout(()=>localizeChat(lang()),0);
     });
     widgetObserver.observe(widget,{attributes:true,attributeFilter:["class"]});
 
     /* Contact capture appears only after the visitor starts a conversation. */
     const updateEngagement=()=>{
       if(messages?.querySelector(".chat-msg.user"))modal.classList.add("chat-engaged");
-      localizeChat(lang());
     };
     updateEngagement();
     if(messages){
-      const messageObserver=new MutationObserver(updateEngagement);
-      messageObserver.observe(messages,{childList:true,subtree:true});
+      const messageObserver=new MutationObserver(()=>{
+        updateEngagement();
+        /* app.js can add the welcome after this script initializes. Localize once, without rewriting unchanged nodes. */
+        if(!messages.querySelector(".chat-msg.user")){
+          const firstBot=messages.querySelector(".chat-msg.bot");
+          const welcome=chatCopy[lang()].welcome;
+          if(firstBot&&firstBot.textContent!==welcome)firstBot.textContent=welcome;
+        }
+      });
+      messageObserver.observe(messages,{childList:true});
     }
   }
 
