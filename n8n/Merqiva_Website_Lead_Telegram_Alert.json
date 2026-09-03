@@ -5,6 +5,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "merqiva-sales-alert",
+        "authentication": "headerAuth",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -12,57 +13,8 @@
       "name": "Merqiva Sales Alert",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [
-        -760,
-        0
-      ],
+      "position": [-560, 0],
       "webhookId": "merqiva-sales-alert"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.headers?.['x-merqiva-alert-secret'] || '' }}",
-              "rightValue": "={{ $env.MERQIVA_SALES_ALERT_SECRET || '' }}",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "authorize-alert",
-      "name": "Authorize Alert",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -540,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\"success\":false,\"error\":\"Unauthorized\"}",
-        "options": {
-          "responseCode": 401
-        }
-      },
-      "id": "reject-unauthorized",
-      "name": "Reject Unauthorized",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        -300,
-        180
-      ]
     },
     {
       "parameters": {
@@ -72,16 +24,13 @@
       "name": "Normalize Lead",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        -300,
-        -40
-      ]
+      "position": [-300, 0]
     },
     {
       "parameters": {
         "resource": "message",
         "operation": "sendMessage",
-        "chatId": "={{ $env.MERQIVA_TELEGRAM_CHAT_ID }}",
+        "chatId": "RESELECT_OR_SET_CHAT_ID_AFTER_IMPORT",
         "text": "={{ '🚢 NEW MERQIVA LEAD\\n\\n' + 'Lead ID: ' + ($json.leadId || '—') + '\\n' + 'Name: ' + ($json.name || '—') + '\\n' + 'Company: ' + ($json.company || '—') + '\\n' + 'Email: ' + ($json.email || '—') + '\\n' + 'Country: ' + ($json.country || '—') + '\\n' + 'Offering: ' + ($json.offering || '—') + '\\n' + 'Target market: ' + ($json.market || '—') + '\\n' + 'Source: ' + ($json.source || '—') + '\\n\\n' + 'Message: ' + ($json.message || '—') + '\\n\\n' + 'Received: ' + ($json.createdAt || '') }}",
         "additionalFields": {}
       },
@@ -89,10 +38,7 @@
       "name": "Send Lead Alert to Telegram",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [
-        -40,
-        -40
-      ]
+      "position": [-40, 0]
     },
     {
       "parameters": {
@@ -106,63 +52,18 @@
       "name": "Acknowledge Alert",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        220,
-        -40
-      ]
+      "position": [220, 0]
     }
   ],
   "connections": {
     "Merqiva Sales Alert": {
-      "main": [
-        [
-          {
-            "node": "Authorize Alert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Authorize Alert": {
-      "main": [
-        [
-          {
-            "node": "Normalize Lead",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reject Unauthorized",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node":"Normalize Lead","type":"main","index":0}]]
     },
     "Normalize Lead": {
-      "main": [
-        [
-          {
-            "node": "Send Lead Alert to Telegram",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node":"Send Lead Alert to Telegram","type":"main","index":0}]]
     },
     "Send Lead Alert to Telegram": {
-      "main": [
-        [
-          {
-            "node": "Acknowledge Alert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{"node":"Acknowledge Alert","type":"main","index":0}]]
     }
   },
   "pinData": {},
@@ -170,9 +71,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "merqiva-sales-alert-production-template-v1",
+  "versionId": "merqiva-sales-alert-production-template-v2",
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": false,
+    "notes": "After import, select a Header Auth credential on the Webhook, select the Telegram credential, and set the target Chat ID. Secrets are intentionally not stored in this repository."
   },
   "tags": []
 }
