@@ -1,4 +1,4 @@
-/* Merqiva growth copy layer. Runs after app.js so growth messaging stays consistent in EN/AR. */
+/* Merqiva growth copy + conversion UX layer. Runs after app.js. */
 (function(){
   const copy={
     en:{
@@ -31,27 +31,63 @@
     });
   }
 
+  function initChatUX(){
+    const widget=document.getElementById("chatWidget");
+    const modal=widget?.querySelector(".chat-modal");
+    const messages=document.getElementById("chatMessages");
+    const messageInput=document.getElementById("chatMessage");
+    const launcher=document.getElementById("merqivaChatLauncher");
+    if(!widget||!modal)return;
+
+    /* Do not force chat open. B2B visitors should choose when to engage. */
+    try{sessionStorage.setItem("merqiva_chat_auto_shown","1")}catch(_){}
+    if(launcher)launcher.hidden=false;
+
+    widget.dataset.userOpen="0";
+
+    /* Capture trusted open/close intent before app.js bubble handlers run. */
+    document.addEventListener("click",event=>{
+      const target=event.target instanceof Element?event.target:null;
+      if(!target)return;
+      if(target.closest("[data-chat-open],#merqivaChatLauncher,[data-chat-prompt]")){
+        widget.dataset.userOpen="1";
+      }
+      if(target.closest("[data-chat-close]")){
+        widget.dataset.userOpen="0";
+      }
+    },true);
+
+    /* app.js still contains a legacy first-session timer. Suppress only non-user opens. */
+    const widgetObserver=new MutationObserver(()=>{
+      if(widget.classList.contains("open")&&widget.dataset.userOpen!=="1"){
+        widget.classList.remove("open");
+        widget.setAttribute("aria-hidden","true");
+        if(launcher)launcher.hidden=false;
+        setTimeout(()=>{
+          if(document.activeElement===messageInput)messageInput.blur();
+        },100);
+      }
+    });
+    widgetObserver.observe(widget,{attributes:true,attributeFilter:["class"]});
+
+    /* Hide contact capture until the visitor has actually started a conversation. */
+    const updateEngagement=()=>{
+      if(messages?.querySelector(".chat-msg.user"))modal.classList.add("chat-engaged");
+    };
+    updateEngagement();
+    if(messages){
+      const messageObserver=new MutationObserver(updateEngagement);
+      messageObserver.observe(messages,{childList:true,subtree:true});
+    }
+
+    const chatNote=widget.querySelector(".chat-form small");
+    if(chatNote)chatNote.textContent="Automated qualification responses. Do not share sensitive information.";
+  }
+
   function init(){
     apply();
     document.querySelectorAll(".lang").forEach(btn=>btn.addEventListener("click",()=>setTimeout(apply,0)));
-
-    const chatNote=document.querySelector("#chatWidget .chat-form small");
-    if(chatNote)chatNote.textContent="Automated qualification responses. Do not share passwords, payment credentials or sensitive information.";
-
-    let chatInteracted=false;
-    document.querySelectorAll("[data-chat-open],[data-chat-close]").forEach(node=>node.addEventListener("click",event=>{
-      if(event.isTrusted)chatInteracted=true;
-    }));
-
-    /* app.js suppresses repeated auto-open inside a browser session. For the current CRO test,
-       reopen on each page load after ~5 seconds unless the visitor has already interacted. */
-    setTimeout(()=>{
-      const widget=document.getElementById("chatWidget");
-      if(!chatInteracted&&widget&&!widget.classList.contains("open")){
-        const opener=document.querySelector("[data-chat-open]");
-        if(opener)opener.click();
-      }
-    },5200);
+    initChatUX();
   }
 
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
