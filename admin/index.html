@@ -1,1 +1,98 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Merqiva CRM Admin</title><link rel="stylesheet" href="/admin/admin.css"></head><body><div class="container"><div id="loginBox" class="card"><h1>Merqiva CRM Login</h1><input id="token" type="password" placeholder="Admin Token" /><button id="loginBtn">Login</button><div id="loginError" class="message"></div></div><div id="panel" class="hidden"><div class="card"><h1>Lead Management</h1><div class="toolbar"><button id="refreshBtn">Refresh</button><button id="logoutBtn">Logout</button><button type="button" onclick="window.location.href='/admin/opportunities.html'">Opportunity Intelligence</button><button type="button" onclick="window.location.href='/admin/campaigns.html'">Campaign Operations</button><button type="button" onclick="window.location.href='/admin/operations.html'">Operations & Quality</button><button type="button" onclick="window.location.href='/admin/performance.html'">Performance & Billing</button></div></div><div class="card"><h2>Search &amp; Filter</h2><input id="searchInput" type="text" placeholder="Search name, email, company..." /><select id="statusFilter"><option value="">All Status</option><option value="New">New</option><option value="Reviewed">Reviewed</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Proposal Sent">Proposal Sent</option><option value="Won">Won</option><option value="Lost">Lost</option></select><button id="searchBtn">Search</button></div><div class="card"><h2>Customer Chat Inbox</h2><div class="toolbar"><button id="refreshChatBtn" type="button">Refresh Chats</button></div><div id="chatInbox" class="chat-inbox"></div><div id="chatConversation" class="chat-conversation hidden"><h3 id="chatConversationTitle">Conversation</h3><div id="chatConversationMessages"></div></div></div><div class="card"><h2>Campaign Management</h2><div class="campaign-form"><input id="campaignName" type="text" placeholder="Campaign Name" /><input id="campaignSubject" type="text" placeholder="Email Subject" /><textarea id="campaignBody" placeholder="Email Content"></textarea><button id="createCampaignBtn">Create Campaign</button></div><h3>Campaign List</h3><table><thead><tr><th>ID</th><th>Name</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead><tbody id="campaignTable"></tbody></table><table><tbody id="leadTable"></tbody></table><div class="pagination"><button id="prevPage">Previous</button><span id="pageInfo">Page 1</span><button id="nextPage">Next</button></div></div><div id="leadDetails" class="card hidden"><h2>Lead Details</h2><div id="detailsContent"></div><div class="noteBox"><h3>Internal Notes</h3><textarea id="noteInput" placeholder="Add internal note..."></textarea><button id="saveNoteBtn">Save Note</button><div id="notesList"></div></div><h3>Activity History</h3><div id="historyContent"></div><div class="detailActions"><button id="replyBtn">Reply Email</button><button id="copyEmailBtn">Copy Email</button><button id="closeDetails">Close</button></div></div></div></div><script src="/admin/admin.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merqiva CRM Admin</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="stylesheet" href="/admin/shell.css">
+</head>
+<body class="admin-app">
+  <div id="loginBox" class="card login-card">
+    <div class="admin-kicker">MERQIVA OPERATIONS</div>
+    <h1>Admin Login</h1>
+    <p>Secure access to the Merqiva sales and intelligence console.</p>
+    <label for="token">Admin token</label>
+    <div class="login-row">
+      <input id="token" type="password" placeholder="Enter admin token" autocomplete="current-password">
+      <button id="loginBtn">Login</button>
+    </div>
+    <div id="loginError" class="message" role="status"></div>
+  </div>
+
+  <div id="panel" class="hidden">
+    <div class="admin-shell">
+      <aside class="admin-sidebar" aria-label="Merqiva admin navigation">
+        <div class="admin-brand"><span class="admin-brand-mark"></span><div><strong>MERQIVA</strong><small>Intelligence OS</small></div></div>
+        <nav class="admin-nav">
+          <div class="admin-nav-group"><div class="admin-nav-label">Sales</div><a class="is-active" aria-current="page" href="/admin/index.html">Lead CRM</a><a href="/admin/opportunities.html">Opportunities</a><a href="/admin/index.html#chat-inbox">Chat Inbox</a></div>
+          <div class="admin-nav-group"><div class="admin-nav-label">Intelligence & Quality</div><a href="/admin/operations.html">Operations & Quality</a><a href="/admin/operations.html#research-agent">Research Agent</a><a href="/admin/operations.html#monitoring">Monitoring</a></div>
+          <div class="admin-nav-group"><div class="admin-nav-label">Outreach</div><a href="/admin/campaigns.html">Campaigns</a><a href="/admin/campaign-audience.html">Campaign Audience</a></div>
+          <div class="admin-nav-group"><div class="admin-nav-label">Analytics</div><a href="/admin/performance.html">Performance & Billing</a></div>
+        </nav>
+        <div class="admin-sidebar-footer"><button class="admin-signout" type="button" onclick="localStorage.removeItem('admin_session');location.href='/admin/';">Sign out</button></div>
+      </aside>
+
+      <main class="admin-main">
+        <div class="admin-main-inner">
+          <header class="admin-page-header">
+            <div><div class="admin-kicker">SALES OPERATIONS</div><h1>Lead CRM</h1><p>Review inbound leads, customer conversations and outreach activity from one operational workspace.</p></div>
+            <div class="admin-page-actions"><button id="refreshBtn" type="button">Refresh data</button><button id="logoutBtn" class="btn-secondary" type="button">Logout</button></div>
+          </header>
+
+          <section class="card" aria-labelledby="filter-title">
+            <div class="section-heading"><div><h2 id="filter-title">Search & Filter</h2><p>Find accounts quickly by contact, company or workflow status.</p></div></div>
+            <div class="filter-grid">
+              <label for="searchInput">Lead search<input id="searchInput" type="text" placeholder="Name, email or company"></label>
+              <label for="statusFilter">Status<select id="statusFilter"><option value="">All statuses</option><option value="New">New</option><option value="Reviewed">Reviewed</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Proposal Sent">Proposal Sent</option><option value="Won">Won</option><option value="Lost">Lost</option></select></label>
+              <button id="searchBtn" type="button">Apply filter</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="lead-title">
+            <div class="section-heading"><div><h2 id="lead-title">Lead Pipeline</h2><p>Operational view of inbound contacts and their current sales status.</p></div></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Company</th><th>Country</th><th>Offering</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="leadTable"></tbody>
+              </table>
+            </div>
+            <div class="pagination"><button id="prevPage" class="btn-secondary" type="button">Previous</button><span id="pageInfo">Page 1</span><button id="nextPage" class="btn-secondary" type="button">Next</button></div>
+          </section>
+
+          <section id="chat-inbox" class="card" aria-labelledby="chat-title">
+            <div class="section-heading"><div><h2 id="chat-title">Customer Chat Inbox</h2><p>Read customer conversations captured by the website assistant. Reply functionality is not enabled here.</p></div><button id="refreshChatBtn" class="btn-secondary" type="button">Refresh chats</button></div>
+            <div class="admin-split">
+              <div id="chatInbox" class="chat-inbox"></div>
+              <div id="chatConversation" class="chat-conversation hidden"><h3 id="chatConversationTitle">Conversation</h3><div id="chatConversationMessages"></div></div>
+            </div>
+          </section>
+
+          <section id="campaign-management" class="card" aria-labelledby="campaign-title">
+            <div class="section-heading"><div><h2 id="campaign-title">Campaign Management</h2><p>Create an evidence-led campaign, then use Campaign Operations for audience preparation and controlled sending.</p></div><a class="button-link btn-secondary" href="/admin/campaigns.html">Open Campaign Operations</a></div>
+            <div class="campaign-form">
+              <input id="campaignName" type="text" placeholder="Campaign name" aria-label="Campaign name">
+              <input id="campaignSubject" type="text" placeholder="Email subject" aria-label="Email subject">
+              <textarea id="campaignBody" placeholder="Email content" aria-label="Email content"></textarea>
+              <button id="createCampaignBtn" type="button">Create campaign</button>
+            </div>
+            <div class="table-wrap">
+              <table><thead><tr><th>ID</th><th>Name</th><th>Subject</th><th>Status & Delivery</th><th>Action</th></tr></thead><tbody id="campaignTable"></tbody></table>
+            </div>
+          </section>
+
+          <section id="leadDetails" class="card hidden" aria-labelledby="lead-details-title">
+            <div class="section-heading"><div><h2 id="lead-details-title">Lead Details</h2><p>Account context, notes and activity history.</p></div><button id="closeDetails" class="btn-secondary" type="button">Close</button></div>
+            <div id="detailsContent"></div>
+            <div class="noteBox"><h3>Internal Notes</h3><textarea id="noteInput" placeholder="Add internal note..."></textarea><button id="saveNoteBtn" type="button">Save note</button><div id="notesList"></div></div>
+            <h3>Activity History</h3><div id="historyContent"></div>
+            <div class="detailActions"><button id="replyBtn" type="button">Reply Email</button><button id="copyEmailBtn" class="btn-secondary" type="button">Copy Email</button></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/admin/admin.js"></script>
+</body>
+</html>
