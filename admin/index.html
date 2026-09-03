@@ -6,6 +6,7 @@
   <title>Merqiva CRM Admin</title>
   <link rel="stylesheet" href="/admin/admin.css">
   <link rel="stylesheet" href="/admin/shell.css">
+  <link rel="stylesheet" href="/admin/chat-inbox.css">
 </head>
 <body class="admin-app">
   <div id="loginBox" class="card login-card">
@@ -60,11 +61,22 @@
             <div class="pagination"><button id="prevPage" class="btn-secondary" type="button">Previous</button><span id="pageInfo">Page 1</span><button id="nextPage" class="btn-secondary" type="button">Next</button></div>
           </section>
 
-          <section id="chat-inbox" class="card" aria-labelledby="chat-title">
-            <div class="section-heading"><div><h2 id="chat-title">Customer Chat Inbox</h2><p>Read customer conversations captured by the website assistant. Reply functionality is not enabled here.</p></div><button id="refreshChatBtn" class="btn-secondary" type="button">Refresh chats</button></div>
-            <div class="admin-split">
-              <div id="chatInbox" class="chat-inbox"></div>
-              <div id="chatConversation" class="chat-conversation hidden"><h3 id="chatConversationTitle">Conversation</h3><div id="chatConversationMessages"></div></div>
+          <section id="chat-inbox" class="card chat-section" aria-labelledby="chat-title">
+            <div class="section-heading">
+              <div><h2 id="chat-title">Customer Chat Inbox</h2><p>Scan recent website conversations, then open a thread to review the full customer and Merqiva exchange.</p></div>
+              <div class="toolbar"><span class="chat-readonly-badge">Read only</span><button id="refreshChatBtn" class="btn-secondary" type="button">Refresh chats</button></div>
+            </div>
+            <div class="chat-workspace">
+              <div class="chat-list-pane">
+                <div class="chat-pane-head"><strong>Conversations</strong><small id="chatCount">0 conversations</small></div>
+                <div id="chatInbox" class="chat-inbox" aria-label="Customer conversations"></div>
+              </div>
+              <div class="chat-detail-pane">
+                <div id="chatConversation" class="chat-conversation">
+                  <div class="chat-conversation-header"><h3 id="chatConversationTitle">Select a conversation</h3><span class="chat-readonly-badge">Transcript</span></div>
+                  <div id="chatConversationMessages"><div class="chat-empty-state">Choose a conversation on the left to inspect the transcript.</div></div>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -94,5 +106,6 @@
   </div>
 
   <script src="/admin/admin.js"></script>
+  <script src="/admin/chat-ui.js"></script>
 </body>
 </html>
