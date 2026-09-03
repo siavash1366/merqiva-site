@@ -1,0 +1,197 @@
+{
+  "name": "Merqiva — AI Maritime Research Agent (Production)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "merqiva-research",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "research-webhook",
+      "name": "Merqiva Research Job",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -720,
+        0
+      ],
+      "webhookId": "merqiva-research"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst job = body.job ?? body;\n\nconst clean = (value, max = 2500) =>\n  String(value ?? \"\").trim().slice(0, max);\n\nconst list = (value, max = 30) =>\n  Array.isArray(value)\n    ? value.map((item) => clean(item, 500)).filter(Boolean).slice(0, max)\n    : [];\n\nconst jobId = clean(body.jobId || job.id || job.jobId, 160);\nif (!/^RES[0-9A-Za-z_-]+$/.test(jobId)) {\n  throw new Error(\"Invalid or missing Merqiva research jobId\");\n}\n\nconst rawCallback = clean(body.callbackUrl || job.callbackUrl, 1000);\nlet callback;\ntry {\n  callback = new URL(rawCallback);\n} catch {\n  throw new Error(\"Invalid callback URL\");\n}\n\nconst allowedHosts = new Set([\"merqivaintel.com\", \"www.merqivaintel.com\"]);\nif (\n  callback.protocol !== \"https:\" ||\n  !allowedHosts.has(callback.hostname) ||\n  callback.pathname !== \"/api/research/callback\"\n) {\n  throw new Error(\"Callback URL is not an approved Merqiva endpoint\");\n}\n\nconst productName = clean(job.productName, 240);\nconst researchQuestion = clean(job.researchQuestion, 2500);\n\nif (!productName || !researchQuestion) {\n  throw new Error(\"productName and researchQuestion are required\");\n}\n\nreturn [{\n  json: {\n    jobId,\n    callbackUrl: callback.toString(),\n    productName,\n    productId: clean(job.productId, 160),\n    targetMarket: clean(job.targetMarket, 500),\n    researchQuestion,\n    targetCompanyTypes: list(job.targetCompanyTypes),\n    targetVesselTypes: list(job.targetVesselTypes),\n    relevantSignals: list(job.relevantSignals),\n    targetDecisionMakerRoles: list(job.targetDecisionMakerRoles),\n    maxOpportunities: Math.max(1, Math.min(10, Number(job.maxOpportunities) || 10)),\n    language: [\"en\", \"ar\"].includes(job.language) ? job.language : \"en\"\n  }\n}];"
+      },
+      "id": "normalize-research",
+      "name": "Normalize Research Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({success:true,accepted:true,jobId:$node['Normalize Research Job'].json.jobId,status:'RUNNING'}) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "ack-research",
+      "name": "Acknowledge Research Job",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({model:'gpt-5.6-luna',store:false,reasoning:{effort:'medium'},tools:[{type:'web_search'}],tool_choice:'auto',include:['web_search_call.results'],max_output_tokens:10000,input:`You are Merqiva's evidence-first maritime B2B opportunity research agent.\n\nMISSION\nFind sales-ready maritime opportunities that match the supplied product/service and target market. Use web search actively. Prioritize recent commercial signals such as fleet expansion, vessel acquisition, newbuilds, drydock, retrofit/refit, contracts, tenders, port/shipyard activity, regulatory change, management changes, and other evidence that makes an account worth pursuing now.\n\nNON-NEGOTIABLE RULES\n1. Never invent a company, vessel, person, contract, tender, event, score, date, or URL.\n2. Every returned opportunity MUST have at least one evidence item backed by a real source found during this run.\n3. Copy sourceUrl exactly from sources found by web search. Do not fabricate or reconstruct URLs.\n4. Separate VERIFIED FACT from INFERENCE. Do not label an inference as a verified fact.\n5. If the named decision maker cannot be verified from a source, leave name empty, use verificationStatus UNVERIFIED or UNKNOWN, and do not invent contact details.\n6. Do not invent email addresses, phone numbers, or LinkedIn URLs.\n7. Keep scoring conservative. A weak or stale signal should not receive a high score.\n8. Only include companies relevant to the requested target market and customer criteria.\n9. It is acceptable to return zero opportunities when evidence is insufficient.\n10. Return ONLY valid JSON. No Markdown fences and no prose outside JSON.\n\nOUTPUT JSON SHAPE\n{\n  \"status\": \"COMPLETED\",\n  \"notes\": \"short research note\",\n  \"opportunities\": [\n    {\n      \"companyName\": \"string\",\n      \"productName\": \"string\",\n      \"companyFit\": 0,\n      \"productFit\": 0,\n      \"fleetFit\": 0,\n      \"buyingSignalStrength\": 0,\n      \"signalRecency\": 0,\n      \"decisionMakerConfidence\": 0,\n      \"commercialRelevance\": 0,\n      \"timingUrgency\": 0,\n      \"companyFitReason\": \"string\",\n      \"productFitReason\": \"string\",\n      \"fleetFitReason\": \"string\",\n      \"whyNowSummary\": \"string\",\n      \"buyingSignals\": [\"string\"],\n      \"decisionMaker\": {\n        \"name\": \"\",\n        \"role\": \"UNKNOWN\",\n        \"relevance\": 0,\n        \"influence\": 0,\n        \"confidence\": 0,\n        \"verificationStatus\": \"UNKNOWN\",\n        \"verificationEvidence\": {\n          \"sourceName\": \"\",\n          \"sourceUrl\": \"\",\n          \"notes\": \"\",\n          \"verifiedAt\": \"\"\n        }\n      },\n      \"evidence\": [\n        {\n          \"title\": \"source title\",\n          \"summary\": \"what this source verifies\",\n          \"sourceName\": \"publisher/source\",\n          \"sourceUrl\": \"https://...\",\n          \"observedAt\": \"ISO date if known, otherwise empty string\",\n          \"evidenceLevel\": \"VERIFIED FACT\"\n        }\n      ],\n      \"outreachDraft\": \"brief evidence-grounded first-touch message\"\n    }\n  ]\n}\n\nRESEARCH JOB\n${JSON.stringify($node['Normalize Research Job'].json)}`}) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "openai-web-research",
+      "name": "OpenAI Web Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        40
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "const job = $node[\"Normalize Research Job\"].json;\nconst response = $json;\n\nfunction outputText(resp) {\n  if (typeof resp?.output_text === \"string\" && resp.output_text.trim()) {\n    return resp.output_text.trim();\n  }\n\n  const parts = [];\n  for (const item of Array.isArray(resp?.output) ? resp.output : []) {\n    if (item?.type !== \"message\") continue;\n    for (const content of Array.isArray(item?.content) ? item.content : []) {\n      if (content?.type === \"output_text\" && typeof content.text === \"string\") {\n        parts.push(content.text);\n      }\n    }\n  }\n  return parts.join(\"\\n\").trim();\n}\n\nfunction normalizeUrl(value) {\n  try {\n    const url = new URL(String(value || \"\").trim());\n    if (url.protocol !== \"https:\") return \"\";\n    url.hash = \"\";\n    return url.toString().replace(/\\/$/, \"\");\n  } catch {\n    return \"\";\n  }\n}\n\nconst allowedUrls = new Set();\n\nfunction collectUrlFields(value) {\n  if (!value || typeof value !== \"object\") return;\n\n  if (Array.isArray(value)) {\n    for (const item of value) collectUrlFields(item);\n    return;\n  }\n\n  for (const [key, item] of Object.entries(value)) {\n    if (\n      typeof item === \"string\" &&\n      key.toLowerCase().includes(\"url\")\n    ) {\n      const normalized = normalizeUrl(item);\n      if (normalized) allowedUrls.add(normalized);\n    } else if (item && typeof item === \"object\") {\n      collectUrlFields(item);\n    }\n  }\n}\n\nfor (const item of Array.isArray(response?.output) ? response.output : []) {\n  if (item?.type === \"web_search_call\") {\n    collectUrlFields(item);\n  }\n\n  if (item?.type === \"message\") {\n    for (const content of Array.isArray(item?.content) ? item.content : []) {\n      for (const annotation of Array.isArray(content?.annotations) ? content.annotations : []) {\n        collectUrlFields(annotation);\n      }\n    }\n  }\n}\n\nlet raw = outputText(response)\n  .replace(/^```json/i, \"\")\n  .replace(/^```/i, \"\")\n  .replace(/```$/i, \"\")\n  .trim();\n\nif (!raw) {\n  throw new Error(\"OpenAI Responses API returned no output text\");\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (error) {\n  throw new Error(\"Research model did not return valid JSON: \" + error.message);\n}\n\nconst clamp = (value) => {\n  const number = Number(value);\n  if (!Number.isFinite(number)) return 0;\n  return Math.max(0, Math.min(100, Math.round(number)));\n};\n\nconst clean = (value, max = 2500) =>\n  String(value ?? \"\").trim().slice(0, max);\n\nconst signalList = (value) =>\n  Array.isArray(value)\n    ? value.map((item) => clean(\n        typeof item === \"string\" ? item : item?.summary || item?.type || \"\",\n        600\n      )).filter(Boolean).slice(0, 20)\n    : [];\n\nconst validated = [];\nlet rejectedForEvidence = 0;\n\nfor (const sourceOpportunity of Array.isArray(parsed?.opportunities) ? parsed.opportunities : []) {\n  if (validated.length >= job.maxOpportunities) break;\n\n  const companyName = clean(sourceOpportunity?.companyName, 240);\n  if (!companyName) continue;\n\n  const evidence = [];\n  for (const item of Array.isArray(sourceOpportunity?.evidence) ? sourceOpportunity.evidence : []) {\n    const sourceUrl = normalizeUrl(item?.sourceUrl);\n    if (!sourceUrl || !allowedUrls.has(sourceUrl)) continue;\n\n    const title = clean(item?.title, 240);\n    const summary = clean(item?.summary, 1000);\n    if (!title || !summary) continue;\n\n    evidence.push({\n      title,\n      summary,\n      sourceName: clean(item?.sourceName, 160),\n      sourceUrl,\n      observedAt: clean(item?.observedAt, 64),\n      evidenceLevel: item?.evidenceLevel === \"INFERENCE\"\n        ? \"INFERENCE\"\n        : item?.evidenceLevel === \"UNKNOWN\"\n          ? \"UNKNOWN\"\n          : \"VERIFIED FACT\"\n    });\n  }\n\n  const verifiedFacts = evidence.filter((item) => item.evidenceLevel === \"VERIFIED FACT\");\n  if (!verifiedFacts.length) {\n    rejectedForEvidence += 1;\n    continue;\n  }\n\n  const dm = sourceOpportunity?.decisionMaker && typeof sourceOpportunity.decisionMaker === \"object\"\n    ? sourceOpportunity.decisionMaker\n    : {};\n\n  let verificationEvidence = dm?.verificationEvidence && typeof dm.verificationEvidence === \"object\"\n    ? {\n        sourceName: clean(dm.verificationEvidence.sourceName, 200),\n        sourceUrl: normalizeUrl(dm.verificationEvidence.sourceUrl),\n        notes: clean(dm.verificationEvidence.notes, 1000),\n        verifiedAt: clean(dm.verificationEvidence.verifiedAt, 64)\n      }\n    : null;\n\n  if (\n    verificationEvidence?.sourceUrl &&\n    !allowedUrls.has(verificationEvidence.sourceUrl)\n  ) {\n    verificationEvidence = null;\n  }\n\n  let verificationStatus = clean(dm.verificationStatus, 20).toUpperCase();\n  if (![\"VERIFIED\", \"PARTIAL\", \"UNVERIFIED\", \"UNKNOWN\"].includes(verificationStatus)) {\n    verificationStatus = \"UNKNOWN\";\n  }\n\n  if (!verificationEvidence?.sourceUrl && verificationStatus === \"VERIFIED\") {\n    verificationStatus = clean(dm.name, 200) ? \"UNVERIFIED\" : \"UNKNOWN\";\n  }\n\n  validated.push({\n    companyName,\n    productName: clean(sourceOpportunity?.productName || job.productName, 240),\n    companyFit: clamp(sourceOpportunity?.companyFit),\n    productFit: clamp(sourceOpportunity?.productFit),\n    fleetFit: clamp(sourceOpportunity?.fleetFit),\n    buyingSignalStrength: clamp(sourceOpportunity?.buyingSignalStrength),\n    signalRecency: clamp(sourceOpportunity?.signalRecency),\n    decisionMakerConfidence: clamp(sourceOpportunity?.decisionMakerConfidence ?? dm?.confidence),\n    commercialRelevance: clamp(sourceOpportunity?.commercialRelevance),\n    timingUrgency: clamp(sourceOpportunity?.timingUrgency),\n    companyFitReason: clean(sourceOpportunity?.companyFitReason, 1200),\n    productFitReason: clean(sourceOpportunity?.productFitReason, 1200),\n    fleetFitReason: clean(sourceOpportunity?.fleetFitReason, 1200),\n    whyNowSummary: clean(sourceOpportunity?.whyNowSummary || sourceOpportunity?.whyNow, 1800),\n    buyingSignals: signalList(sourceOpportunity?.buyingSignals),\n    decisionMaker: {\n      name: clean(dm.name, 200),\n      role: clean(dm.role || \"UNKNOWN\", 200) || \"UNKNOWN\",\n      relevance: clamp(dm.relevance),\n      influence: clamp(dm.influence),\n      confidence: clamp(dm.confidence),\n      verificationStatus,\n      verificationEvidence\n    },\n    evidence: evidence.slice(0, 12),\n    outreachDraft: clean(sourceOpportunity?.outreachDraft, 2000),\n    status: \"New\"\n  });\n}\n\nconst notes = [\n  clean(parsed?.notes, 1800),\n  `Evidence gate kept ${validated.length} opportunity(s).`,\n  rejectedForEvidence\n    ? `${rejectedForEvidence} candidate(s) were rejected because no verified web-search source URL could be matched.`\n    : \"\",\n  allowedUrls.size\n    ? `${allowedUrls.size} source URL(s) were available for validation.`\n    : \"No source URLs were available from the web-search response.\"\n].filter(Boolean).join(\" \" );\n\nreturn [{\n  json: {\n    jobId: job.jobId,\n    callbackUrl: job.callbackUrl,\n    provider: \"N8N_OPENAI_WEB_SEARCH\",\n    status: \"COMPLETED\",\n    notes: notes.slice(0, 2500),\n    opportunities: validated\n  }\n}];"
+      },
+      "id": "validate-evidence",
+      "name": "Validate Evidence & Structure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.callbackUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({jobId:$json.jobId,status:$json.status,provider:$json.provider,notes:$json.notes,opportunities:$json.opportunities}) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "callback-merqiva",
+      "name": "Send Results to Merqiva",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        40
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Merqiva Research Job": {
+      "main": [
+        [
+          {
+            "node": "Normalize Research Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Research Job": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge Research Job",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "OpenAI Web Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Web Research": {
+      "main": [
+        [
+          {
+            "node": "Validate Evidence & Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Evidence & Structure": {
+      "main": [
+        [
+          {
+            "node": "Send Results to Merqiva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "merqiva-research-production-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
