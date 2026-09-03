@@ -22,6 +22,7 @@
       focus:"استخبارات فرص المبيعات البحرية في الخليج"
     }
   };
+
   function apply(){
     const lang=document.documentElement.lang==="ar"?"ar":"en";
     document.querySelectorAll("[data-growth]").forEach(el=>{
@@ -29,9 +30,29 @@
       if(copy[lang][key])el.textContent=copy[lang][key];
     });
   }
+
   function init(){
     apply();
     document.querySelectorAll(".lang").forEach(btn=>btn.addEventListener("click",()=>setTimeout(apply,0)));
+
+    const chatNote=document.querySelector("#chatWidget .chat-form small");
+    if(chatNote)chatNote.textContent="Automated qualification responses. Do not share passwords, payment credentials or sensitive information.";
+
+    let chatInteracted=false;
+    document.querySelectorAll("[data-chat-open],[data-chat-close]").forEach(node=>node.addEventListener("click",event=>{
+      if(event.isTrusted)chatInteracted=true;
+    }));
+
+    /* app.js suppresses repeated auto-open inside a browser session. For the current CRO test,
+       reopen on each page load after ~5 seconds unless the visitor has already interacted. */
+    setTimeout(()=>{
+      const widget=document.getElementById("chatWidget");
+      if(!chatInteracted&&widget&&!widget.classList.contains("open")){
+        const opener=document.querySelector("[data-chat-open]");
+        if(opener)opener.click();
+      }
+    },5200);
   }
+
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
