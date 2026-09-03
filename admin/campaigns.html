@@ -1,1 +1,46 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merqiva Campaign Operations</title><link rel="stylesheet" href="/admin/admin.css"><link rel="stylesheet" href="/admin/performance.css"></head><body><main class="container"><header class="perf-header card"><div><div class="eyebrow">MERQIVA OUTREACH ENGINE</div><h1>Campaign Operations</h1><p>Build → Audience → Prepare → Send → Measure.</p></div><div class="perf-nav"><a class="button-link" href="/admin/index.html">CRM</a><a class="button-link" href="/admin/opportunities.html">Opportunities</a><a class="button-link" href="/admin/performance.html">Performance</a></div></header><section class="card"><div class="section-title"><div><h2>Create Campaign</h2><p>Keep outreach specific, evidence-led and easy to review before sending.</p></div></div><div class="campaign-form"><input id="name" placeholder="Campaign name"><input id="subject" placeholder="Subject"><textarea id="body" placeholder="Email content"></textarea><button id="create">Create Campaign</button></div></section><section class="card"><div class="section-title"><div><h2>Campaign Queue</h2><p>Choose a campaign, build its audience, prepare a validated snapshot, then run a small controlled batch.</p></div><button id="refresh">Refresh</button></div><div id="list"></div></section><div id="status" class="message"></div></main><script src="/admin/campaigns.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Merqiva Campaign Operations</title>
+<link rel="stylesheet" href="/admin/admin.css">
+<link rel="stylesheet" href="/admin/performance.css">
+<link rel="stylesheet" href="/admin/shell.css">
+</head>
+<body class="admin-app">
+<div class="admin-shell">
+  <aside class="admin-sidebar" aria-label="Merqiva admin navigation">
+    <div class="admin-brand"><span class="admin-brand-mark"></span><div><strong>MERQIVA</strong><small>Intelligence OS</small></div></div>
+    <nav class="admin-nav">
+      <div class="admin-nav-group"><div class="admin-nav-label">Sales</div><a href="/admin/index.html">Lead CRM</a><a href="/admin/opportunities.html">Opportunities</a><a href="/admin/index.html#chat-inbox">Chat Inbox</a></div>
+      <div class="admin-nav-group"><div class="admin-nav-label">Intelligence & Quality</div><a href="/admin/operations.html">Operations & Quality</a><a href="/admin/operations.html#research-agent">Research Agent</a><a href="/admin/operations.html#monitoring">Monitoring</a></div>
+      <div class="admin-nav-group"><div class="admin-nav-label">Outreach</div><a class="is-active" aria-current="page" href="/admin/campaigns.html">Campaigns</a><a href="/admin/campaign-audience.html">Campaign Audience</a></div>
+      <div class="admin-nav-group"><div class="admin-nav-label">Analytics</div><a href="/admin/performance.html">Performance & Billing</a></div>
+    </nav>
+    <div class="admin-sidebar-footer"><button class="admin-signout" type="button" onclick="localStorage.removeItem('admin_session');location.href='/admin/';">Sign out</button></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-main-inner">
+      <header class="admin-page-header">
+        <div><div class="admin-kicker">OUTREACH ENGINE</div><h1>Campaign Operations</h1><p>Build → Audience → Prepare → Send → Measure. Keep every send controlled and reviewable.</p></div>
+        <div class="admin-page-actions"><a class="button-link btn-secondary" href="/admin/campaign-audience.html">Campaign Audience</a><a class="button-link btn-secondary" href="/admin/performance.html">Performance</a></div>
+      </header>
+
+      <section class="card" aria-labelledby="create-campaign-title">
+        <div class="section-title"><div><h2 id="create-campaign-title">Create Campaign</h2><p>Keep outreach specific, evidence-led and easy to review before sending.</p></div></div>
+        <div class="campaign-form"><input id="name" placeholder="Campaign name" aria-label="Campaign name"><input id="subject" placeholder="Subject" aria-label="Campaign subject"><textarea id="body" placeholder="Email content" aria-label="Campaign email content"></textarea><button id="create" type="button">Create Campaign</button></div>
+      </section>
+
+      <section class="card" aria-labelledby="campaign-queue-title">
+        <div class="section-title"><div><h2 id="campaign-queue-title">Campaign Queue</h2><p>Choose a campaign, build its audience, prepare a validated snapshot, then run a small controlled batch.</p></div><button id="refresh" class="btn-secondary" type="button">Refresh</button></div>
+        <div id="list"></div>
+      </section>
+      <div id="status" class="message" role="status"></div>
+    </div>
+  </main>
+</div>
+<script src="/admin/campaigns.js"></script>
+</body>
+</html>
