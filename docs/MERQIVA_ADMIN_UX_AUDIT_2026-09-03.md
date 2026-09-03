@@ -1,0 +1,123 @@
+# MERQIVA Admin / CRM UX Audit — 2026-09-03
+
+## Executive assessment
+
+Current UI score: **62/100**.
+
+Recommendation: **B → targeted structural redesign**, not a backend rewrite.
+
+The current admin is functional and production-connected, but it behaves like several adjacent internal pages rather than one coherent maritime intelligence operating system. The redesign should preserve all API contracts, Cloudflare Pages Functions, KV storage, local admin-session behavior, n8n workflows, campaign execution, Resend delivery, research jobs, and opportunity persistence.
+
+## Highest-severity UX issues
+
+1. **Fragmented navigation** — CRM, Opportunities, Campaigns, Operations and Performance expose different header-button navigation patterns. The operator must relearn navigation on each page.
+2. **Weak information architecture** — operational modules are technically separate pages but are not presented as a single product shell.
+3. **CRM page overload** — Leads, chat, campaign creation, campaign status and lead details coexist in one long flow without a strong hierarchy.
+4. **Poor scan density in campaign areas** — campaign state and delivery information consume too much vertical space relative to the decisions an operator needs to make.
+5. **Opportunities page prioritizes configuration over action** — ICP and manual-creation forms appear before the opportunity list, although they are lower-frequency tasks.
+6. **Inconsistent visual language** — admin.css plus page-specific CSS files independently define cards, navs, metrics, pills and headers.
+7. **Mobile navigation is incomplete** — individual components stack, but there is no unified responsive app navigation.
+8. **Accessibility gaps** — several controls rely on placeholder-only labeling; focus styles and status semantics are inconsistent.
+
+## What should remain unchanged
+
+- Dark navy MERQIVA identity and turquoise accent.
+- Existing API endpoints and request/response contracts.
+- `admin_session` localStorage behavior.
+- Read-only customer chat behavior; no fabricated reply controls.
+- Existing campaign safety/confirmation logic.
+- Opportunity evidence model and scoring transparency.
+- Research Agent, Monitoring, System Check and Quality Guarantee functions.
+- Existing backend separation between CRM, opportunities, campaign operations and performance.
+
+## Redesign direction
+
+Introduce one shared app shell across all production admin pages:
+
+- Persistent desktop sidebar.
+- Compact responsive top navigation on smaller screens.
+- Consistent page headers, section hierarchy, cards, tables, filters, forms, buttons and status chips.
+- No new framework and no new runtime dependency.
+- Frontend-only structural changes unless a backend change is separately justified.
+
+## Proposed information architecture
+
+### Sales
+- Lead CRM
+- Opportunities
+- Chat Inbox
+
+### Intelligence & Quality
+- Operations & Quality
+- Research Agent
+- Monitoring / System Health
+
+### Outreach
+- Campaigns
+- Campaign Audience
+
+### Analytics
+- Performance & Billing
+
+No fake Overview route is introduced because there is no existing backend module for it.
+
+## Page-level changes
+
+### CRM
+- Dedicated page header and primary actions.
+- Search/filter section separated from the lead table.
+- Lead table gets an explicit header and its own operational card.
+- Chat remains a distinct read-only inbox.
+- Campaign creation/management remains functional but visually separated from lead operations.
+
+### Opportunities
+- Opportunity alerts and the opportunity list become the primary visible content.
+- Lower-frequency ICP configuration and manual opportunity creation move into expandable sections while remaining fully available in the DOM.
+- Export and filtering remain unchanged.
+
+### Campaigns
+- Consistent shell and navigation.
+- Campaign creation and queue stay separate.
+- Existing Prepare / Run Batch / Audience behavior remains unchanged.
+
+### Operations & Quality
+- Research, System Check, Monitoring and Quality Guarantee remain intact.
+- Unified page hierarchy and shared navigation are added.
+
+### Performance
+- Existing metrics, signals, guarantee claims and plans remain unchanged.
+- Presentation is normalized into the same admin shell.
+
+## Responsive strategy
+
+- 1440/1366 desktop: fixed sidebar and dense content.
+- 1024/768: sidebar becomes a sticky horizontal navigation rail.
+- 390/320: horizontal nav scroll, single-column cards, scrollable data tables, full-width form controls.
+
+## Accessibility improvements
+
+- Visible labels where forms previously depended on placeholders.
+- Strong keyboard focus treatment.
+- Larger and more consistent click targets.
+- Semantic section headings.
+- Status text remains visible in addition to color.
+- `aria-current="page"` on active navigation links.
+
+## Backend/API impact
+
+**None planned.**
+
+The redesign intentionally avoids modifying production API contracts, authentication, n8n, email, KV or callback behavior.
+
+## Remaining risks
+
+- Campaign metrics are generated by existing JavaScript and still need future product-level simplification if operators manage a large campaign volume.
+- Customer Chat is read-only by backend design.
+- There is not yet a dedicated actionable Overview API, so an Overview dashboard should not be fabricated.
+
+## Recommended follow-up
+
+1. Production visual QA after Cloudflare deployment.
+2. Test at 1440, 1366, 1024, 768, 390 and 320 widths.
+3. Add an Overview only after a real operational summary endpoint is defined.
+4. Consider a dedicated campaign detail view if campaign volume grows enough to justify it.
