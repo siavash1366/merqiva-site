@@ -3,40 +3,66 @@ const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:
 const clean=(value,max)=>String(value==null?"":value).trim().slice(0,max);
 const LEAD_TTL=31536000;
 function leadId(){return "CHAT"+Date.now().toString(36).toUpperCase()}
+const hasAny=(text,terms)=>terms.some(term=>text.includes(term));
+const isArabic=text=>/[\u0600-\u06FF]/.test(text);
 
 function baseReply(message){
   const q=message.toLowerCase();
-  if(q.includes("price")||q.includes("cost")||q.includes("pricing")){
-    return "Merqiva’s current founding-customer offer is $299/month for 30 researched GCC maritime opportunities delivered monthly. Before subscribing, you can request 3 verified opportunities for your exact product and target market.";
+  const ar=isArabic(message);
+
+  if(hasAny(q,["price","cost","pricing","سعر","السعر","الأسعار","تكلفة","التكلفة"])){
+    return ar
+      ?"العرض الحالي لعملاء Merqiva المؤسسين هو 299 دولاراً شهرياً مقابل 30 فرصة بحرية مدروسة في دول الخليج كل شهر. قبل الاشتراك يمكنك طلب 3 فرص موثقة ومخصصة لمنتجك والسوق الذي تستهدفه."
+      :"Merqiva’s current founding-customer offer is $299/month for 30 researched GCC maritime opportunities delivered monthly. Before subscribing, you can request 3 verified opportunities for your exact product and target market.";
   }
-  if(q.includes("guarantee")||q.includes("verify")||q.includes("evidence")||q.includes("fact")||q.includes("inference")){
-    return "Merqiva evaluates company fit, product fit, fleet context, decision makers, buying signals and Why Now. Material claims are designed to be separated into verified facts, analytical inferences and unknowns, with source context and freshness checked where available.";
+  if(hasAny(q,["guarantee","verify","evidence","fact","inference","ضمان","تحقق","التحقق","دليل","الأدلة","حقيقة","حقائق","استنتاج","الاستنتاجات"])){
+    return ar
+      ?"تقيّم Merqiva ملاءمة الشركة والمنتج وسياق الأسطول وصنّاع القرار وإشارات الشراء وسبب أهمية التوقيت الآن. ونفصل بين الحقائق الموثقة والاستنتاجات التحليلية والمعلومات غير المؤكدة، مع توضيح المصادر وحداثة البيانات حيثما كان ذلك متاحاً."
+      :"Merqiva evaluates company fit, product fit, fleet context, decision makers, buying signals and Why Now. Material claims are designed to be separated into verified facts, analytical inferences and unknowns, with source context and freshness checked where available.";
   }
-  if(q.includes("uae")||q.includes("dubai")||q.includes("fujairah")||q.includes("abu dhabi")||q.includes("sharjah")){
-    return "UAE is Merqiva’s first validation market. Tell me what equipment or maritime service you sell and, if relevant, which vessel/operator types usually buy it. That gives the team enough context to research a product-specific sample.";
+  if(hasAny(q,["uae","dubai","fujairah","abu dhabi","sharjah","الإمارات","دبي","الفجيرة","أبوظبي","أبو ظبي","الشارقة"])){
+    return ar
+      ?"الإمارات هي أول سوق تحقق تجاري لـ Merqiva. أخبرني بالمعدات أو الخدمة البحرية التي تبيعها، وإن كان مهماً فأضف أنواع السفن أو المشغلين الذين يشترونها عادةً. هذا يعطينا السياق اللازم لإعداد عينة مخصصة لمنتجك."
+      :"UAE is Merqiva’s first validation market. Tell me what equipment or maritime service you sell and, if relevant, which vessel/operator types usually buy it. That gives the team enough context to research a product-specific sample.";
   }
-  if(q.includes("saudi")||q.includes("jeddah")||q.includes("dammam")||q.includes("jubail")){
-    return "Saudi Arabia is a priority GCC market for Merqiva. Tell me what you sell and who normally buys it, and the team can evaluate a Saudi-specific opportunity sample around your product.";
+  if(hasAny(q,["saudi","jeddah","dammam","jubail","السعودية","جدة","الدمام","الجبيل"])){
+    return ar
+      ?"السعودية سوق خليجي ذو أولوية لـ Merqiva. أخبرني بما تبيعه ومن يشتريه عادةً، ويمكننا تقييم عينة فرص مخصصة للسوق السعودي حول منتجك."
+      :"Saudi Arabia is a priority GCC market for Merqiva. Tell me what you sell and who normally buys it, and the team can evaluate a Saudi-specific opportunity sample around your product.";
   }
-  if(q.includes("navcom")||q.includes("gmdss")||q.includes("marine electronics")){
-    return "NAVCOM, GMDSS and marine electronics are an initial Merqiva beachhead because vessel fit, new-vessel activity, retrofit/compliance context and technical/procurement buyer research can materially improve prioritization. Tell me your exact product and target GCC market.";
+  if(hasAny(q,["navcom","gmdss","marine electronics","إلكترونيات بحرية","الإلكترونيات البحرية","اتصالات بحرية","ملاحة بحرية"])){
+    return ar
+      ?"تُعد NAVCOM وGMDSS والإلكترونيات البحرية من مجالات Merqiva الأولية لأن ملاءمة السفينة ونشاط السفن الجديدة والتحديث والامتثال والبحث عن المشتري الفني أو مسؤول المشتريات يمكن أن تحسّن ترتيب الأولويات بشكل واضح. أخبرني بمنتجك الدقيق والسوق الخليجي المستهدف."
+      :"NAVCOM, GMDSS and marine electronics are an initial Merqiva beachhead because vessel fit, new-vessel activity, retrofit/compliance context and technical/procurement buyer research can materially improve prioritization. Tell me your exact product and target GCC market.";
   }
-  if(q.includes("safety")||q.includes("compliance")){
-    return "For marine safety and compliance equipment, Merqiva looks for relevant fleet context, observable timing signals, evidence quality and the likely procurement/technical buyer path. Tell me your exact product and target GCC market.";
+  if(hasAny(q,["safety","compliance","سلامة","السلامة","امتثال","الامتثال"])){
+    return ar
+      ?"بالنسبة لمعدات السلامة والامتثال البحري، تبحث Merqiva في سياق الأسطول وإشارات التوقيت وجودة الأدلة ومسار المشتري الفني أو مسؤول المشتريات. أخبرني بمنتجك الدقيق والسوق الخليجي الذي تستهدفه."
+      :"For marine safety and compliance equipment, Merqiva looks for relevant fleet context, observable timing signals, evidence quality and the likely procurement/technical buyer path. Tell me your exact product and target GCC market.";
   }
-  if(q.includes("offshore")){
-    return "For offshore equipment and technical services, Merqiva can research relevant operators/support fleets, current commercial or maintenance-related signals, buyer functions and Why Now. Tell me what you sell and which GCC market matters.";
+  if(hasAny(q,["offshore","أوفشور","بحري خارجي","خدمات بحرية فنية"])){
+    return ar
+      ?"بالنسبة لمعدات الأوفشور والخدمات الفنية، يمكن لـ Merqiva البحث عن المشغلين وأساطيل الدعم ذات الصلة والإشارات التجارية أو إشارات الصيانة الحالية ووظائف المشترين وسبب أهمية التوقيت الآن. أخبرني بما تبيعه والسوق الخليجي المهم لك."
+      :"For offshore equipment and technical services, Merqiva can research relevant operators/support fleets, current commercial or maintenance-related signals, buyer functions and Why Now. Tell me what you sell and which GCC market matters.";
   }
-  if(q.includes("how")||q.includes("work")){
-    return "Merqiva starts with what you sell, then researches relevant GCC accounts, fleet/operating context, current signals and buyer roles. The goal is an evidence-backed opportunity brief explaining fit, Why Now and the next sales action.";
+  if(hasAny(q,["how","work","كيف","كيف تعمل","طريقة العمل","آلية العمل"])){
+    return ar
+      ?"تبدأ Merqiva بما تبيعه، ثم تبحث في الحسابات الخليجية المناسبة وسياق الأسطول والتشغيل والإشارات الحالية وأدوار المشترين. والهدف هو تقديم فرصة مدعومة بالأدلة توضح الملاءمة وسبب أهمية التوقيت الآن والخطوة البيعية التالية."
+      :"Merqiva starts with what you sell, then researches relevant GCC accounts, fleet/operating context, current signals and buyer roles. The goal is an evidence-backed opportunity brief explaining fit, Why Now and the next sales action.";
   }
-  if(q.includes("free")||q.includes("sample")||q.includes("3 verified")||q.includes("three verified")){
-    return "You can request 3 verified opportunities for your exact product. Tell us what you sell, which GCC market you want to target, and who normally buys the product or service if you know.";
+  if(hasAny(q,["free","sample","3 verified","three verified","مجاني","عينة","3 فرص","ثلاث فرص","فرص موثقة"])){
+    return ar
+      ?"يمكنك طلب 3 فرص موثقة ومخصصة لمنتجك. أخبرنا بما تبيعه والسوق الخليجي الذي تريد استهدافه، ومن يشتري المنتج أو الخدمة عادةً إذا كنت تعرف ذلك."
+      :"You can request 3 verified opportunities for your exact product. Tell us what you sell, which GCC market you want to target, and who normally buys the product or service if you know.";
   }
-  if(q.includes("sales")||q.includes("contact")||q.includes("email")){
-    return "You can contact sales@merqivaintel.com or leave your work email here for follow-up. For the fastest qualification, include what you sell and your target GCC market.";
+  if(hasAny(q,["sales","contact","email","مبيعات","تواصل","اتصال","بريد","البريد"])){
+    return ar
+      ?"يمكنك التواصل عبر sales@merqivaintel.com أو ترك بريد العمل هنا للمتابعة. ولتسريع التأهيل، اذكر ما تبيعه والسوق الخليجي المستهدف."
+      :"You can contact sales@merqivaintel.com or leave your work email here for follow-up. For the fastest qualification, include what you sell and your target GCC market.";
   }
-  return "To qualify a useful Merqiva sample, start with two things: what do you sell, and which GCC market do you want to target? If you know the usual vessel type or buyer role, include that too.";
+  return ar
+    ?"لإعداد عينة مفيدة من Merqiva، ابدأ بأمرين: ماذا تبيع، وأي سوق خليجي تريد استهدافه؟ وإذا كنت تعرف نوع السفينة أو دور المشتري المعتاد، أضف هذه المعلومة أيضاً."
+    :"To qualify a useful Merqiva sample, start with two things: what do you sell, and which GCC market do you want to target? If you know the usual vessel type or buyer role, include that too.";
 }
 
 async function auth(request,env){
