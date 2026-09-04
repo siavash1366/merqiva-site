@@ -774,7 +774,9 @@ if (
   const loadHistory=async()=>{if(historyLoaded)return;historyLoaded=true;try{const r=await fetch("/api/chat?conversation="+encodeURIComponent(conversationId),{headers:{Accept:"application/json"},cache:"no-store"});if(r.ok){const d=await r.json();if(d.success&&Array.isArray(d.messages)&&d.messages.length){messages.innerHTML="";d.messages.forEach(m=>add(m.role,m.message));return}}}catch(_){}welcome()};
   const open=()=>{widget.classList.add("open");widget.setAttribute("aria-hidden","false");launcher.hidden=true;loadHistory();setTimeout(()=>messageInput?.focus(),80)};
   const minimize=()=>{widget.classList.remove("open");widget.setAttribute("aria-hidden","true");launcher.hidden=false};
-  widget.querySelector("[data-chat-close]")?.addEventListener("click",e=>{e.preventDefault();minimize()});
+  widget.querySelectorAll("[data-chat-close]").forEach(closeButton=>{
+    closeButton.addEventListener("click",e=>{e.preventDefault();minimize()});
+  });
   document.querySelectorAll("[data-chat-open]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();open()}));
   launcher.addEventListener("click",open);
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&widget.classList.contains("open"))minimize()});
