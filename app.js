@@ -772,15 +772,19 @@ if (
   const add=(role,text)=>{if(!messages||!text)return;const n=document.createElement("div");n.className="chat-msg "+(role==="user"?"user":"bot");n.textContent=text;messages.appendChild(n);messages.scrollTop=messages.scrollHeight};
   const welcome=()=>{if(messages&&!messages.children.length)add("bot","Hi — I’m Merqiva’s customer assistant. Tell me what you sell, which market you target, or ask about our opportunity intelligence service.")};
   const loadHistory=async()=>{if(historyLoaded)return;historyLoaded=true;try{const r=await fetch("/api/chat?conversation="+encodeURIComponent(conversationId),{headers:{Accept:"application/json"},cache:"no-store"});if(r.ok){const d=await r.json();if(d.success&&Array.isArray(d.messages)&&d.messages.length){messages.innerHTML="";d.messages.forEach(m=>add(m.role,m.message));return}}}catch(_){}welcome()};
-  const open=()=>{widget.classList.add("open");widget.setAttribute("aria-hidden","false");launcher.hidden=true;loadHistory();setTimeout(()=>messageInput?.focus(),80)};
+  const autoShownKey="merqiva_chat_auto_shown_v2";
+  let autoHandled=false;
+  try{autoHandled=sessionStorage.getItem(autoShownKey)==="1"}catch(_){}
+  const markAutoHandled=()=>{autoHandled=true;try{sessionStorage.setItem(autoShownKey,"1")}catch(_){}};
+  const open=(focusInput=true)=>{widget.classList.add("open");widget.setAttribute("aria-hidden","false");launcher.hidden=true;loadHistory();if(focusInput)setTimeout(()=>messageInput?.focus(),80)};
   const minimize=()=>{widget.classList.remove("open");widget.setAttribute("aria-hidden","true");launcher.hidden=false};
   widget.querySelectorAll("[data-chat-close]").forEach(closeButton=>{
-    closeButton.addEventListener("click",e=>{e.preventDefault();minimize()});
+    closeButton.addEventListener("click",e=>{e.preventDefault();markAutoHandled();minimize()});
   });
-  document.querySelectorAll("[data-chat-open]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();open()}));
-  launcher.addEventListener("click",open);
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&widget.classList.contains("open"))minimize()});
-  document.querySelectorAll("[data-chat-prompt]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.chatPrompt||"";if(v){open();messageInput.value=v;messageInput.focus()}}));
+  document.querySelectorAll("[data-chat-open]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();markAutoHandled();open()}));
+  launcher.addEventListener("click",()=>{markAutoHandled();open()});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&widget.classList.contains("open")){markAutoHandled();minimize()}});
+  document.querySelectorAll("[data-chat-prompt]").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.chatPrompt||"";if(v){markAutoHandled();open();messageInput.value=v;messageInput.focus()}}));
   try{if(nameInput)nameInput.value=localStorage.getItem("merqiva_chat_name")||"";if(emailInput)emailInput.value=localStorage.getItem("merqiva_chat_email")||""}catch(_){}
   form?.addEventListener("submit",async e=>{
     e.preventDefault();
@@ -795,6 +799,5 @@ if (
       add("bot",d.reply); status.textContent=d.leadCaptured?"Your details were captured for the Merqiva team.":"";
     }catch(err){add("bot",err?.name==="AbortError"?"The assistant took too long to respond. Please try again.":"I’m unable to complete that request right now. Please email sales@merqivaintel.com.");status.textContent=err?.message||"Chat unavailable"}finally{clearTimeout(tm);sendButton.disabled=false;messageInput.focus()}
   });
-  let shown=false;try{shown=sessionStorage.getItem("merqiva_chat_auto_shown")==="1"}catch(_){}
-  setTimeout(()=>{if(!shown&&!widget.classList.contains("open")){try{sessionStorage.setItem("merqiva_chat_auto_shown","1")}catch(_){}open()}else if(!widget.classList.contains("open"))launcher.hidden=false},5000);
+  setTimeout(()=>{if(!autoHandled&&!widget.classList.contains("open")){markAutoHandled();open(false)}else if(!widget.classList.contains("open"))launcher.hidden=false},7000);
 })();

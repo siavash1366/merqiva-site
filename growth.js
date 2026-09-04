@@ -162,34 +162,11 @@
     const widget=document.getElementById("chatWidget");
     const modal=widget?.querySelector(".chat-modal");
     const messages=document.getElementById("chatMessages");
-    const messageInput=document.getElementById("chatMessage");
     const launcher=document.getElementById("merqivaChatLauncher");
     if(!widget||!modal)return;
 
-    /* Do not force chat open. B2B visitors should choose when to engage. */
-    try{sessionStorage.setItem("merqiva_chat_auto_shown","1")}catch(_){}
-    if(launcher)launcher.hidden=false;
-
-    widget.dataset.userOpen="0";
-
-    /* Capture trusted open/close intent before app.js bubble handlers run. */
-    document.addEventListener("click",event=>{
-      const target=event.target instanceof Element?event.target:null;
-      if(!target)return;
-      if(target.closest("[data-chat-open],#merqivaChatLauncher,[data-chat-prompt]"))widget.dataset.userOpen="1";
-      if(target.closest("[data-chat-close]"))widget.dataset.userOpen="0";
-    },true);
-
-    /* Suppress only the legacy automatic open from app.js. */
-    const widgetObserver=new MutationObserver(()=>{
-      if(widget.classList.contains("open")&&widget.dataset.userOpen!=="1"){
-        widget.classList.remove("open");
-        widget.setAttribute("aria-hidden","true");
-        if(launcher)launcher.hidden=false;
-        setTimeout(()=>{if(document.activeElement===messageInput)messageInput.blur()},100);
-      }
-    });
-    widgetObserver.observe(widget,{attributes:true,attributeFilter:["class"]});
+    /* app.js handles one delayed auto-open per session. */
+    if(launcher&&!widget.classList.contains("open"))launcher.hidden=false;
 
     /* Contact capture appears only after the visitor starts a conversation. */
     const updateEngagement=()=>{
