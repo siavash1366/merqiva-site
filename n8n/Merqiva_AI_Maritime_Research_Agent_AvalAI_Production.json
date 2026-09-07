@@ -15,7 +15,10 @@
       "name": "Merqiva Research Job",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [-720,0],
+      "position": [
+        -720,
+        0
+      ],
       "webhookId": "merqiva-research"
     },
     {
@@ -26,7 +29,10 @@
       "name": "Normalize Research Job",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-450,0]
+      "position": [
+        -450,
+        0
+      ]
     },
     {
       "parameters": {
@@ -35,31 +41,46 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {"parameters":[{"name":"Content-Type","value":"application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({model:'gpt-5.5',store:false,reasoning:{effort:'low'},tools:[{type:'web_search'}],tool_choice:'auto',include:['web_search_call.results'],max_output_tokens:8000,input:`You are Merqiva's evidence-first maritime B2B opportunity research agent.\\n\\nMISSION\\nFind sales-ready maritime opportunities that match the supplied product/service and target market. Use web search actively. Prioritize recent commercial signals such as fleet expansion, vessel acquisition, newbuilds, drydock, retrofit/refit, contracts, tenders, port/shipyard activity, regulatory change, management changes, and other evidence that makes an account worth pursuing now.\\n\\nNON-NEGOTIABLE RULES\\n1. Never invent a company, vessel, person, contract, tender, event, score, date, or URL.\\n2. Every returned opportunity MUST have at least one evidence item backed by a real source found during this run.\\n3. Copy sourceUrl exactly from sources found by web search. Do not fabricate or reconstruct URLs.\\n4. Separate VERIFIED FACT from INFERENCE. Do not label an inference as a verified fact.\\n5. If the named decision maker cannot be verified from a source, leave name empty, use verificationStatus UNVERIFIED or UNKNOWN, and do not invent contact details.\\n6. Do not invent email addresses, phone numbers, or LinkedIn URLs.\\n7. Keep scoring conservative. A weak or stale signal should not receive a high score.\\n8. Only include companies relevant to the requested target market and customer criteria.\\n9. It is acceptable to return zero opportunities when evidence is insufficient.\\n10. Prefer official company, port, government, regulator, shipyard, exchange, tender, or established maritime-industry sources over low-quality aggregators.\\n11. Return ONLY valid JSON. No Markdown fences and no prose outside JSON.\\n\\nOUTPUT JSON SHAPE\\n{\\n  \\\"status\\\": \\\"COMPLETED\\\",\\n  \\\"notes\\\": \\\"short research note\\\",\\n  \\\"opportunities\\\": [\\n    {\\n      \\\"companyName\\\": \\\"string\\\",\\n      \\\"productName\\\": \\\"string\\\",\\n      \\\"companyFit\\\": 0,\\n      \\\"productFit\\\": 0,\\n      \\\"fleetFit\\\": 0,\\n      \\\"buyingSignalStrength\\\": 0,\\n      \\\"signalRecency\\\": 0,\\n      \\\"decisionMakerConfidence\\\": 0,\\n      \\\"commercialRelevance\\\": 0,\\n      \\\"timingUrgency\\\": 0,\\n      \\\"companyFitReason\\\": \\\"string\\\",\\n      \\\"productFitReason\\\": \\\"string\\\",\\n      \\\"fleetFitReason\\\": \\\"string\\\",\\n      \\\"whyNowSummary\\\": \\\"string\\\",\\n      \\\"buyingSignals\\\": [\\\"string\\\"],\\n      \\\"decisionMaker\\\": {\\\"name\\\":\\\"\\\",\\\"role\\\":\\\"UNKNOWN\\\",\\\"relevance\\\":0,\\\"influence\\\":0,\\\"confidence\\\":0,\\\"verificationStatus\\\":\\\"UNKNOWN\\\",\\\"verificationEvidence\\\":{\\\"sourceName\\\":\\\"\\\",\\\"sourceUrl\\\":\\\"\\\",\\\"notes\\\":\\\"\\\",\\\"verifiedAt\\\":\\\"\\\"}},\\n      \\\"evidence\\\": [{\\\"title\\\":\\\"source title\\\",\\\"summary\\\":\\\"what this source verifies\\\",\\\"sourceName\\\":\\\"publisher/source\\\",\\\"sourceUrl\\\":\\\"https://...\\\",\\\"observedAt\\\":\\\"ISO date if known, otherwise empty string\\\",\\\"evidenceLevel\\\":\\\"VERIFIED FACT\\\"}],\\n      \\\"outreachDraft\\\": \\\"brief evidence-grounded first-touch message\\\"\\n    }\\n  ]\\n}\\n\\nRESEARCH JOB\\n${JSON.stringify($node['Normalize Research Job'].json)}`}) }}",
-        "options": {"timeout":120000}
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "avalai-web-research",
       "name": "AvalAI Web Research",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-170,0],
+      "position": [
+        -170,
+        0
+      ],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 2000
     },
     {
       "parameters": {
-        "jsCode": "const job=$node['Normalize Research Job'].json; const response=$json; function outputText(resp){if(typeof resp?.output_text==='string'&&resp.output_text.trim())return resp.output_text.trim();const parts=[];for(const item of Array.isArray(resp?.output)?resp.output:[]){if(item?.type!=='message')continue;for(const content of Array.isArray(item?.content)?item.content:[]){if(content?.type==='output_text'&&typeof content.text==='string')parts.push(content.text)}}return parts.join('\\n').trim()} function normalizeUrl(value){try{const url=new URL(String(value||'').trim());if(url.protocol!=='https:')return '';url.hash='';return url.toString().replace(/\\/$/,'')}catch{return ''}} const allowedUrls=new Set(); function collectUrlFields(value){if(!value||typeof value!=='object')return;if(Array.isArray(value)){for(const item of value)collectUrlFields(item);return}for(const [key,item] of Object.entries(value)){if(typeof item==='string'&&key.toLowerCase().includes('url')){const normalized=normalizeUrl(item);if(normalized)allowedUrls.add(normalized)}else if(item&&typeof item==='object')collectUrlFields(item)}} for(const item of Array.isArray(response?.output)?response.output:[]){if(item?.type==='web_search_call')collectUrlFields(item);if(item?.type==='message'){for(const content of Array.isArray(item?.content)?item.content:[]){for(const annotation of Array.isArray(content?.annotations)?content.annotations:[])collectUrlFields(annotation)}}} let raw=outputText(response).replace(/^```json/i,'').replace(/^```/i,'').replace(/```$/i,'').trim(); if(!raw)throw new Error('AvalAI Responses API returned no output text'); let parsed;try{parsed=JSON.parse(raw)}catch(error){throw new Error('Research model did not return valid JSON: '+error.message)} const clamp=(value)=>{const number=Number(value);if(!Number.isFinite(number))return 0;return Math.max(0,Math.min(100,Math.round(number)))}; const clean=(value,max=2500)=>String(value??'').trim().slice(0,max); const signalList=(value)=>Array.isArray(value)?value.map((item)=>clean(typeof item==='string'?item:item?.summary||item?.type||'',600)).filter(Boolean).slice(0,20):[]; const validated=[];let rejectedForEvidence=0; for(const sourceOpportunity of Array.isArray(parsed?.opportunities)?parsed.opportunities:[]){if(validated.length>=job.maxOpportunities)break;const companyName=clean(sourceOpportunity?.companyName,240);if(!companyName)continue;const evidence=[];for(const item of Array.isArray(sourceOpportunity?.evidence)?sourceOpportunity.evidence:[]){const sourceUrl=normalizeUrl(item?.sourceUrl);if(!sourceUrl||!allowedUrls.has(sourceUrl))continue;const title=clean(item?.title,240);const summary=clean(item?.summary,1000);if(!title||!summary)continue;evidence.push({title,summary,sourceName:clean(item?.sourceName,160),sourceUrl,observedAt:clean(item?.observedAt,64),evidenceLevel:item?.evidenceLevel==='INFERENCE'?'INFERENCE':item?.evidenceLevel==='UNKNOWN'?'UNKNOWN':'VERIFIED FACT'})} const verifiedFacts=evidence.filter((item)=>item.evidenceLevel==='VERIFIED FACT');if(!verifiedFacts.length){rejectedForEvidence+=1;continue} const dm=sourceOpportunity?.decisionMaker&&typeof sourceOpportunity.decisionMaker==='object'?sourceOpportunity.decisionMaker:{};let verificationEvidence=dm?.verificationEvidence&&typeof dm.verificationEvidence==='object'?{sourceName:clean(dm.verificationEvidence.sourceName,200),sourceUrl:normalizeUrl(dm.verificationEvidence.sourceUrl),notes:clean(dm.verificationEvidence.notes,1000),verifiedAt:clean(dm.verificationEvidence.verifiedAt,64)}:null;if(verificationEvidence?.sourceUrl&&!allowedUrls.has(verificationEvidence.sourceUrl))verificationEvidence=null;let verificationStatus=clean(dm.verificationStatus,20).toUpperCase();if(!['VERIFIED','PARTIAL','UNVERIFIED','UNKNOWN'].includes(verificationStatus))verificationStatus='UNKNOWN';if(!verificationEvidence?.sourceUrl&&verificationStatus==='VERIFIED')verificationStatus=clean(dm.name,200)?'UNVERIFIED':'UNKNOWN';validated.push({companyName,productName:clean(sourceOpportunity?.productName||job.productName,240),companyFit:clamp(sourceOpportunity?.companyFit),productFit:clamp(sourceOpportunity?.productFit),fleetFit:clamp(sourceOpportunity?.fleetFit),buyingSignalStrength:clamp(sourceOpportunity?.buyingSignalStrength),signalRecency:clamp(sourceOpportunity?.signalRecency),decisionMakerConfidence:clamp(sourceOpportunity?.decisionMakerConfidence??dm?.confidence),commercialRelevance:clamp(sourceOpportunity?.commercialRelevance),timingUrgency:clamp(sourceOpportunity?.timingUrgency),companyFitReason:clean(sourceOpportunity?.companyFitReason,1200),productFitReason:clean(sourceOpportunity?.productFitReason,1200),fleetFitReason:clean(sourceOpportunity?.fleetFitReason,1200),whyNowSummary:clean(sourceOpportunity?.whyNowSummary||sourceOpportunity?.whyNow,1800),buyingSignals:signalList(sourceOpportunity?.buyingSignals),decisionMaker:{name:clean(dm.name,200),role:clean(dm.role||'UNKNOWN',200)||'UNKNOWN',relevance:clamp(dm.relevance),influence:clamp(dm.influence),confidence:clamp(dm.confidence),verificationStatus,verificationEvidence},evidence:evidence.slice(0,12),outreachDraft:clean(sourceOpportunity?.outreachDraft,2000),status:'New'})} const notes=[clean(parsed?.notes,1800),`Evidence gate kept ${validated.length} opportunity(s).`,rejectedForEvidence?`${rejectedForEvidence} candidate(s) were rejected because no verified web-search source URL could be matched.`:'',allowedUrls.size?`${allowedUrls.size} source URL(s) were available for validation.`:'No source URLs were available from the web-search response.'].filter(Boolean).join(' '); return [{json:{jobId:job.jobId,callbackUrl:job.callbackUrl,provider:'N8N_AVALAI_WEB_SEARCH',status:'COMPLETED',notes:notes.slice(0,2500),opportunities:validated}}];"
+        "jsCode": "// n8n Code node: a matching source URL is provenance, not claim verification.\nconst job = $node['Normalize Research Job'].json;\nconst base = {\n  jobId: job.jobId,\n  callbackUrl: job.callbackUrl,\n  provider: 'N8N_AVALAI',\n  opportunities: []\n};\nconst fail = (code) => [{ json: { ...base, status: 'FAILED', notes: code } }];\nconst clean = (value, max = 1000) => typeof value === 'string' ? value.trim().slice(0, max) : '';\nconst sourceUrl = (value) => {\n  if (typeof value !== 'string') return '';\n  try {\n    const parsed = new URL(value);\n    return parsed.protocol === 'https:' && !parsed.username && !parsed.password ? parsed.href : '';\n  } catch { return ''; }\n};\n\ntry {\n  const response = $json;\n  if (response?.error) return fail('PROVIDER_REQUEST_FAILED');\n  if (response?.status !== 'completed') return fail('PROVIDER_RESPONSE_NOT_COMPLETED');\n\n  const allowed = new Set();\n  function collect(value) {\n    if (!value || typeof value !== 'object') return;\n    for (const [key, child] of Object.entries(value)) {\n      if (key === 'url' && sourceUrl(child)) allowed.add(sourceUrl(child));\n      else if (child && typeof child === 'object') collect(child);\n    }\n  }\n  const parts = [];\n  for (const item of response.output || []) {\n    if (item.type === 'web_search_call') collect(item);\n    if (item.type === 'message') {\n      for (const content of item.content || []) {\n        if (content.type === 'output_text' && typeof content.text === 'string') parts.push(content.text);\n        collect(content.annotations);\n      }\n    }\n  }\n  const raw = typeof response.output_text === 'string' ? response.output_text : parts.join('\\n');\n  if (!raw || raw.length > 250000) return fail('EMPTY_OR_OVERSIZE_OUTPUT');\n  let data;\n  try {\n    data = JSON.parse(raw.trim().replace(/^```(?:json)?\\s*/, '').replace(/\\s*```$/, ''));\n  } catch { return fail('INVALID_JSON'); }\n  if (!data || data.status !== 'COMPLETED' || !Array.isArray(data.opportunities)) {\n    return fail('INVALID_RESEARCH_SCHEMA');\n  }\n  if (data.opportunities.length && !allowed.size) return fail('MISSING_SEARCH_PROVENANCE');\n\n  const opportunities = [];\n  const seen = new Set();\n  const limit = Math.max(1, Math.min(10, Math.floor(Number(job.maxOpportunities) || 10)));\n  let rejected = 0;\n  for (const candidate of data.opportunities) {\n    const companyName = clean(candidate?.companyName, 240);\n    const key = companyName.toLowerCase();\n    if (!key || seen.has(key)) { rejected++; continue; }\n    const evidence = (Array.isArray(candidate.evidence) ? candidate.evidence : [])\n      .filter((item) => item && allowed.has(sourceUrl(item.sourceUrl)) && clean(item.title) && clean(item.summary))\n      .slice(0, 12)\n      .map((item) => ({\n        title: clean(item.title, 240),\n        summary: clean(item.summary),\n        sourceName: clean(item.sourceName, 160),\n        sourceUrl: sourceUrl(item.sourceUrl),\n        observedAt: '',\n        evidenceLevel: item.evidenceLevel === 'INFERENCE' ? 'INFERENCE' : 'UNKNOWN'\n      }));\n    if (!evidence.length) { rejected++; continue; }\n    seen.add(key);\n    opportunities.push({\n      companyName,\n      productName: job.productName,\n      productId: job.productId || '',\n      status: 'New',\n      evidence,\n      whyNow: clean(candidate.whyNow || candidate.whyNowSummary, 1800),\n      buyingSignals: [],\n      decisionMaker: { name: '', role: 'UNKNOWN', confidence: 0, verificationStatus: 'UNKNOWN' },\n      outreachDraft: ''\n    });\n    if (opportunities.length >= limit) break;\n  }\n  if (data.opportunities.length && !opportunities.length) return fail('ALL_CANDIDATES_REJECTED');\n  return [{ json: {\n    ...base,\n    status: 'COMPLETED',\n    opportunities,\n    notes: `Human review required. ${opportunities.length} candidates; ${rejected} rejected. URL matching does not verify claims.`\n  } }];\n} catch { return fail('VALIDATION_FAILED'); }\n"
       },
       "id": "validate-evidence",
       "name": "Validate Evidence & Structure",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [110,0]
+      "position": [
+        110,
+        0
+      ]
     },
     {
       "parameters": {
@@ -68,33 +89,89 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
-        "headerParameters": {"parameters":[{"name":"Content-Type","value":"application/json"}]},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({jobId:$json.jobId,status:$json.status,provider:$json.provider,notes:$json.notes,opportunities:$json.opportunities}) }}",
-        "options": {"timeout":30000}
+        "options": {
+          "timeout": 30000
+        }
       },
       "id": "callback-merqiva",
       "name": "Send Results to Merqiva",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [390,0],
+      "position": [
+        390,
+        0
+      ],
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 2000
     }
   ],
   "connections": {
-    "Merqiva Research Job":{"main":[[{"node":"Normalize Research Job","type":"main","index":0}]]},
-    "Normalize Research Job":{"main":[[{"node":"AvalAI Web Research","type":"main","index":0}]]},
-    "AvalAI Web Research":{"main":[[{"node":"Validate Evidence & Structure","type":"main","index":0}]]},
-    "Validate Evidence & Structure":{"main":[[{"node":"Send Results to Merqiva","type":"main","index":0}]]}
+    "Merqiva Research Job": {
+      "main": [
+        [
+          {
+            "node": "Normalize Research Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Research Job": {
+      "main": [
+        [
+          {
+            "node": "AvalAI Web Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AvalAI Web Research": {
+      "main": [
+        [
+          {
+            "node": "Validate Evidence & Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Evidence & Structure": {
+      "main": [
+        [
+          {
+            "node": "Send Results to Merqiva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "pinData": {},
   "active": false,
-  "settings": {"executionOrder":"v1"},
+  "settings": {
+    "executionOrder": "v1"
+  },
   "versionId": "05352bc2-c8b4-4062-860d-44a429f7e7d4",
-  "meta": {"templateCredsSetupCompleted":false},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
   "tags": []
 }

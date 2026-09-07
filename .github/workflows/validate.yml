@@ -21,6 +21,8 @@ jobs:
           find . -type f -name '*.js' -not -path './node_modules/*' -print0 | while IFS= read -r -d '' file; do
             node --check "$file"
           done
+      - name: Test research evidence boundaries
+        run: node --test tests/research-evidence.test.mjs
       - name: Check required product files
         shell: bash
         run: |
