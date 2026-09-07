@@ -18,3 +18,6 @@
 - https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.datatable
 
 قیمت‌های صفحات عمومی AvalAI ناسازگار دیده شدند؛ از درج قیمت قطعی خودداری شده است.
+
+
+آزمون کنترل شروع در n8n: runApproved=false باعث خطای مورد انتظار PILOT_BLOCKED شد؛ هیچ درخواست AvalAI اجرا نشد. بدنه درخواست ثابت است تا با ویرایشگر و تجزیه‌گر عبارت‌های n8n سازگار باشد.
