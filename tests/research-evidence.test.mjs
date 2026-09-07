@@ -10,7 +10,8 @@ const root = process.env.MERQIVA_TEST_ROOT || new URL('../', import.meta.url);
 const read = (path) => readFileSync(root instanceof URL ? new URL(path, root) : resolve(root, path), 'utf8');
 const workflow = JSON.parse(read('n8n/Merqiva_AI_Maritime_Research_Agent_AvalAI_Production.json'));
 const code = workflow.nodes.find((node) => node.name === 'Validate Evidence & Structure').parameters.jsCode;
-const execute = new Function('$json', '$node', code);
+// Reproduce n8n's missing URL global, rather than relying on the Node test host.
+const execute = new Function('$json', '$node', 'URL', 'require', code);
 const moduleUrl = (source) => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
 const coreUrl = moduleUrl(read('functions/api/lib/opportunity-core.js'));
 const { normalizeOpportunityPayload } = await import(coreUrl);
@@ -119,6 +120,27 @@ test('validator preserves the normalized callback destination', () => {
   assert.equal(validate(response(), { callbackUrl }).callbackUrl, callbackUrl);
 });
 
+test('source matching works without URL or modules and rejects ambiguous authorities', () => {
+  const input = response();
+  input.output[0].results[0].url = 'https://EXAMPLE.COM:443/company-update';
+  assert.equal(validate(input).opportunities.length, 1);
+  for (const url of ['https://example.com:444/x', 'https://example.com@evil.test/x', 'https://example.com\\evil.test/x', 'https://example..com/x', 'https://-example.com/x', 'https://example.com/%zz', 'https://127.0.0.1/x', 'https://example.com/\nx']) {
+    const item = candidate(); item.evidence[0].sourceUrl = url;
+    const input = response([item]); input.output[0].results[0].url = url;
+    assert.equal(validate(input).status, 'FAILED', url);
+  }
+});
+
+test('actual job normalizer needs no URL global and accepts only exact approved callbacks', () => {
+  const normalize = new Function('$json', 'URL', 'require', workflow.nodes.find((node) => node.name === 'Normalize Research Job').parameters.jsCode);
+  const body = { ...job, researchQuestion: 'Synthetic question' };
+  assert.equal(normalize({ body })[0].json.callbackUrl, job.callbackUrl);
+  assert.equal(normalize({ body: { ...body, callbackUrl: 'https://www.merqivaintel.com/api/research/callback' } })[0].json.callbackUrl, 'https://www.merqivaintel.com/api/research/callback');
+  for (const callbackUrl of ['http://merqivaintel.com/api/research/callback', 'https://evil.test/api/research/callback', 'https://merqivaintel.com.evil.test/api/research/callback', job.callbackUrl + '?redirect=evil', job.callbackUrl + '#fragment', 'https://user:pass@merqivaintel.com/api/research/callback', 'https://merqivaintel.com:444/api/research/callback']) {
+    assert.throws(() => normalize({ body: { ...body, callbackUrl } }));
+  }
+});
+
 test('actual workflow output survives callback and storage with review required', async () => {
   const { kv, call } = fixture();
   const payload = validate();
@@ -203,10 +225,12 @@ test('isolated runtime workflow uses the exact validator and has no external-act
   assert.ok(isolated.nodes.every((node) => ['n8n-nodes-base.manualTrigger', 'n8n-nodes-base.code'].includes(node.type)));
   const validationNode = isolated.nodes.find((node) => node.name === 'Validate Evidence & Structure');
   assert.equal(validationNode.parameters.jsCode, code);
+  assert.equal(isolated.nodes.find((node) => node.name === 'Normalize Research Job').parameters.jsCode,
+    workflow.nodes.find((node) => node.name === 'Normalize Research Job').parameters.jsCode);
   const values = {};
   let current = {};
   for (const node of isolated.nodes.filter((node) => node.type === 'n8n-nodes-base.code')) {
-    current = new Function('$json', '$node', node.parameters.jsCode)(current, values)[0].json;
+    current = new Function('$json', '$node', 'URL', 'require', node.parameters.jsCode)(current, values)[0].json;
     values[node.name] = { json: current };
   }
   assert.equal(current.runtimeCheck, 'PASSED');

@@ -1,5 +1,5 @@
 {
-  "name": "Merqiva - Isolated Validator Runtime Check",
+  "name": "Merqiva - Validator Runtime Check - Compatible",
   "nodes": [
     {
       "parameters": {},
@@ -14,14 +14,27 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{json:{jobId:'RES_LOCAL_RUNTIME_CHECK',productName:'Synthetic marine radio',productId:'SYNTHETIC_ONLY',callbackUrl:'https://example.com/not-called',maxOpportunities:1}}];"
+        "jsCode": "return [{json:{body:{jobId:'RES_LOCAL_RUNTIME_CHECK',callbackUrl:'https://merqivaintel.com/api/research/callback',job:{productName:'Synthetic marine radio',productId:'SYNTHETIC_ONLY',researchQuestion:'Synthetic runtime check; no external calls.',maxOpportunities:1}}}}];"
+      },
+      "id": "prepare-synthetic-job",
+      "name": "Prepare Synthetic Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? {};\nconst job = body.job ?? body;\nconst clean = (value, max = 2500) => String(value ?? '').trim().slice(0, max);\nconst list = (value, max = 30) => Array.isArray(value) ? value.map((item) => clean(item, 500)).filter(Boolean).slice(0, max) : [];\nconst jobId = clean(body.jobId || job.id || job.jobId, 160);\nif (!/^RES[0-9A-Za-z_-]+$/.test(jobId)) throw new Error('Invalid or missing Merqiva research jobId');\nconst rawCallback = clean(body.callbackUrl || job.callbackUrl, 1000);\nconst allowedCallbacks = new Set(['https://merqivaintel.com/api/research/callback', 'https://www.merqivaintel.com/api/research/callback']);\nif (!allowedCallbacks.has(rawCallback)) throw new Error('Callback URL is not an approved Merqiva endpoint');\nconst productName = clean(job.productName, 240);\nconst researchQuestion = clean(job.researchQuestion, 2500);\nif (!productName || !researchQuestion) throw new Error('productName and researchQuestion are required');\nreturn [{json:{jobId,callbackUrl:rawCallback,productName,productId:clean(job.productId,160),targetMarket:clean(job.targetMarket,500),researchQuestion,targetCompanyTypes:list(job.targetCompanyTypes),targetVesselTypes:list(job.targetVesselTypes),relevantSignals:list(job.relevantSignals),targetDecisionMakerRoles:list(job.targetDecisionMakerRoles),maxOpportunities:Math.max(1,Math.min(10,Number(job.maxOpportunities)||10)),language:['en','ar'].includes(job.language)?job.language:'en'}}];"
       },
       "id": "normalize-research-job",
       "name": "Normalize Research Job",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        260,
+        520,
         0
       ]
     },
@@ -34,39 +47,50 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        520,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// n8n Code node: a matching source URL is provenance, not claim verification.\nconst job = $node['Normalize Research Job'].json;\nconst base = {\n  jobId: job.jobId,\n  callbackUrl: job.callbackUrl,\n  provider: 'N8N_AVALAI',\n  opportunities: []\n};\nconst fail = (code) => [{ json: { ...base, status: 'FAILED', notes: code } }];\nconst clean = (value, max = 1000) => typeof value === 'string' ? value.trim().slice(0, max) : '';\nconst sourceUrl = (value) => {\n  if (typeof value !== 'string') return '';\n  try {\n    const parsed = new URL(value);\n    return parsed.protocol === 'https:' && !parsed.username && !parsed.password ? parsed.href : '';\n  } catch { return ''; }\n};\n\ntry {\n  const response = $json;\n  if (response?.error) return fail('PROVIDER_REQUEST_FAILED');\n  if (response?.status !== 'completed') return fail('PROVIDER_RESPONSE_NOT_COMPLETED');\n\n  const allowed = new Set();\n  function collect(value) {\n    if (!value || typeof value !== 'object') return;\n    for (const [key, child] of Object.entries(value)) {\n      if (key === 'url' && sourceUrl(child)) allowed.add(sourceUrl(child));\n      else if (child && typeof child === 'object') collect(child);\n    }\n  }\n  const parts = [];\n  for (const item of response.output || []) {\n    if (item.type === 'web_search_call') collect(item);\n    if (item.type === 'message') {\n      for (const content of item.content || []) {\n        if (content.type === 'output_text' && typeof content.text === 'string') parts.push(content.text);\n        collect(content.annotations);\n      }\n    }\n  }\n  const raw = typeof response.output_text === 'string' ? response.output_text : parts.join('\\n');\n  if (!raw || raw.length > 250000) return fail('EMPTY_OR_OVERSIZE_OUTPUT');\n  let data;\n  try {\n    data = JSON.parse(raw.trim().replace(/^```(?:json)?\\s*/, '').replace(/\\s*```$/, ''));\n  } catch { return fail('INVALID_JSON'); }\n  if (!data || data.status !== 'COMPLETED' || !Array.isArray(data.opportunities)) {\n    return fail('INVALID_RESEARCH_SCHEMA');\n  }\n  if (data.opportunities.length && !allowed.size) return fail('MISSING_SEARCH_PROVENANCE');\n\n  const opportunities = [];\n  const seen = new Set();\n  const limit = Math.max(1, Math.min(10, Math.floor(Number(job.maxOpportunities) || 10)));\n  let rejected = 0;\n  for (const candidate of data.opportunities) {\n    const companyName = clean(candidate?.companyName, 240);\n    const key = companyName.toLowerCase();\n    if (!key || seen.has(key)) { rejected++; continue; }\n    const evidence = (Array.isArray(candidate.evidence) ? candidate.evidence : [])\n      .filter((item) => item && allowed.has(sourceUrl(item.sourceUrl)) && clean(item.title) && clean(item.summary))\n      .slice(0, 12)\n      .map((item) => ({\n        title: clean(item.title, 240),\n        summary: clean(item.summary),\n        sourceName: clean(item.sourceName, 160),\n        sourceUrl: sourceUrl(item.sourceUrl),\n        observedAt: '',\n        evidenceLevel: item.evidenceLevel === 'INFERENCE' ? 'INFERENCE' : 'UNKNOWN'\n      }));\n    if (!evidence.length) { rejected++; continue; }\n    seen.add(key);\n    opportunities.push({\n      companyName,\n      productName: job.productName,\n      productId: job.productId || '',\n      status: 'New',\n      evidence,\n      whyNow: clean(candidate.whyNow || candidate.whyNowSummary, 1800),\n      buyingSignals: [],\n      decisionMaker: { name: '', role: 'UNKNOWN', confidence: 0, verificationStatus: 'UNKNOWN' },\n      outreachDraft: ''\n    });\n    if (opportunities.length >= limit) break;\n  }\n  if (data.opportunities.length && !opportunities.length) return fail('ALL_CANDIDATES_REJECTED');\n  return [{ json: {\n    ...base,\n    status: 'COMPLETED',\n    opportunities,\n    notes: `Human review required. ${opportunities.length} candidates; ${rejected} rejected. URL matching does not verify claims.`\n  } }];\n} catch { return fail('VALIDATION_FAILED'); }\n"
-      },
-      "id": "validate-evidence-&-structure",
-      "name": "Validate Evidence & Structure",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
         780,
         0
       ]
     },
     {
       "parameters": {
-        "jsCode": "const result = $json;\nconst candidate = result.opportunities?.[0];\nconst expected = ['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'INFERENCE', 'UNKNOWN'];\nconst checks = {\n  completed: result.status === 'COMPLETED',\n  oneCandidate: result.opportunities?.length === 1,\n  allLabelsSafe: JSON.stringify(candidate?.evidence?.map(item => item.evidenceLevel)) === JSON.stringify(expected),\n  noInventedContact: candidate?.decisionMaker?.name === '',\n  noOutreach: candidate?.outreachDraft === '',\n  timingPreserved: candidate?.whyNow === 'Synthetic timing; unconfirmed.',\n  jobProductPreserved: candidate?.productName === 'Synthetic marine radio',\n  callbackPreserved: result.callbackUrl === 'https://example.com/not-called'\n};\nif (Object.values(checks).some(value => !value)) throw new Error('Runtime test failed: ' + JSON.stringify(checks) + '; validator status: ' + result.status + '; notes: ' + result.notes + '; URL constructor: ' + typeof URL);\nreturn [{json:{runtimeCheck:'PASSED',checks,syntheticOnly:true,externalCalls:0,productionWrites:0,scope:'Validator in n8n only. Does not test AvalAI, HTTP callback, or Cloudflare KV.'}}];"
+        "jsCode": "// n8n Code node: a matching source URL is provenance, not claim verification.\nconst job = $node['Normalize Research Job'].json;\nconst base = {\n  jobId: job.jobId,\n  callbackUrl: job.callbackUrl,\n  provider: 'N8N_AVALAI',\n  opportunities: []\n};\nconst fail = (code) => [{ json: { ...base, status: 'FAILED', notes: code } }];\nconst clean = (value, max = 1000) => typeof value === 'string' ? value.trim().slice(0, max) : '';\nconst sourceUrl = (value) => {\n  // n8n's Code sandbox may omit URL. Accept a conservative HTTPS/DNS subset\n  // for exact provenance matching; do not enable modules or fetch these URLs.\n  if (typeof value !== 'string' || value.length > 2048) return '';\n  if (/[^\\x21-\\x7e]|[\\\\<>\"`]|%(?![0-9a-f]{2})/i.test(value)) return '';\n  const match = /^https:\\/\\/([^/?#]+)([/?#].*)?$/i.exec(value);\n  if (!match) return '';\n  const host = match[1].replace(/:443$/, '').toLowerCase();\n  if (host.length > 253 || !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(host)) return '';\n  const suffix = match[2] || '/';\n  return 'https://' + host + (suffix.startsWith('/') ? suffix : '/' + suffix);\n};\n\ntry {\n  const response = $json;\n  if (response?.error) return fail('PROVIDER_REQUEST_FAILED');\n  if (response?.status !== 'completed') return fail('PROVIDER_RESPONSE_NOT_COMPLETED');\n\n  const allowed = new Set();\n  function collect(value) {\n    if (!value || typeof value !== 'object') return;\n    for (const [key, child] of Object.entries(value)) {\n      if (key === 'url' && sourceUrl(child)) allowed.add(sourceUrl(child));\n      else if (child && typeof child === 'object') collect(child);\n    }\n  }\n  const parts = [];\n  for (const item of response.output || []) {\n    if (item.type === 'web_search_call') collect(item);\n    if (item.type === 'message') {\n      for (const content of item.content || []) {\n        if (content.type === 'output_text' && typeof content.text === 'string') parts.push(content.text);\n        collect(content.annotations);\n      }\n    }\n  }\n  const raw = typeof response.output_text === 'string' ? response.output_text : parts.join('\\n');\n  if (!raw || raw.length > 250000) return fail('EMPTY_OR_OVERSIZE_OUTPUT');\n  let data;\n  try {\n    data = JSON.parse(raw.trim().replace(/^```(?:json)?\\s*/, '').replace(/\\s*```$/, ''));\n  } catch { return fail('INVALID_JSON'); }\n  if (!data || data.status !== 'COMPLETED' || !Array.isArray(data.opportunities)) {\n    return fail('INVALID_RESEARCH_SCHEMA');\n  }\n  if (data.opportunities.length && !allowed.size) return fail('MISSING_SEARCH_PROVENANCE');\n\n  const opportunities = [];\n  const seen = new Set();\n  const limit = Math.max(1, Math.min(10, Math.floor(Number(job.maxOpportunities) || 10)));\n  let rejected = 0;\n  for (const candidate of data.opportunities) {\n    const companyName = clean(candidate?.companyName, 240);\n    const key = companyName.toLowerCase();\n    if (!key || seen.has(key)) { rejected++; continue; }\n    const evidence = (Array.isArray(candidate.evidence) ? candidate.evidence : [])\n      .filter((item) => item && allowed.has(sourceUrl(item.sourceUrl)) && clean(item.title) && clean(item.summary))\n      .slice(0, 12)\n      .map((item) => ({\n        title: clean(item.title, 240),\n        summary: clean(item.summary),\n        sourceName: clean(item.sourceName, 160),\n        sourceUrl: sourceUrl(item.sourceUrl),\n        observedAt: '',\n        evidenceLevel: item.evidenceLevel === 'INFERENCE' ? 'INFERENCE' : 'UNKNOWN'\n      }));\n    if (!evidence.length) { rejected++; continue; }\n    seen.add(key);\n    opportunities.push({\n      companyName,\n      productName: job.productName,\n      productId: job.productId || '',\n      status: 'New',\n      evidence,\n      whyNow: clean(candidate.whyNow || candidate.whyNowSummary, 1800),\n      buyingSignals: [],\n      decisionMaker: { name: '', role: 'UNKNOWN', confidence: 0, verificationStatus: 'UNKNOWN' },\n      outreachDraft: ''\n    });\n    if (opportunities.length >= limit) break;\n  }\n  if (data.opportunities.length && !opportunities.length) return fail('ALL_CANDIDATES_REJECTED');\n  return [{ json: {\n    ...base,\n    status: 'COMPLETED',\n    opportunities,\n    notes: `Human review required. ${opportunities.length} candidates; ${rejected} rejected. URL matching does not verify claims.`\n  } }];\n} catch { return fail('VALIDATION_FAILED'); }\n"
       },
-      "id": "assert-runtime-result",
-      "name": "Assert Runtime Result",
+      "id": "validate-evidence-&-structure",
+      "name": "Validate Evidence & Structure",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1040,
         0
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $json;\nconst candidate = result.opportunities?.[0];\nconst expected = ['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'INFERENCE', 'UNKNOWN'];\nconst checks = {\n  completed: result.status === 'COMPLETED',\n  oneCandidate: result.opportunities?.length === 1,\n  allLabelsSafe: JSON.stringify(candidate?.evidence?.map(item => item.evidenceLevel)) === JSON.stringify(expected),\n  noInventedContact: candidate?.decisionMaker?.name === '',\n  noOutreach: candidate?.outreachDraft === '',\n  timingPreserved: candidate?.whyNow === 'Synthetic timing; unconfirmed.',\n  jobProductPreserved: candidate?.productName === 'Synthetic marine radio',\n  callbackPreserved: result.callbackUrl === 'https://merqivaintel.com/api/research/callback'\n};\nif (Object.values(checks).some(value => !value)) throw new Error('Runtime test failed: ' + JSON.stringify(checks) + '; validator status: ' + result.status + '; notes: ' + result.notes + '; URL constructor: ' + typeof URL);\nreturn [{json:{runtimeCheck:'PASSED',checks,syntheticOnly:true,externalCalls:0,productionWrites:0,scope:'Validator in n8n only. Does not test AvalAI, HTTP callback, or Cloudflare KV.'}}];"
+      },
+      "id": "assert-runtime-result",
+      "name": "Assert Runtime Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        0
+      ]
     }
   ],
   "connections": {
     "Manual Test Only": {
+      "main": [
+        [
+          {
+            "node": "Prepare Synthetic Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Synthetic Job": {
       "main": [
         [
           {
