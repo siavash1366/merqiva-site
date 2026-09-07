@@ -196,3 +196,19 @@ test('callback accepts explicit zero results', async () => {
 test('manual normalization still preserves explicitly verified evidence', () => {
   assert.equal(normalizeOpportunityPayload(candidate()).evidence[0].evidenceLevel, 'VERIFIED FACT');
 });
+
+test('isolated runtime workflow uses the exact validator and has no external-action nodes', () => {
+  const isolated = JSON.parse(read('n8n/Merqiva_Validator_Runtime_Check.json'));
+  assert.equal(isolated.active, false);
+  assert.ok(isolated.nodes.every((node) => ['n8n-nodes-base.manualTrigger', 'n8n-nodes-base.code'].includes(node.type)));
+  const validationNode = isolated.nodes.find((node) => node.name === 'Validate Evidence & Structure');
+  assert.equal(validationNode.parameters.jsCode, code);
+  const values = {};
+  let current = {};
+  for (const node of isolated.nodes.filter((node) => node.type === 'n8n-nodes-base.code')) {
+    current = new Function('$json', '$node', node.parameters.jsCode)(current, values)[0].json;
+    values[node.name] = { json: current };
+  }
+  assert.equal(current.runtimeCheck, 'PASSED');
+  assert.equal(Object.keys(current.checks).length, 8);
+});
