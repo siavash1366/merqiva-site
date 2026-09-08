@@ -14,21 +14,48 @@ function clean(value, max = 5000) {
   return String(value || "").trim().slice(0, max);
 }
 
-function hasUsableEvidence(item) {
-  if (!Array.isArray(item?.evidence) || item.evidence.length === 0) return false;
-  return item.evidence.some((e) => {
-    if (!e || typeof e !== "object") return false;
-    const url = clean(e.sourceUrl, 1500);
-    const title = clean(e.title, 500);
-    const summary = clean(e.summary, 2000);
-    return /^https:\/\//i.test(url) && title && summary;
-  });
+function researchEvidence(items) {
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    try {
+      const url = new URL(item.sourceUrl);
+      if (url.protocol !== "https:" || url.username || url.password) return [];
+      const title = clean(item.title, 500);
+      const summary = clean(item.summary, 2000);
+      if (!title || !summary) return [];
+      return [{
+        title,
+        summary,
+        sourceName: clean(item.sourceName, 160),
+        sourceUrl: url.href,
+        observedAt: "",
+        // Authentication and a source link do not establish factual accuracy.
+        evidenceLevel: item.evidenceLevel === "INFERENCE" ? "INFERENCE" : "UNKNOWN"
+      }];
+    } catch { return []; }
+  }).slice(0, 12);
 }
 
-async function saveOpportunity(env, payload, jobId, sourceIndex) {
-  const normalized = normalizeOpportunityPayload(payload);
+async function saveOpportunity(env, payload, job, jobId, sourceIndex) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const evidence = researchEvidence(payload.evidence);
+  if (!evidence.length) return null;
+  // Allow only research fields. Older workflows must not inject verified contacts,
+  // sales scores, outreach, or a won/paid outcome through this AI-only boundary.
+  const normalized = normalizeOpportunityPayload({
+    companyName: clean(payload.companyName, 240),
+    productName: clean(job.productName || payload.productName, 240),
+    productId: clean(job.productId || payload.productId, 160),
+    whyNow: clean(payload.whyNow || payload.whyNowSummary, 2000),
+    evidence,
+    status: "New"
+  });
   if (!normalized.companyName || !normalized.productName) return null;
-  if (!hasUsableEvidence(payload)) return null;
+  normalized.recommendedAction = "Review source claims, purchase need, timing and decision-maker identity before outreach.";
+  normalized.recommendedActionSource = "SYSTEM_RULES";
+  normalized.salesAngle = "";
+  normalized.outreachDraft = "";
 
   const fingerprint = await sha256(`${jobId}|${sourceIndex}|${normalized.companyName}|${normalized.productName}`);
   const existing = await env.LEADS_KV.get("research:opportunity:" + fingerprint);
@@ -45,6 +72,7 @@ async function saveOpportunity(env, payload, jobId, sourceIndex) {
       source: "AI_RESEARCH",
       researchJobId: jobId,
       evidenceGated: true,
+      humanReviewRequired: true,
       ingestedAt: now
     }
   };
@@ -72,7 +100,12 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const body = await request.json();
+    let body;
+    try { body = await request.json(); }
+    catch { return jsonResponse({ success: false, error: "Invalid JSON" }, 400); }
+    if (!body || !["COMPLETED", "FAILED"].includes(body.status) || !Array.isArray(body.opportunities)) {
+      return jsonResponse({ success: false, error: "Valid status and opportunities array are required" }, 400);
+    }
     const jobId = clean(body.jobId, 160);
     if (!jobId) return jsonResponse({ success: false, error: "jobId is required" }, 400);
 
@@ -83,14 +116,15 @@ export async function onRequestPost(context) {
       return jsonResponse({ success: true, jobId, status: "COMPLETED", createdOpportunityIds: job.opportunityIds, idempotent: true }, 200);
     }
 
-    const resultItems = Array.isArray(body.opportunities) ? body.opportunities.slice(0, job.maxOpportunities || 25) : [];
+    const limit = Math.max(1, Math.min(25, Math.floor(Number(job.maxOpportunities) || 25)));
+    const resultItems = body.status === "FAILED" ? [] : body.opportunities.slice(0, limit);
     const created = [];
     for (let i = 0; i < resultItems.length; i += 1) {
-      const opportunity = await saveOpportunity(env, resultItems[i], jobId, i);
+      const opportunity = await saveOpportunity(env, resultItems[i], job, jobId, i);
       if (opportunity) created.push(opportunity.id);
     }
 
-    job.status = body.status === "FAILED" ? "FAILED" : "COMPLETED";
+    job.status = body.status === "FAILED" || (resultItems.length > 0 && created.length === 0) ? "FAILED" : "COMPLETED";
     job.updatedAt = new Date().toISOString();
     job.completedAt = new Date().toISOString();
     job.resultCount = created.length;

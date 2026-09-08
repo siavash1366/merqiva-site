@@ -1,125 +1,96 @@
 {
-  "name": "Merqiva — AI Maritime Research Agent (AvalAI Production)",
+  "name": "Merqiva - Validator Runtime Check - Compatible",
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "merqiva-research",
-        "authentication": "headerAuth",
-        "responseMode": "onReceived",
-        "options": {
-          "responseCode": 202
-        }
-      },
-      "id": "research-webhook",
-      "name": "Merqiva Research Job",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
+      "parameters": {},
+      "id": "manual-only",
+      "name": "Manual Test Only",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
       "position": [
-        -720,
+        0,
         0
-      ],
-      "webhookId": "merqiva-research"
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json:{body:{jobId:'RES_LOCAL_RUNTIME_CHECK',callbackUrl:'https://merqivaintel.com/api/research/callback',job:{productName:'Synthetic marine radio',productId:'SYNTHETIC_ONLY',researchQuestion:'Synthetic runtime check; no external calls.',maxOpportunities:1}}}}];"
+      },
+      "id": "prepare-synthetic-job",
+      "name": "Prepare Synthetic Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
     },
     {
       "parameters": {
         "jsCode": "const body = $json.body ?? {};\nconst job = body.job ?? body;\nconst clean = (value, max = 2500) => String(value ?? '').trim().slice(0, max);\nconst list = (value, max = 30) => Array.isArray(value) ? value.map((item) => clean(item, 500)).filter(Boolean).slice(0, max) : [];\nconst jobId = clean(body.jobId || job.id || job.jobId, 160);\nif (!/^RES[0-9A-Za-z_-]+$/.test(jobId)) throw new Error('Invalid or missing Merqiva research jobId');\nconst rawCallback = clean(body.callbackUrl || job.callbackUrl, 1000);\nconst allowedCallbacks = new Set(['https://merqivaintel.com/api/research/callback', 'https://www.merqivaintel.com/api/research/callback']);\nif (!allowedCallbacks.has(rawCallback)) throw new Error('Callback URL is not an approved Merqiva endpoint');\nconst productName = clean(job.productName, 240);\nconst researchQuestion = clean(job.researchQuestion, 2500);\nif (!productName || !researchQuestion) throw new Error('productName and researchQuestion are required');\nreturn [{json:{jobId,callbackUrl:rawCallback,productName,productId:clean(job.productId,160),targetMarket:clean(job.targetMarket,500),researchQuestion,targetCompanyTypes:list(job.targetCompanyTypes),targetVesselTypes:list(job.targetVesselTypes),relevantSignals:list(job.relevantSignals),targetDecisionMakerRoles:list(job.targetDecisionMakerRoles),maxOpportunities:Math.max(1,Math.min(10,Number(job.maxOpportunities)||10)),language:['en','ar'].includes(job.language)?job.language:'en'}}];"
       },
-      "id": "normalize-research",
+      "id": "normalize-research-job",
       "name": "Normalize Research Job",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -450,
+        520,
         0
       ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.avalai.ir/v1/responses",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({model:'gpt-5.5',store:false,reasoning:{effort:'low'},tools:[{type:'web_search'}],tool_choice:'auto',include:['web_search_call.results'],max_output_tokens:8000,input:`You are Merqiva's evidence-first maritime B2B opportunity research agent.\\n\\nMISSION\\nFind sales-ready maritime opportunities that match the supplied product/service and target market. Use web search actively. Prioritize recent commercial signals such as fleet expansion, vessel acquisition, newbuilds, drydock, retrofit/refit, contracts, tenders, port/shipyard activity, regulatory change, management changes, and other evidence that makes an account worth pursuing now.\\n\\nNON-NEGOTIABLE RULES\\n1. Never invent a company, vessel, person, contract, tender, event, score, date, or URL.\\n2. Every returned opportunity MUST have at least one evidence item backed by a real source found during this run.\\n3. Copy sourceUrl exactly from sources found by web search. Do not fabricate or reconstruct URLs.\\n4. Separate VERIFIED FACT from INFERENCE. Do not label an inference as a verified fact.\\n5. If the named decision maker cannot be verified from a source, leave name empty, use verificationStatus UNVERIFIED or UNKNOWN, and do not invent contact details.\\n6. Do not invent email addresses, phone numbers, or LinkedIn URLs.\\n7. Keep scoring conservative. A weak or stale signal should not receive a high score.\\n8. Only include companies relevant to the requested target market and customer criteria.\\n9. It is acceptable to return zero opportunities when evidence is insufficient.\\n10. Prefer official company, port, government, regulator, shipyard, exchange, tender, or established maritime-industry sources over low-quality aggregators.\\n11. Return ONLY valid JSON. No Markdown fences and no prose outside JSON.\\n\\nOUTPUT JSON SHAPE\\n{\\n  \\\"status\\\": \\\"COMPLETED\\\",\\n  \\\"notes\\\": \\\"short research note\\\",\\n  \\\"opportunities\\\": [\\n    {\\n      \\\"companyName\\\": \\\"string\\\",\\n      \\\"productName\\\": \\\"string\\\",\\n      \\\"companyFit\\\": 0,\\n      \\\"productFit\\\": 0,\\n      \\\"fleetFit\\\": 0,\\n      \\\"buyingSignalStrength\\\": 0,\\n      \\\"signalRecency\\\": 0,\\n      \\\"decisionMakerConfidence\\\": 0,\\n      \\\"commercialRelevance\\\": 0,\\n      \\\"timingUrgency\\\": 0,\\n      \\\"companyFitReason\\\": \\\"string\\\",\\n      \\\"productFitReason\\\": \\\"string\\\",\\n      \\\"fleetFitReason\\\": \\\"string\\\",\\n      \\\"whyNowSummary\\\": \\\"string\\\",\\n      \\\"buyingSignals\\\": [\\\"string\\\"],\\n      \\\"decisionMaker\\\": {\\\"name\\\":\\\"\\\",\\\"role\\\":\\\"UNKNOWN\\\",\\\"relevance\\\":0,\\\"influence\\\":0,\\\"confidence\\\":0,\\\"verificationStatus\\\":\\\"UNKNOWN\\\",\\\"verificationEvidence\\\":{\\\"sourceName\\\":\\\"\\\",\\\"sourceUrl\\\":\\\"\\\",\\\"notes\\\":\\\"\\\",\\\"verifiedAt\\\":\\\"\\\"}},\\n      \\\"evidence\\\": [{\\\"title\\\":\\\"source title\\\",\\\"summary\\\":\\\"what this source verifies\\\",\\\"sourceName\\\":\\\"publisher/source\\\",\\\"sourceUrl\\\":\\\"https://...\\\",\\\"observedAt\\\":\\\"ISO date if known, otherwise empty string\\\",\\\"evidenceLevel\\\":\\\"VERIFIED FACT\\\"}],\\n      \\\"outreachDraft\\\": \\\"brief evidence-grounded first-touch message\\\"\\n    }\\n  ]\\n}\\n\\nRESEARCH JOB\\n${JSON.stringify($node['Normalize Research Job'].json)}`}) }}",
-        "options": {
-          "timeout": 120000
-        }
+        "jsCode": "const sourceUrl = 'https://example.com/synthetic-source';\nconst levels = ['VERIFIED FACT', undefined, 'INVALID LABEL', 'INFERENCE', 'UNKNOWN'];\nconst evidence = levels.map((evidenceLevel, index) => ({title: 'Synthetic claim ' + index, summary: 'Test data only; no real buying need.', sourceUrl, evidenceLevel}));\nreturn [{json:{status:'completed',output_text:JSON.stringify({status:'COMPLETED',opportunities:[{companyName:'Synthetic Runtime Operator',whyNowSummary:'Synthetic timing; unconfirmed.',evidence,decisionMaker:{name:'Invented contact',confidence:100,verificationStatus:'VERIFIED'},outreachDraft:'Must be removed'}]}),output:[{type:'web_search_call',results:[{url:sourceUrl}]}]}}];"
       },
-      "id": "avalai-web-research",
-      "name": "AvalAI Web Research",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "synthetic-provider-response",
+      "name": "Synthetic Provider Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        -170,
+        780,
         0
-      ],
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 2000
+      ]
     },
     {
       "parameters": {
         "jsCode": "// n8n Code node: a matching source URL is provenance, not claim verification.\nconst job = $node['Normalize Research Job'].json;\nconst base = {\n  jobId: job.jobId,\n  callbackUrl: job.callbackUrl,\n  provider: 'N8N_AVALAI',\n  opportunities: []\n};\nconst fail = (code) => [{ json: { ...base, status: 'FAILED', notes: code } }];\nconst clean = (value, max = 1000) => typeof value === 'string' ? value.trim().slice(0, max) : '';\nconst sourceUrl = (value) => {\n  // n8n's Code sandbox may omit URL. Accept a conservative HTTPS/DNS subset\n  // for exact provenance matching; do not enable modules or fetch these URLs.\n  if (typeof value !== 'string' || value.length > 2048) return '';\n  if (/[^\\x21-\\x7e]|[\\\\<>\"`]|%(?![0-9a-f]{2})/i.test(value)) return '';\n  const match = /^https:\\/\\/([^/?#]+)([/?#].*)?$/i.exec(value);\n  if (!match) return '';\n  const host = match[1].replace(/:443$/, '').toLowerCase();\n  if (host.length > 253 || !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(host)) return '';\n  const suffix = match[2] || '/';\n  return 'https://' + host + (suffix.startsWith('/') ? suffix : '/' + suffix);\n};\n\ntry {\n  const response = $json;\n  if (response?.error) return fail('PROVIDER_REQUEST_FAILED');\n  if (response?.status !== 'completed') return fail('PROVIDER_RESPONSE_NOT_COMPLETED');\n\n  const allowed = new Set();\n  function collect(value) {\n    if (!value || typeof value !== 'object') return;\n    for (const [key, child] of Object.entries(value)) {\n      if (key === 'url' && sourceUrl(child)) allowed.add(sourceUrl(child));\n      else if (child && typeof child === 'object') collect(child);\n    }\n  }\n  const parts = [];\n  for (const item of response.output || []) {\n    if (item.type === 'web_search_call') collect(item);\n    if (item.type === 'message') {\n      for (const content of item.content || []) {\n        if (content.type === 'output_text' && typeof content.text === 'string') parts.push(content.text);\n        collect(content.annotations);\n      }\n    }\n  }\n  const raw = typeof response.output_text === 'string' ? response.output_text : parts.join('\\n');\n  if (!raw || raw.length > 250000) return fail('EMPTY_OR_OVERSIZE_OUTPUT');\n  let data;\n  try {\n    data = JSON.parse(raw.trim().replace(/^```(?:json)?\\s*/, '').replace(/\\s*```$/, ''));\n  } catch { return fail('INVALID_JSON'); }\n  if (!data || data.status !== 'COMPLETED' || !Array.isArray(data.opportunities)) {\n    return fail('INVALID_RESEARCH_SCHEMA');\n  }\n  if (data.opportunities.length && !allowed.size) return fail('MISSING_SEARCH_PROVENANCE');\n\n  const opportunities = [];\n  const seen = new Set();\n  const limit = Math.max(1, Math.min(10, Math.floor(Number(job.maxOpportunities) || 10)));\n  let rejected = 0;\n  for (const candidate of data.opportunities) {\n    const companyName = clean(candidate?.companyName, 240);\n    const key = companyName.toLowerCase();\n    if (!key || seen.has(key)) { rejected++; continue; }\n    const evidence = (Array.isArray(candidate.evidence) ? candidate.evidence : [])\n      .filter((item) => item && allowed.has(sourceUrl(item.sourceUrl)) && clean(item.title) && clean(item.summary))\n      .slice(0, 12)\n      .map((item) => ({\n        title: clean(item.title, 240),\n        summary: clean(item.summary),\n        sourceName: clean(item.sourceName, 160),\n        sourceUrl: sourceUrl(item.sourceUrl),\n        observedAt: '',\n        evidenceLevel: item.evidenceLevel === 'INFERENCE' ? 'INFERENCE' : 'UNKNOWN'\n      }));\n    if (!evidence.length) { rejected++; continue; }\n    seen.add(key);\n    opportunities.push({\n      companyName,\n      productName: job.productName,\n      productId: job.productId || '',\n      status: 'New',\n      evidence,\n      whyNow: clean(candidate.whyNow || candidate.whyNowSummary, 1800),\n      buyingSignals: [],\n      decisionMaker: { name: '', role: 'UNKNOWN', confidence: 0, verificationStatus: 'UNKNOWN' },\n      outreachDraft: ''\n    });\n    if (opportunities.length >= limit) break;\n  }\n  if (data.opportunities.length && !opportunities.length) return fail('ALL_CANDIDATES_REJECTED');\n  return [{ json: {\n    ...base,\n    status: 'COMPLETED',\n    opportunities,\n    notes: `Human review required. ${opportunities.length} candidates; ${rejected} rejected. URL matching does not verify claims.`\n  } }];\n} catch { return fail('VALIDATION_FAILED'); }\n"
       },
-      "id": "validate-evidence",
+      "id": "validate-evidence-&-structure",
       "name": "Validate Evidence & Structure",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        110,
+        1040,
         0
       ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $json.callbackUrl }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "json",
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({jobId:$json.jobId,status:$json.status,provider:$json.provider,notes:$json.notes,opportunities:$json.opportunities}) }}",
-        "options": {
-          "timeout": 30000
-        }
+        "jsCode": "const result = $json;\nconst candidate = result.opportunities?.[0];\nconst expected = ['UNKNOWN', 'UNKNOWN', 'UNKNOWN', 'INFERENCE', 'UNKNOWN'];\nconst checks = {\n  completed: result.status === 'COMPLETED',\n  oneCandidate: result.opportunities?.length === 1,\n  allLabelsSafe: JSON.stringify(candidate?.evidence?.map(item => item.evidenceLevel)) === JSON.stringify(expected),\n  noInventedContact: candidate?.decisionMaker?.name === '',\n  noOutreach: candidate?.outreachDraft === '',\n  timingPreserved: candidate?.whyNow === 'Synthetic timing; unconfirmed.',\n  jobProductPreserved: candidate?.productName === 'Synthetic marine radio',\n  callbackPreserved: result.callbackUrl === 'https://merqivaintel.com/api/research/callback'\n};\nif (Object.values(checks).some(value => !value)) throw new Error('Runtime test failed: ' + JSON.stringify(checks) + '; validator status: ' + result.status + '; notes: ' + result.notes + '; URL constructor: ' + typeof URL);\nreturn [{json:{runtimeCheck:'PASSED',checks,syntheticOnly:true,externalCalls:0,productionWrites:0,scope:'Validator in n8n only. Does not test AvalAI, HTTP callback, or Cloudflare KV.'}}];"
       },
-      "id": "callback-merqiva",
-      "name": "Send Results to Merqiva",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "assert-runtime-result",
+      "name": "Assert Runtime Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        390,
+        1300,
         0
-      ],
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 2000
+      ]
     }
   ],
   "connections": {
-    "Merqiva Research Job": {
+    "Manual Test Only": {
+      "main": [
+        [
+          {
+            "node": "Prepare Synthetic Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Synthetic Job": {
       "main": [
         [
           {
@@ -134,14 +105,14 @@
       "main": [
         [
           {
-            "node": "AvalAI Web Research",
+            "node": "Synthetic Provider Response",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "AvalAI Web Research": {
+    "Synthetic Provider Response": {
       "main": [
         [
           {
@@ -156,7 +127,7 @@
       "main": [
         [
           {
-            "node": "Send Results to Merqiva",
+            "node": "Assert Runtime Result",
             "type": "main",
             "index": 0
           }
@@ -164,14 +135,9 @@
       ]
     }
   },
-  "pinData": {},
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "05352bc2-c8b4-4062-860d-44a429f7e7d4",
-  "meta": {
-    "templateCredsSetupCompleted": false
-  },
-  "tags": []
+  "active": false,
+  "pinData": {}
 }
